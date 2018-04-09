@@ -581,9 +581,6 @@ int think(Position *p) {
         print_pv();
 
         previous_guess = current_guess;
-        if (std::abs(current_guess) > MATE_IN_MAX_PLY) {
-            break;
-        }
         pv_at_depth[depth - 1] = main_pv.moves[0];
 
         if (depth >= 18 && depth <= 30 && std::abs(current_guess) < KNOWN_WIN && std::abs(current_guess) > 30 &&

@@ -124,11 +124,16 @@ void go() {
     int black_increment = 0;
     int white_increment = 0;
     moves_to_go = 0;
+    think_depth_limit = MAX_PLY;
 
     if (word_equal(1, "movetime")) {
         moves_to_go = 1;
         myremain = stoi(word_list[2]) * 99 / 100;
         total_remaining = myremain;
+    }
+    else if (word_equal(1, "infinite")) {
+        moves_to_go = 1;
+        myremain = 3600000;
     }
     else if (word_equal(1, "depth")) {
         moves_to_go = 1;
@@ -147,6 +152,10 @@ void go() {
                 black_increment = stoi(word_list[i + 1]);
             if (word_list[i] == "movestogo")
                 moves_to_go = stoi(word_list[i + 1]);
+            if (word_list[i] == "infinite")
+                myremain = 3600000;
+            if (word_list[i] == "depth")
+                think_depth_limit = stoi(word_list[i + 1]);
         }
 
         TTime t = get_myremain(
@@ -167,10 +176,10 @@ void startpos() {
 
     if (word_equal(2, "moves")) {
         for (unsigned i = 3 ; i < word_list.size() ; i++) {
-            Move m;
+            Move m = 0;
             if (word_list[i].length() == 4) {
                 m = uci2move(root_position, word_list[i]);
-            } else {
+            } else if (word_list[i].length() == 5) {
                 if (word_list[i][4] == 'n') {
                     m = _promoten(uci2move(root_position, word_list[i]));
                 } else if (word_list[i][4] == 'r') {
@@ -181,8 +190,9 @@ void startpos() {
                     m = _promoteq(uci2move(root_position, word_list[i]));
                 }
             }
-
-            root_position = make_move(root_position, m);
+            if (m && is_pseudolegal(root_position, m)) {
+                root_position = make_move(root_position, m);
+            }
         }
     }
 }
@@ -194,10 +204,10 @@ void cmd_fen() {
 
     if (word_equal(8, "moves")) {
         for (unsigned i = 9 ; i < word_list.size() ; i++) {
-            Move m;
+            Move m = 0;
             if (word_list[i].length() == 4) {
                 m = uci2move(root_position, word_list[i]);
-            } else {
+            } else if (word_list[i].length() == 5) {
                 if (word_list[i][4] == 'n') {
                     m = _promoten(uci2move(root_position, word_list[i]));
                 } else if (word_list[i][4] == 'r') {
@@ -208,8 +218,9 @@ void cmd_fen() {
                     m = _promoteq(uci2move(root_position, word_list[i]));
                 }
             }
-
-            root_position = make_move(root_position, m);
+            if (m && is_pseudolegal(root_position, m)) {
+                root_position = make_move(root_position, m);
+            }
         }
     }
 }
