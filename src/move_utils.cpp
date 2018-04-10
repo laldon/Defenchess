@@ -39,12 +39,6 @@ string move_to_str_stock(Move m) {
     return move_str;
 }
 
-string move_to_str(Move m) {
-    return int_to_notation(move_from(m)) + to_string((move_from(m) >> 3) + 1) +
-           int_to_notation(move_to(m)) + to_string((move_to(m) >> 3) + 1);
-}
-
-
 int n2i(char c) {
     switch(c) {
         case 'a':
