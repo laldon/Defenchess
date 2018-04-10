@@ -269,9 +269,12 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
     p->current_move = 0;
 
     Move tte_move = 0;
+    Move excluded_move = p->excluded_move;
+    (p+1)->excluded_move = 0;
     int tte_score;
     tte_score = p->static_eval = UNDEFINED;
-    TTEntry *tte = get_tte(p->hash);
+    uint64_t position_hash = p->hash ^ uint64_t(excluded_move << 16);
+    TTEntry *tte = get_tte(position_hash);
     if (tte) {
         tte_move = tte->move;
         if (tte->depth >= depth) {
@@ -352,7 +355,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
     if (!tte_move && depth >= 6 && (is_principal || p->static_eval + 150 >= beta)) {
         new_depth = 3 * depth / 4 - 2;
         alpha_beta(p, alpha, beta, new_depth, in_check, cut);
-        tte = get_tte(p->hash);
+        tte = get_tte(position_hash);
         if (tte) {
             tte_move = tte->move;
         }
@@ -374,6 +377,10 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
         assert(!is_move_empty(move));
         assert(0 < depth || in_check);
 
+        if (move == excluded_move) {
+            continue;
+        }
+
         ++num_moves;
 
         bool checks = gives_check(p, move);
@@ -381,7 +388,24 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
         bool important = in_check || capture_or_promo || checks || move == tte_move || is_advanced_pawn_push(p, move);
 
         int extension = 0;
-        if (checks && see_capture(p, move) >= 0) {
+        if (depth >= 8 &&
+            move == tte_move &&
+            !root_node &&
+            !excluded_move &&
+            tte_score != UNDEFINED &&
+            (tte->flag == FLAG_BETA || tte->flag == FLAG_EXACT) &&
+            tte->depth >= depth - 3 &&
+            is_legal(p, move))
+        {
+            int r_beta = std::max(tte_score - 2 * depth, -MATE);
+            p->excluded_move = move;
+            int search_result = alpha_beta(p, r_beta - 1, r_beta, depth / 2, in_check, cut);
+            p->excluded_move = 0;
+
+            if (search_result < r_beta) {
+                extension = 1;
+            }
+        } else if (checks && see_capture(p, move) >= 0) {
             extension = 1;
         }
         new_depth = depth - 1 + extension;
@@ -470,7 +494,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
                     alpha = score;
                 } else {
                     save_killer(p, move, depth, ply);
-                    set_tte(p->hash, move, depth, score_to_tt(score, ply), FLAG_BETA);
+                    set_tte(position_hash, move, depth, score_to_tt(score, ply), FLAG_BETA);
                     return score;
                 }
             }
@@ -478,11 +502,13 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
     }
 
     if (num_moves == 0) {
-        best_score = in_check ? -MATE + ply : 0;
+        best_score = excluded_move ? alpha : in_check ? -MATE + ply : 0;
     }
 
     uint8_t flag = is_principal && best_move ? FLAG_EXACT : FLAG_ALPHA;
-    set_tte(p->hash, best_move, depth, score_to_tt(best_score, ply), flag);
+    if (!excluded_move) {
+        set_tte(position_hash, best_move, depth, score_to_tt(best_score, ply), flag);
+    }
     if (!in_check && best_move) {
         save_killer(p, best_move, depth, ply);
     }

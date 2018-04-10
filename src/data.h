@@ -365,6 +365,7 @@ struct Position {
     Move     current_move;
     uint64_t hash;
     Bitboard pinned[2];
+    Move     excluded_move;
 };
 
 const int position_size = sizeof(CopyThingSize);
