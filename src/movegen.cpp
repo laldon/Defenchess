@@ -37,15 +37,15 @@ void print_movegen(MoveGen *movegen) {
 
 void score_moves(MoveGen *movegen, ScoreType score_type) {
     if (score_type == SCORE_CAPTURE) {
-        for (int i = movegen->head; i < movegen->tail; ++i) {
+        for (uint8_t i = movegen->head; i < movegen->tail; ++i) {
             movegen->moves[i].score = score_capture_mvvlva(movegen->position, movegen->moves[i].move);
         }
     } else if (score_type == SCORE_QUIET) {
-        for (int i = movegen->head; i < movegen->tail; ++i) {
+        for (uint8_t i = movegen->head; i < movegen->tail; ++i) {
             movegen->moves[i].score = score_quiet(movegen->position, movegen->moves[i].move);
         }
     } else { // Evasions
-        for (int i = movegen->head; i < movegen->tail; ++i) {
+        for (uint8_t i = movegen->head; i < movegen->tail; ++i) {
             if (is_capture(movegen->position, movegen->moves[i].move)) {
                 movegen->moves[i].score = score_capture_mvvlva(movegen->position, movegen->moves[i].move);
             } else {
@@ -55,7 +55,7 @@ void score_moves(MoveGen *movegen, ScoreType score_type) {
     }
 }
 
-ScoredMove pick_best(ScoredMove *moves, int head, int tail) {
+ScoredMove pick_best(ScoredMove *moves, uint8_t head, uint8_t tail) {
     std::swap(moves[head], *std::max_element(moves + head, moves + tail, scored_move_compare));
     return moves[head];
 }
@@ -218,19 +218,24 @@ Move next_move(MoveGen *movegen) {
 MoveGen new_movegen(Position *p, int ply, int depth, Move tte_move, uint8_t type, bool in_check) {
     Square prev_to = move_to((p-1)->current_move);
     int movegen_stage;
+    Move tm;
     if (in_check) {
+        tm = (tte_move && is_pseudolegal(p, tte_move)) ? tte_move : Move(0);
         movegen_stage = EVASION_TTE_MOVE;
     } else {
         if (type == NORMAL_SEARCH) {
+            tm = (tte_move && is_pseudolegal(p, tte_move)) ? tte_move : Move(0);
             movegen_stage = NORMAL_TTE_MOVE;
         } else if (type == QUIESCENCE_SEARCH) {
             assert(depth == 0 || depth == -1);
+            tm = (tte_move && is_pseudolegal(p, tte_move) && is_capture(p, tte_move)) ? tte_move : Move(0);
             if (depth >= 0) {
                 movegen_stage = QUIESCENCE_TTE_MOVE_CHECKS;
             } else {
                 movegen_stage = QUIESCENCE_TTE_MOVE;
             }
-        } else {
+        } else {  // Perft
+            tm = (tte_move && is_pseudolegal(p, tte_move)) ? tte_move : Move(0);
             movegen_stage = NORMAL_TTE_MOVE;
         }
     }
@@ -239,7 +244,7 @@ MoveGen new_movegen(Position *p, int ply, int depth, Move tte_move, uint8_t type
     MoveGen movegen = {
         {}, // Moves
         p, // Position
-        (tte_move && is_pseudolegal(p, tte_move)) ? tte_move : Move(0), // tte_move
+        tm, // tte_move
         {my_thread->killers[ply][0], my_thread->killers[ply][1]}, // killer 2
         (ply > 0) ? my_thread->counter_moves[p->pieces[prev_to]][prev_to] : Move(0), // counter move
         movegen_stage, // stage

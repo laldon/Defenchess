@@ -191,9 +191,9 @@ bool is_pseudolegal(Position *p, Move move) {
     if (m_type != NORMAL) {
         MoveGen movegen = blank_movegen;
         generate_moves<ALL>(&movegen, p);
-        for (int i = movegen.head; i < movegen.tail; ++i) {
+        for (uint8_t i = movegen.head; i < movegen.tail; ++i) {
             Move gen_move = movegen.moves[i].move;
-            if (move == gen_move && is_legal(p, gen_move)) {
+            if (move == gen_move) {
                 return true;
             }
         }
@@ -219,12 +219,6 @@ bool is_pseudolegal(Position *p, Move move) {
     Bitboard b = 0;
     if (p_type == white_king) {
         b = generate_king_targets(from);
-        if (can_king_castle(p)) {
-            b |= bfi_king_castle[p->color];
-        }
-        if (can_queen_castle(p)) {
-            b |= bfi_queen_castle[p->color];
-        }
     } else if (p_type == white_pawn) {
         if (rank(to, p->color) == RANK_8) {
             return false;

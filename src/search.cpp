@@ -170,6 +170,10 @@ int alpha_beta_quiescence(Position *p, int alpha, int beta, int depth, bool in_c
     Move best_move = 0;
     int num_moves = 0;
     while (Move move = next_move(&movegen)) {
+        if (!is_pseudolegal(p, move)) {
+            std::cout << move_to_str_stock(move) << " " << move_type(move) << std::endl;
+            show_position_png(p);
+        }
         assert(!is_move_empty(move));
         assert(is_pseudolegal(p, move));
         assert(in_check || p->static_eval != UNDEFINED);
@@ -388,24 +392,24 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
         bool important = in_check || capture_or_promo || checks || move == tte_move || is_advanced_pawn_push(p, move);
 
         int extension = 0;
-        if (depth >= 8 &&
-            move == tte_move &&
-            !root_node &&
-            !excluded_move &&
-            tte_score != UNDEFINED &&
-            (tte->flag == FLAG_BETA || tte->flag == FLAG_EXACT) &&
-            tte->depth >= depth - 3 &&
-            is_legal(p, move))
-        {
-            int r_beta = std::max(tte_score - 2 * depth, -MATE);
-            p->excluded_move = move;
-            int search_result = alpha_beta(p, r_beta - 1, r_beta, depth / 2, in_check, cut);
-            p->excluded_move = 0;
+        // if (depth >= 8 &&
+        //     move == tte_move &&
+        //     !root_node &&
+        //     !excluded_move &&
+        //     tte_score != UNDEFINED &&
+        //     (tte->flag == FLAG_BETA || tte->flag == FLAG_EXACT) &&
+        //     tte->depth >= depth - 3 &&
+        //     is_legal(p, move))
+        // {
+        //     int r_beta = std::max(tte_score - 2 * depth, -MATE);
+        //     p->excluded_move = move;
+        //     int search_result = alpha_beta(p, r_beta - 1, r_beta, depth / 2, in_check, cut);
+        //     p->excluded_move = 0;
 
-            if (search_result < r_beta) {
-                extension = 1;
-            }
-        } else if (checks && see_capture(p, move) >= 0) {
+        //     if (search_result < r_beta) {
+        //         extension = 1;
+        //     }
+        if (checks && see_capture(p, move) >= 0) {
             extension = 1;
         }
         new_depth = depth - 1 + extension;
