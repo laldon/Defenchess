@@ -220,22 +220,22 @@ MoveGen new_movegen(Position *p, int ply, int depth, Move tte_move, uint8_t type
     int movegen_stage;
     Move tm;
     if (in_check) {
-        tm = (tte_move && is_pseudolegal(p, tte_move)) ? tte_move : Move(0);
+        tm = tte_move && is_pseudolegal(p, tte_move) ? tte_move : Move(0);
         movegen_stage = EVASION_TTE_MOVE;
     } else {
         if (type == NORMAL_SEARCH) {
-            tm = (tte_move && is_pseudolegal(p, tte_move)) ? tte_move : Move(0);
+            tm = tte_move && is_pseudolegal(p, tte_move) ? tte_move : Move(0);
             movegen_stage = NORMAL_TTE_MOVE;
         } else if (type == QUIESCENCE_SEARCH) {
             assert(depth == 0 || depth == -1);
-            tm = (tte_move && is_pseudolegal(p, tte_move) && is_capture(p, tte_move)) ? tte_move : Move(0);
+            tm = tte_move && is_pseudolegal(p, tte_move) && is_capture(p, tte_move) ? tte_move : Move(0);
             if (depth >= 0) {
                 movegen_stage = QUIESCENCE_TTE_MOVE_CHECKS;
             } else {
                 movegen_stage = QUIESCENCE_TTE_MOVE;
             }
         } else {  // Perft
-            tm = (tte_move && is_pseudolegal(p, tte_move)) ? tte_move : Move(0);
+            tm = tte_move && is_pseudolegal(p, tte_move) ? tte_move : Move(0);
             movegen_stage = NORMAL_TTE_MOVE;
         }
     }
