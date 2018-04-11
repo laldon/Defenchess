@@ -190,6 +190,7 @@ bool is_pseudolegal(Position *p, Move move) {
 
     if (m_type != NORMAL) {
         MoveGen movegen = blank_movegen;
+        movegen.position = p;
         generate_moves<ALL>(&movegen, p);
         for (uint8_t i = movegen.head; i < movegen.tail; ++i) {
             Move gen_move = movegen.moves[i].move;

@@ -51,28 +51,27 @@ void perft_test(){
         Position *p = st_pos;
 
         // Generate all moves and test pseudo legal
-        for (Square a = A1; a <= H8; ++a) {
-            for (Square b = A1; b <= H8; ++b) {
-                Move gen_move = _movecast(a, b, NORMAL);
-                if (is_pseudolegal(p, gen_move)) {
-                    MoveGen movegen = new_movegen(p, 0, 0, 0, NORMAL_SEARCH, is_checked(p));
-                    generate_moves<ALL>(&movegen, p);
-                    bool found = false;
-                    for (uint8_t move_idx = movegen.head; move_idx < movegen.tail; ++move_idx) {
-                        if (movegen.moves[move_idx].move == gen_move) {
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (!found) {
-                        std::cout << move_to_str_stock(gen_move) << std::endl;
-                        show_position_png(p);
-                    }
-                    assert(found);
-                }
-            }
-        }
-        continue;
+        // for (Square a = A1; a <= H8; ++a) {
+        //     for (Square b = A1; b <= H8; ++b) {
+        //         Move gen_move = _movecast(a, b, NORMAL);
+        //         if (is_pseudolegal(p, gen_move)) {
+        //             MoveGen movegen = new_movegen(p, 0, 0, 0, NORMAL_SEARCH, is_checked(p));
+        //             generate_moves<ALL>(&movegen, p);
+        //             bool found = false;
+        //             for (uint8_t move_idx = movegen.head; move_idx < movegen.tail; ++move_idx) {
+        //                 if (movegen.moves[move_idx].move == gen_move) {
+        //                     found = true;
+        //                     break;
+        //                 }
+        //             }
+        //             if (!found) {
+        //                 std::cout << move_to_str_stock(gen_move) << std::endl;
+        //                 show_position_png(p);
+        //             }
+        //             assert(found);
+        //         }
+        //     }
+        // }
 
         int t_depth = depths[i];
 

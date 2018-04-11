@@ -142,8 +142,8 @@ void generate_pawn_moves(MoveGen *movegen, Position *p) {
                 append_move(_promoten(m), movegen);
                 append_move(_promoteq(m), movegen);
             } else if (p->enpassant && index == p->enpassant) {
-                    Move m = _movecast(outpost, index, ENPASSANT);
-                    append_move(m, movegen);
+                Move m = _movecast(outpost, index, ENPASSANT);
+                append_move(m, movegen);
             } else {
                 Move m = _movecast(outpost, index, NORMAL);
                 append_move(m, movegen);

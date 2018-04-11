@@ -519,7 +519,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
 int think(Position *p) {
     Material *eval_material = get_material(p);
     bool in_check = is_checked(p);
-    MoveGen movegen = blank_movegen;
+    MoveGen movegen = new_movegen(p, 0, 0, 0, NORMAL_SEARCH, in_check);
     if (in_check) {
         generate_evasions(&movegen, p);
     } else {
