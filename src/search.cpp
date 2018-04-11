@@ -170,10 +170,6 @@ int alpha_beta_quiescence(Position *p, int alpha, int beta, int depth, bool in_c
     Move best_move = 0;
     int num_moves = 0;
     while (Move move = next_move(&movegen)) {
-        if (!is_pseudolegal(p, move)) {
-            std::cout << move_to_str_stock(move) << " " << move_type(move) << std::endl;
-            show_position_png(p);
-        }
         assert(!is_move_empty(move));
         assert(is_pseudolegal(p, move));
         assert(in_check || p->static_eval != UNDEFINED);
