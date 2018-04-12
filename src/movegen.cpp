@@ -60,7 +60,7 @@ ScoredMove pick_best(ScoredMove *moves, uint8_t head, uint8_t tail) {
     return moves[head];
 }
 
-Move next_move(MoveGen *movegen) {
+Move next_move(MoveGen *movegen, bool skip_quiets) {
     Move move;
     switch (movegen->stage) {
         case NORMAL_TTE_MOVE:
@@ -122,13 +122,15 @@ Move next_move(MoveGen *movegen) {
             ++movegen->stage;
 
         case QUIETS:
-            while (movegen->head < movegen->tail) {
-                move = movegen->moves[movegen->head++].move;
-                if (move != movegen->tte_move &&
-                    move != movegen->killer_moves[0] &&
-                    move != movegen->killer_moves[1] &&
-                    move != movegen->counter_move) {
-                    return move;
+            if (!skip_quiets) {
+                while (movegen->head < movegen->tail) {
+                    move = movegen->moves[movegen->head++].move;
+                    if (move != movegen->tte_move &&
+                        move != movegen->killer_moves[0] &&
+                        move != movegen->killer_moves[1] &&
+                        move != movegen->counter_move) {
+                        return move;
+                    }
                 }
             }
             ++movegen->stage;

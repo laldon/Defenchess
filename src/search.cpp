@@ -169,7 +169,7 @@ int alpha_beta_quiescence(Position *p, int alpha, int beta, int depth, bool in_c
 
     Move best_move = 0;
     int num_moves = 0;
-    while (Move move = next_move(&movegen)) {
+    while (Move move = next_move(&movegen, false)) {
         assert(!is_move_empty(move));
         assert(is_pseudolegal(p, move));
         assert(in_check || p->static_eval != UNDEFINED);
@@ -361,6 +361,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
     MoveGen movegen = new_movegen(p, ply, depth, tte_move, NORMAL_SEARCH, in_check);
 
     Move best_move = 0;
+    bool skip_quiets = false;
     int best_score = -INFINITE;
     int num_moves = 0;
 
@@ -369,7 +370,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
         improving = p->static_eval >= (p-2)->static_eval || (p-2)->static_eval == UNDEFINED;
     }
 
-    while (Move move = next_move(&movegen)) {
+    while (Move move = next_move(&movegen, skip_quiets)) {
         assert(is_pseudolegal(p, move));
         assert(!is_move_empty(move));
         assert(0 < depth || in_check);
@@ -389,6 +390,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
         if (!root_node && !important && p->non_pawn_material[p->color] && best_score > MATED_IN_MAX_PLY) {
             int reduction = lmr(depth, num_moves);
             if (depth < 8 && num_moves >= futility_move_counts[improving][depth]) {
+                skip_quiets = true;
                 continue;
             }
             // Reduced depth of the next LMR search

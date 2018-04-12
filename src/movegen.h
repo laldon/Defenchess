@@ -29,7 +29,7 @@ MoveGen new_movegen(Position *p, int ply, int depth, Move tt_move, Square type, 
 
 void generate_evasions(MoveGen *movegen, Position *p);
 void generate_king_evasions(MoveGen *movegen, Position *p);
-Move next_move(MoveGen *movegen);
+Move next_move(MoveGen *movegen, bool skip_quiets);
 
 inline int score_quiet(Position *p, Move move) {
     return p->my_thread->history[p->pieces[move_from(move)]][move_to(move)];

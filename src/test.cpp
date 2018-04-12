@@ -130,7 +130,7 @@ uint64_t Perft(int depth, Position *p, bool root, bool in_check) {
     const bool is_leaf = depth == 2;
 
     MoveGen movegen = new_movegen(p, PLY(p), depth, 0, NORMAL_SEARCH, in_check);
-    while (Move m = next_move(&movegen)) {
+    while (Move m = next_move(&movegen, false)) {
         if (root && depth == 1) {
             move_nodes = 1;
             ++nodes;
