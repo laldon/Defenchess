@@ -30,173 +30,181 @@ bool scored_move_compare_greater(ScoredMove lhs, ScoredMove rhs) { return lhs.sc
 void print_movegen(MoveGen *movegen) {
     std::cout << "movegen: ";
     for (int i = movegen->head; i < movegen->tail; i++) {
-        std::cout << move_to_str(movegen->moves[i]) << ", ";
+        std::cout << move_to_str_stock(movegen->moves[i].move) << ", ";
     }
     std::cout << std::endl;
 }
 
-void sort_movegen(MoveGen *movegen) {
-    SearchThread *my_thread = movegen->position->my_thread;
-    for (int i = movegen->head; i < movegen->tail; i++) {
-        Move move = movegen->moves[i];
-        if (move == movegen->tte_move) {
-            movegen->movegen_tte_move = move;
-            continue;
+void score_moves(MoveGen *movegen, ScoreType score_type) {
+    if (score_type == SCORE_CAPTURE) {
+        for (uint8_t i = movegen->head; i < movegen->tail; ++i) {
+            movegen->moves[i].score = score_capture_mvvlva(movegen->position, movegen->moves[i].move);
         }
-        if (is_capture(movegen->position, move)) {
-            int exchange = see_capture(movegen->position, move);
-            if (exchange >= 0) {
-                movegen->movegen_good_captures[movegen->gcc++] = ScoredMove{move, score_capture_mvvlva(movegen->position, move)};
+    } else if (score_type == SCORE_QUIET) {
+        for (uint8_t i = movegen->head; i < movegen->tail; ++i) {
+            movegen->moves[i].score = score_quiet(movegen->position, movegen->moves[i].move);
+        }
+    } else { // Evasions
+        for (uint8_t i = movegen->head; i < movegen->tail; ++i) {
+            if (is_capture(movegen->position, movegen->moves[i].move)) {
+                movegen->moves[i].score = score_capture_mvvlva(movegen->position, movegen->moves[i].move);
             } else {
-                movegen->movegen_bad_captures[movegen->bcc++] = ScoredMove{move, score_capture_mvvlva(movegen->position, move)};
-            }
-            continue;
-        }
-        if (move == my_thread->killers[movegen->ply][0]) {
-            movegen->movegen_killer_moves[0] = move;
-            continue;
-        }
-        if (move == my_thread->killers[movegen->ply][1]) {
-            movegen->movegen_killer_moves[1] = move;
-            continue;
-        }
-        if (movegen->ply > 0) {
-            Square prev_to = move_to((movegen->position - 1)->current_move);
-            if (move == my_thread->counter_moves[movegen->position->pieces[prev_to]][prev_to]) {
-                movegen->movegen_counter_move = move;
-                continue;
+                movegen->moves[i].score = score_quiet(movegen->position, movegen->moves[i].move) - (1 << 30);
             }
         }
-        movegen->movegen_quiet_moves[movegen->qc++] = ScoredMove{move, score_quiet(movegen->position, move)};
     }
 }
 
-void sort_evasions(MoveGen *movegen) {
-    for (int i = movegen->head; i < movegen->tail; i++) {
-        Move move = movegen->moves[i];
-        if (move == movegen->tte_move) {
-            movegen->movegen_tte_move = move;
-            continue;
-        }
-        if (is_capture(movegen->position, move)) {
-            movegen->movegen_evasions[movegen->ec++] = ScoredMove{move, score_capture_mvvlva(movegen->position, move)};
-            continue;
-        }
-        movegen->movegen_evasions[movegen->ec++] = ScoredMove{move, score_quiet(movegen->position, move) - (1 << 30)};
-        assert(movegen->movegen_evasions[movegen->ec - 1].score < 0);
-    }
-}
-
-void sort_movegen_quiescence(MoveGen *movegen) {
-    for (int i = movegen->head; i < movegen->tail; i++) {
-        Move move = movegen->moves[i];
-        if (move == movegen->tte_move) {
-            movegen->movegen_tte_move = move;
-            continue;
-        }
-        if (is_capture(movegen->position, move)) {
-            movegen->movegen_good_captures[movegen->gcc++] = ScoredMove{move, score_capture_mvvlva(movegen->position, move)};
-            continue;
-        }
-        movegen->movegen_quiet_moves[movegen->qc++] = ScoredMove{move, 0};
-    }
-}
-
-ScoredMove pick_best(ScoredMove *moves, int head, int tail) {
+ScoredMove pick_best(ScoredMove *moves, uint8_t head, uint8_t tail) {
     std::swap(moves[head], *std::max_element(moves + head, moves + tail, scored_move_compare));
     return moves[head];
 }
 
 Move next_move(MoveGen *movegen) {
+    Move move;
     switch (movegen->stage) {
         case NORMAL_TTE_MOVE:
             ++movegen->stage;
-            if (movegen->movegen_tte_move) {
-                return movegen->movegen_tte_move;
+            if (movegen->tte_move) {
+                return movegen->tte_move;
             }
 
         case GOOD_CAPTURES_SORT:
-            movegen->head = 0;
+            generate_moves<CAPTURE>(movegen, movegen->position);
+            score_moves(movegen, SCORE_CAPTURE);
             ++movegen->stage;
 
         case GOOD_CAPTURES:
-            if (movegen->head < movegen->gcc) {
-                return pick_best(movegen->movegen_good_captures, movegen->head++, movegen->gcc).move;
+            while (movegen->head < movegen->tail) {
+                move = pick_best(movegen->moves, movegen->head++, movegen->tail).move;
+                if (see_capture(movegen->position, move) >= 0) {
+                    return move;
+                }
+                movegen->moves[movegen->end_bad_captures++] = ScoredMove{move, 0};
             }
             ++movegen->stage;
-            if (movegen->movegen_killer_moves[0]) {
-                return movegen->movegen_killer_moves[0];
+            move = movegen->killer_moves[0];
+            if (move &&
+                move != movegen->tte_move &&
+                is_pseudolegal(movegen->position, move) &&
+                !is_capture(movegen->position, move)) {
+                return move;
             }
 
         case KILLER_MOVES:
             ++movegen->stage;
-            if (movegen->movegen_killer_moves[1]) {
-                return movegen->movegen_killer_moves[1];
+            move = movegen->killer_moves[1];
+            if (move &&
+                move != movegen->tte_move &&
+                is_pseudolegal(movegen->position, move) &&
+                !is_capture(movegen->position, move)) {
+                return move;
             }
 
         case COUNTER_MOVES:
             ++movegen->stage;
-            if (movegen->movegen_counter_move) {
-                return movegen->movegen_counter_move;
+            move = movegen->counter_move;
+            if (move &&
+                move != movegen->tte_move &&
+                move != movegen->killer_moves[0] &&
+                move != movegen->killer_moves[1] &&
+                is_pseudolegal(movegen->position, move) &&
+                !is_capture(movegen->position, move)) {
+                return move;
             }
 
         case QUIETS_SORT:
-            movegen->head = 0;
-            std::sort(movegen->movegen_quiet_moves, movegen->movegen_quiet_moves + movegen->qc, scored_move_compare_greater);
+            movegen->head = movegen->end_bad_captures;
+            movegen->tail = movegen->end_bad_captures;
+            generate_moves<SILENT>(movegen, movegen->position);
+            score_moves(movegen, SCORE_QUIET);
+            std::sort(movegen->moves + movegen->head, movegen->moves + movegen->tail, scored_move_compare_greater);
             ++movegen->stage;
 
         case QUIETS:
-            if (movegen->head < movegen->qc) {
-                return movegen->movegen_quiet_moves[movegen->head++].move;
+            while (movegen->head < movegen->tail) {
+                move = movegen->moves[movegen->head++].move;
+                if (move != movegen->tte_move &&
+                    move != movegen->killer_moves[0] &&
+                    move != movegen->killer_moves[1] &&
+                    move != movegen->counter_move) {
+                    return move;
+                }
             }
             ++movegen->stage;
-
-        case BAD_CAPTURES_SORT:
             movegen->head = 0;
-            ++movegen->stage;
 
         case BAD_CAPTURES:
-            if (movegen->head < movegen->bcc) {
-                return movegen->movegen_bad_captures[movegen->head++].move;
+            if (movegen->head < movegen->end_bad_captures) {
+                return movegen->moves[movegen->head++].move;
             }
             break;
 
         case EVASION_TTE_MOVE:
             ++movegen->stage;
-            if (movegen->movegen_tte_move) {
-                return movegen->movegen_tte_move;
+            if (movegen->tte_move) {
+                return movegen->tte_move;
             }
 
         case EVASIONS_SORT:
-            movegen->head = 0;
+            generate_evasions(movegen, movegen->position);
+            score_moves(movegen, SCORE_EVASION);
             ++movegen->stage;
 
         case EVASIONS:
-            if (movegen->head < movegen->ec) {
-                return pick_best(movegen->movegen_evasions, movegen->head++, movegen->ec).move;
+            while (movegen->head < movegen->tail) {
+                move = pick_best(movegen->moves, movegen->head++, movegen->tail).move;
+                if (move != movegen->tte_move) {
+                    return move;
+                }
             }
             break;
 
         case QUIESCENCE_TTE_MOVE:
             ++movegen->stage;
-            if (movegen->movegen_tte_move) {
-                return movegen->movegen_tte_move;
+            if (movegen->tte_move) {
+                return movegen->tte_move;
             }
 
         case QUIESCENCE_CAPTURES_SORT:
-            movegen->head = 0;
+            generate_moves<CAPTURE>(movegen, movegen->position);
+            score_moves(movegen, SCORE_CAPTURE);
             ++movegen->stage;
 
         case QUIESCENCE_CAPTURES:
-            if (movegen->head < movegen->gcc) {
-                return pick_best(movegen->movegen_good_captures, movegen->head++, movegen->gcc).move;
+            while (movegen->head < movegen->tail) {
+                move = pick_best(movegen->moves, movegen->head++, movegen->tail).move;
+                if (move != movegen->tte_move) {
+                    return move;
+                }
+            }
+            break;
+
+        case QUIESCENCE_TTE_MOVE_CHECKS:
+            ++movegen->stage;
+            if (movegen->tte_move) {
+                return movegen->tte_move;
+            }
+
+        case QUIESCENCE_CAPTURES_SORT_CHECKS:
+            generate_moves<CAPTURE>(movegen, movegen->position);
+            score_moves(movegen, SCORE_QUIET);
+            ++movegen->stage;
+
+        case QUIESCENCE_CAPTURES_CHECKS:
+            if (movegen->head < movegen->tail) {
+                return pick_best(movegen->moves, movegen->head++, movegen->tail).move;
             }
             ++movegen->stage;
             movegen->head = 0;
+            generate_quiet_checks(movegen, movegen->position);
 
-        case QUIESCENCE_QUIETS:
-            while (movegen->head < movegen->qc) {
-                return movegen->movegen_quiet_moves[movegen->head++].move;
+        case QUIESCENCE_QUIETS_CHECKS:
+            while (movegen->head < movegen->tail) {
+                move = movegen->moves[movegen->head++].move;
+                if (move != movegen->tte_move) {
+                    return move;
+                }
             }
             break;
 
@@ -207,47 +215,49 @@ Move next_move(MoveGen *movegen) {
     return 0;
 }
 
-MoveGen *new_movegen(Position *p, int ply, int depth, Move tte_move, uint8_t type, bool in_check) {
-    MoveGen *movegen = &(p->my_thread->movegens[ply]);
-    movegen->head = 0;
-    movegen->tail = 0;
-    movegen->position = p;
-    movegen->tte_move = tte_move;
-    movegen->movegen_tte_move = 0;
-    movegen->ply = ply;
-
+MoveGen new_movegen(Position *p, int ply, int depth, Move tte_move, uint8_t type, bool in_check) {
+    Square prev_to = move_to((p-1)->current_move);
+    int movegen_stage;
+    Move tm;
     if (in_check) {
-        movegen->ec = 0;
-        generate_evasions(movegen);
-        sort_evasions(movegen);
-        movegen->stage = EVASION_TTE_MOVE;
+        tm = tte_move && is_pseudolegal(p, tte_move) ? tte_move : Move(0);
+        movegen_stage = EVASION_TTE_MOVE;
     } else {
-        movegen->gcc = 0;
-        movegen->bcc = 0;
-        movegen->qc = 0;
-        movegen->movegen_killer_moves[0] = 0;
-        movegen->movegen_killer_moves[1] = 0;
-        movegen->movegen_counter_move = 0;
         if (type == NORMAL_SEARCH) {
-            generate_moves<ALL>(movegen);
-            sort_movegen(movegen);
-            movegen->stage = NORMAL_TTE_MOVE;
+            tm = tte_move && is_pseudolegal(p, tte_move) ? tte_move : Move(0);
+            movegen_stage = NORMAL_TTE_MOVE;
         } else if (type == QUIESCENCE_SEARCH) {
             assert(depth == 0 || depth == -1);
-            generate_moves<CAPTURE>(movegen);
+            tm = tte_move && is_pseudolegal(p, tte_move) && is_capture(p, tte_move) ? tte_move : Move(0);
             if (depth >= 0) {
-                generate_quiet_checks(movegen);
+                movegen_stage = QUIESCENCE_TTE_MOVE_CHECKS;
+            } else {
+                movegen_stage = QUIESCENCE_TTE_MOVE;
             }
-            sort_movegen_quiescence(movegen);
-            movegen->stage = QUIESCENCE_TTE_MOVE;
+        } else {  // Perft
+            tm = tte_move && is_pseudolegal(p, tte_move) ? tte_move : Move(0);
+            movegen_stage = NORMAL_TTE_MOVE;
         }
     }
+
+    SearchThread *my_thread = p->my_thread;
+    MoveGen movegen = {
+        {}, // Moves
+        p, // Position
+        tm, // tte_move
+        {my_thread->killers[ply][0], my_thread->killers[ply][1]}, // killer 2
+        (ply > 0) ? my_thread->counter_moves[p->pieces[prev_to]][prev_to] : Move(0), // counter move
+        movegen_stage, // stage
+        0, // head
+        0, // tail
+        0, // end bad captures
+        ply // ply
+    };
     return movegen;
 }
 
-void generate_evasions(MoveGen *movegen) {
-    generate_king_evasions(movegen);
-    Position *p = movegen->position;
+void generate_evasions(MoveGen *movegen, Position *p) {
+    generate_king_evasions(movegen, p);
     // How many pieces causing check ?
     Bitboard attackers = targeted_from(p, p->board, p->color, p->king_index[p->color]);
     uint8_t piece_count = count(attackers);
@@ -310,8 +320,7 @@ void generate_evasions(MoveGen *movegen) {
     }
 }
 
-void generate_king_evasions(MoveGen *movegen) {
-    Position *p = movegen->position;
+void generate_king_evasions(MoveGen *movegen, Position *p) {
     Square k_index = p->king_index[p->color];
 
     // Remove the king from the board temporarily
@@ -326,8 +335,7 @@ void generate_king_evasions(MoveGen *movegen) {
     }
 }
 
-void generate_quiet_checks(MoveGen *movegen) {
-    Position *p = movegen->position;
+void generate_quiet_checks(MoveGen *movegen, Position *p) {
     Square king_index = p->king_index[opponent_color(p->color)];
     Bitboard non_capture = ~p->board;
 

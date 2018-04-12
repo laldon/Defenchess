@@ -463,44 +463,58 @@ const int
     QUIETS_SORT = 5,
     QUIETS = 6,
 
-    BAD_CAPTURES_SORT = 7,
-    BAD_CAPTURES = 8,
+    BAD_CAPTURES = 7,
 
     // Evasion stages
-    EVASION_TTE_MOVE = 9,
-    EVASIONS_SORT = 10,
-    EVASIONS = 11,
+    EVASION_TTE_MOVE = 8,
+    EVASIONS_SORT = 9,
+    EVASIONS = 10,
 
     // Quiescence stages
-    QUIESCENCE_TTE_MOVE = 12,
-    QUIESCENCE_CAPTURES_SORT = 13,
-    QUIESCENCE_CAPTURES = 14,
-    QUIESCENCE_QUIETS = 15;
+    QUIESCENCE_TTE_MOVE = 11,
+    QUIESCENCE_CAPTURES_SORT = 12,
+    QUIESCENCE_CAPTURES = 13,
+
+    // Quiescence stages
+    QUIESCENCE_TTE_MOVE_CHECKS = 14,
+    QUIESCENCE_CAPTURES_SORT_CHECKS = 15,
+    QUIESCENCE_CAPTURES_CHECKS = 16,
+    QUIESCENCE_QUIETS_CHECKS = 17;
+
+enum ScoreType {
+    SCORE_CAPTURE = 0,
+    SCORE_QUIET = 1,
+    SCORE_EVASION = 2
+};
 
 struct MoveGen {
-    Move       moves[256];
-    Move       movegen_tte_move;
-    ScoredMove movegen_good_captures[128];
-    int        gcc;
-    ScoredMove movegen_quiet_moves[128];
-    int        qc;
-    ScoredMove movegen_bad_captures[128];
-    int        bcc;
-    ScoredMove movegen_evasions[128];
-    int        ec;
-    Move       movegen_killer_moves[2];
-    Move       movegen_counter_move;
+    ScoredMove moves[256];
+    Position   *position;
+    Move       tte_move;
+    Move       killer_moves[2];
+    Move       counter_move;
     int        stage;
     uint8_t    head;
     uint8_t    tail;
-    Position   *position;
-    Move       tte_move;
-    uint8_t    ply;
+    int        end_bad_captures;
+    int        ply;
+};
+
+const MoveGen blank_movegen = {
+    {}, // Moves
+    0, // Position
+    0, // tte_move
+    {0, 0}, // killers
+    0, // counter move
+    0, // stage
+    0, // head
+    0, // tail
+    0, // end bad captures
+    0 // ply
 };
 
 struct SearchThread {
     std::thread thread_obj;
-    MoveGen     movegens[MAX_PLY + 1];
     Position    positions[1024];
     int         thread_id;
     int         search_ply;
@@ -624,6 +638,8 @@ inline bool is_bishop_promotion(Move m){return (m & 12) == PROMOTION_B;}
 inline bool is_knight_promotion(Move m){return (m & 12) == PROMOTION_N;}
 
 inline Color opponent_color(Color c) {return c ^ 1;}
+
+inline Piece promotion_type(Move m) {return m & 12;}
 
 inline Piece promotion_piece(Move m, Color c){
     uint8_t promotion = m & 12;

@@ -57,8 +57,7 @@ inline bool is_checked_opposite(Position *p){
     return targeted_from(p, p->board, c, p->king_index[c]);
 }
 
-inline bool is_legal(MoveGen *movegen, Move m) {
-    Position *p = movegen->position;
+inline bool is_legal(Position *p, Move m) {
     if (move_type(m) == ENPASSANT) {
         Position *new_p = make_move(p, m);
         bool checked = is_checked_opposite(new_p);

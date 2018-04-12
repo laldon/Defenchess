@@ -20,6 +20,7 @@
 
 #include "move.h"
 #include "target.h"
+#include "movegen.h"
 #include <cstring>
 
 void move_piece(Position *p, Square from, Square to, Piece piece, Color curr_c) {
@@ -187,6 +188,23 @@ bool is_pseudolegal(Position *p, Move move) {
     Piece p_type = piece_type(piece);
     Move m_type = move_type(move);
 
+    if (m_type != NORMAL) {
+        MoveGen movegen = blank_movegen;
+        movegen.position = p;
+        generate_moves<ALL>(&movegen, p);
+        for (uint8_t i = movegen.head; i < movegen.tail; ++i) {
+            Move gen_move = movegen.moves[i].move;
+            if (move == gen_move) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    if (promotion_type(move)) {
+        return false;
+    }
+
     if (piece == empty) {
         return false;
     }
@@ -199,23 +217,13 @@ bool is_pseudolegal(Position *p, Move move) {
         return false;
     }
 
-    if ((m_type == ENPASSANT || m_type == PROMOTION) && p_type != white_pawn) {
-        return false;
-    }
-    if (m_type == CASTLING && p_type != white_king) {
-        return false;
-    }
-
     Bitboard b = 0;
     if (p_type == white_king) {
         b = generate_king_targets(from);
-        if (can_king_castle(p)) {
-            b |= bfi_king_castle[p->color];
-        }
-        if (can_queen_castle(p)) {
-            b |= bfi_queen_castle[p->color];
-        }
     } else if (p_type == white_pawn) {
+        if (rank(to, p->color) == RANK_8) {
+            return false;
+        }
         b = generate_pawn_targets<ALL>(p, from);
     } else if (p_type == white_knight) {
         b = generate_knight_targets(from);
@@ -226,7 +234,7 @@ bool is_pseudolegal(Position *p, Move move) {
     } else if (p_type == white_queen) {
         b = generate_queen_targets(p->board, from);
     }
-    return b & bfi[to] & ~p->bbs[p->color];
+    return b & bfi[to];
 }
 
 bool gives_check(Position *p, Move m) {

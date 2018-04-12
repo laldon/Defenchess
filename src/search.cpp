@@ -45,8 +45,8 @@ void update_main_pv() {
     }
 }
 
-void set_pv(Move move, uint8_t ply) {
-    uint16_t s = ply + 1;
+void set_pv(Move move, int ply) {
+    int s = ply + 1;
     pv[ply].moves[ply] = move;
     pv[ply].size = s;
 
@@ -165,11 +165,11 @@ int alpha_beta_quiescence(Position *p, int alpha, int beta, int depth, bool in_c
         best_score = -INFINITE;
     }
 
-    MoveGen *movegen = new_movegen(p, ply, new_depth, tte_move, QUIESCENCE_SEARCH, in_check);
+    MoveGen movegen = new_movegen(p, ply, new_depth, tte_move, QUIESCENCE_SEARCH, in_check);
 
     Move best_move = 0;
     int num_moves = 0;
-    while (Move move = next_move(movegen)) {
+    while (Move move = next_move(&movegen)) {
         assert(!is_move_empty(move));
         assert(is_pseudolegal(p, move));
         assert(in_check || p->static_eval != UNDEFINED);
@@ -196,7 +196,7 @@ int alpha_beta_quiescence(Position *p, int alpha, int beta, int depth, bool in_c
             continue;
         }
 
-        if (!is_legal(movegen, move)) {
+        if (!is_legal(p, move)) {
             --num_moves;
             continue;
         }
@@ -358,7 +358,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
         }
     }
 
-    MoveGen *movegen = new_movegen(p, ply, depth, tte_move, NORMAL_SEARCH, in_check);
+    MoveGen movegen = new_movegen(p, ply, depth, tte_move, NORMAL_SEARCH, in_check);
 
     Move best_move = 0;
     int best_score = -INFINITE;
@@ -369,7 +369,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
         improving = p->static_eval >= (p-2)->static_eval || (p-2)->static_eval == UNDEFINED;
     }
 
-    while (Move move = next_move(movegen)) {
+    while (Move move = next_move(&movegen)) {
         assert(is_pseudolegal(p, move));
         assert(!is_move_empty(move));
         assert(0 < depth || in_check);
@@ -400,7 +400,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
             }
         }
 
-        if (!is_legal(movegen, move)) {
+        if (!is_legal(p, move)) {
             --num_moves;
             continue;
         }
@@ -493,9 +493,14 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
 int think(Position *p) {
     Material *eval_material = get_material(p);
     bool in_check = is_checked(p);
-    MoveGen *movegen = new_movegen(p, 0, 0, 0, NORMAL_SEARCH, in_check);
-    if (eval_material->endgame_type == DRAW_ENDGAME || (in_check && movegen->tail - movegen->head == 1)) {
-        std::cout << "bestmove " << move_to_str(movegen->moves[0]) << std::endl;
+    MoveGen movegen = new_movegen(p, 0, 0, 0, NORMAL_SEARCH, in_check);
+    if (in_check) {
+        generate_evasions(&movegen, p);
+    } else {
+        generate_moves<ALL>(&movegen, p);
+    }
+    if (eval_material->endgame_type == DRAW_ENDGAME || (in_check && movegen.tail - movegen.head == 1)) {
+        std::cout << "bestmove " << move_to_str_stock(movegen.moves[0].move) << std::endl;
         return 0;
     }
     int previous_guess = -MATE;
