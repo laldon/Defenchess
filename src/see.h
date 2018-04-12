@@ -21,9 +21,6 @@
 
 #include "data.h"
 
-void see_move_piece(Position *see_p, Square from, Square to, Piece piece);
-int get_smallest_attacker(Position *see_p, Square square);
-int see(Position *see_p, uint16_t to);
-int see_capture(Position *p, Move move);
+bool see_capture(Position *p, Move move);
 
 #endif
