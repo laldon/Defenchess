@@ -234,7 +234,7 @@ bool is_pseudolegal(Position *p, Move move) {
     } else if (p_type == white_queen) {
         b = generate_queen_targets(p->board, from);
     }
-    return b & bfi[to] & ~p->bbs[p->color];
+    return b & bfi[to];
 }
 
 bool gives_check(Position *p, Move m) {
