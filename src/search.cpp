@@ -378,7 +378,6 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
 
         bool checks = gives_check(p, move);
         bool capture_or_promo = is_capture_or_promotion(p, move);
-        bool important = in_check || capture_or_promo || checks || move == tte_move || is_advanced_pawn_push(p, move);
 
         int extension = 0;
         if (checks && see_capture(p, move)) {
@@ -386,17 +385,19 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
         }
         new_depth = depth - 1 + extension;
 
-        if (!root_node && !important && p->non_pawn_material[p->color] && best_score > MATED_IN_MAX_PLY) {
-            int reduction = lmr(depth, num_moves);
-            if (depth < 8 && num_moves >= futility_move_counts[improving][depth]) {
-                continue;
-            }
-            // Reduced depth of the next LMR search
-            int lmr_depth = std::max(new_depth - reduction, 0);
+        if (!root_node && p->non_pawn_material[p->color] && best_score > MATED_IN_MAX_PLY) {
+            if (!capture_or_promo && !gives_check && !is_advanced_pawn_push(p, move)) {
+                int reduction = lmr(depth, num_moves);
+                if (depth < 8 && num_moves >= futility_move_counts[improving][depth]) {
+                    continue;
+                }
+                // Reduced depth of the next LMR search
+                int lmr_depth = std::max(new_depth - reduction, 0);
 
-            // Futility pruning: parent node
-            if (lmr_depth < 7 && p->static_eval + 150 + 120 * lmr_depth <= alpha) {
-                continue;
+                // Futility pruning: parent node
+                if (lmr_depth < 7 && p->static_eval + 150 + 120 * lmr_depth <= alpha) {
+                    continue;
+                }
             }
         }
 
