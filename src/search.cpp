@@ -88,11 +88,6 @@ bool is_draw(Position *p) {
     return false;
 }
 
-void save_counter(Position *p, Move move) {
-    Square prev_to = move_to((p-1)->current_move);
-    p->my_thread->counter_moves[p->pieces[prev_to]][prev_to] = move;
-}
-
 void save_killer(Position *p, Move move, int depth, int ply, Move *quiets, int quiets_count) {
     if (!is_capture(p, move)) {
         SearchThread *my_thread = p->my_thread;
@@ -110,7 +105,16 @@ void save_killer(Position *p, Move move, int depth, int ply, Move *quiets, int q
         }
 
         if ((p-1)->current_move) {
-            save_counter(p, move);
+            Square prev_to = move_to((p-1)->current_move);
+            Piece prev_piece = p->pieces[prev_to];
+
+            my_thread->counter_moves[prev_piece][prev_to] = move;
+
+            my_thread->countermove_history[piece][move_to(move)] += bonus;
+            for (int i = 0; i < quiets_count; ++i) {
+                Move q = quiets[i];
+                my_thread->countermove_history[p->pieces[move_from(q)]][move_to(q)] -= bonus;
+            }
         }
     }
 }
