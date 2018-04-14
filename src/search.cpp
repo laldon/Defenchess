@@ -201,7 +201,7 @@ int alpha_beta_quiescence(Position *p, int alpha, int beta, int depth, bool in_c
                                 best_score > MATED_IN_MAX_PLY &&
                                 capture == empty;
 
-        if ((!in_check || evasion_prunable) && move_type(move) != PROMOTION && see_capture(p, move) < 0) {
+        if ((!in_check || evasion_prunable) && move_type(move) != PROMOTION && !see_capture(p, move)) {
             continue;
         }
 
@@ -392,7 +392,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
         bool important = in_check || capture_or_promo || checks || move == tte_move || is_advanced_pawn_push(p, move);
 
         int extension = 0;
-        if (checks && see_capture(p, move) >= 0) {
+        if (checks && see_capture(p, move)) {
             extension = 1;
         }
         new_depth = depth - 1 + extension;

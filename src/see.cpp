@@ -49,10 +49,10 @@ int see(Position *p, Bitboard board, Color color, int piece_value, Square to) {
     return val;
 }
 
-int see_capture(Position *p, Move move) {
+bool see_capture(Position *p, Move move) {
     Move m_type = move_type(move);
-    if (m_type == ENPASSANT) {
-        return PAWN_MID;
+    if (m_type != NORMAL) {
+        return true;
     }
 
     Bitboard board = p->board;
@@ -61,12 +61,11 @@ int see_capture(Position *p, Move move) {
     
     int piece_value = piece_values[p->pieces[to]];
     int capturer_value = piece_values[p->pieces[from]];
-
-    if (is_promotion(move_type(move))) {
-        piece_value = piece_values[promotion_piece(move, white)] - piece_values[white_pawn];
+    if (piece_value >= capturer_value) {
+        return true;
     }
 
     board ^= bfi[from];
-    return piece_value - see(p, board, piece_color(p->pieces[from]), capturer_value, to);
+    return piece_value >= see(p, board, piece_color(p->pieces[from]), capturer_value, to);
 }
 
