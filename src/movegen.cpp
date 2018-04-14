@@ -60,6 +60,19 @@ ScoredMove pick_best(ScoredMove *moves, uint8_t head, uint8_t tail) {
     return moves[head];
 }
 
+void insertion_sort(ScoredMove *moves, uint8_t head, uint8_t tail) {
+    uint8_t i, j;
+    for (i = head + 1; i < tail; ++i) {
+        if (moves[i].score >= 0) {
+            ScoredMove tmp = moves[i];
+            for (j = i; j != head && moves[j - 1].score < tmp.score; --j) {
+                moves[j] = moves[j - 1];
+            }
+            moves[j] = tmp;
+        }
+    }
+}
+
 Move next_move(MoveGen *movegen) {
     Move move;
     switch (movegen->stage) {
@@ -118,7 +131,7 @@ Move next_move(MoveGen *movegen) {
             movegen->tail = movegen->end_bad_captures;
             generate_moves<SILENT>(movegen, movegen->position);
             score_moves(movegen, SCORE_QUIET);
-            std::sort(movegen->moves + movegen->head, movegen->moves + movegen->tail, scored_move_compare_greater);
+            insertion_sort(movegen->moves, movegen->head, movegen->tail);
             ++movegen->stage;
 
         case QUIETS:
