@@ -386,9 +386,10 @@ typedef struct Evaluation {
     Bitboard mobility_area[2];
     Score    mobility_score[2];
     Bitboard pawn_passers[2];
+    Square   bishop_squares[2];
 } Evaluation;
 
-const Evaluation init_evaluation = Evaluation{{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}};
+const Evaluation init_evaluation = Evaluation{{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}};
 
 enum EndgameType {
     NORMAL_ENDGAME,
@@ -639,6 +640,11 @@ inline bool is_bishop_promotion(Move m){return (m & 12) == PROMOTION_B;}
 inline bool is_knight_promotion(Move m){return (m & 12) == PROMOTION_N;}
 
 inline Color opponent_color(Color c) {return c ^ 1;}
+
+inline bool opposite_colors(Square s1, Square s2) {
+    int s = s1 ^ s2;
+    return ((s >> 3) ^ s) & 1;
+}
 
 inline Piece promotion_type(Move m) {return m & 12;}
 

@@ -205,6 +205,7 @@ Score evaluate_bishop(Evaluation *eval, Position *p, Color color) {
 
     while (my_bishops) {
         Square outpost = pop(&my_bishops);
+        eval->bishop_squares[color] = outpost;
         Bitboard bishop_targets = generate_bishop_targets(p->board ^ p->bbs[queen(color)], outpost);
 
         if (p->pinned[color] & bfi[outpost])
@@ -681,6 +682,16 @@ int scaling_factor(Evaluation *eval, Position *p, Material *eval_material) {
                 return 4;
             }
             return 24;
+    }
+
+    // Opposite bishops
+    if (eval->num_pieces[white_bishop] == 1 && eval->num_pieces[black_bishop] == 1 &&
+        opposite_colors(eval->bishop_squares[white], eval->bishop_squares[black])) {
+        if (p->non_pawn_material[white] == BISHOP_MID && p->non_pawn_material[black] == BISHOP_MID) {
+            return 16;
+        } else {
+            return 24;
+        }
     }
     return SCALE_NORMAL;
 }
