@@ -521,6 +521,7 @@ struct SearchThread {
     Move        killers[MAX_PLY + 1][2];
     Move        counter_moves[14][64];
     int         history[14][64];
+    int         countermove_history[14][64];
     uint64_t    nodes;
 };
 
