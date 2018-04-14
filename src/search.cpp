@@ -571,7 +571,7 @@ int think(Position *p) {
 
         gettimeofday(&curr_time, NULL);
         int time_taken = time_passed();
-        std::cout << "info depth " << depth << " seldepth " << main_pv.size << " score ";
+        std::cout << "info depth " << depth << " seldepth " << main_pv.size << " multipv 1 tbhits 0 score ";
 
         if (current_guess <= MATED_IN_MAX_PLY) {
             std::cout << "mate " << (-MATE - current_guess) / 2;
@@ -600,8 +600,6 @@ int think(Position *p) {
         ++depth;
     }
     gettimeofday(&curr_time, NULL);
-    int time_taken = time_passed();
-    std::cout << "info time " << time_taken << std::endl;
     std::cout << "bestmove " << move_to_str_stock(main_pv.moves[0]);
     if (main_pv.size > 1) {
         std::cout << " ponder " << move_to_str_stock(main_pv.moves[1]);
