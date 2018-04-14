@@ -96,7 +96,7 @@ void save_killer(Position *p, Move move, int depth, int ply, Move *quiets, int q
             my_thread->killers[ply][0] = move;
         }
         Piece piece = p->pieces[move_from(move)];
-        int bonus = depth * depth;
+        int bonus = depth > 17 ? 0 : depth * depth;
         my_thread->history[piece][move_to(move)] += bonus;
 
         for (int i = 0; i < quiets_count; ++i) {
