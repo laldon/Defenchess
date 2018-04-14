@@ -93,16 +93,23 @@ void save_counter(Position *p, Move move) {
     p->my_thread->counter_moves[p->pieces[prev_to]][prev_to] = move;
 }
 
-void save_killer(Position *p, Move move, int depth, int ply) {
+void save_killer(Position *p, Move move, int depth, int ply, Move *quiets, int quiets_count) {
     if (!is_capture(p, move)) {
-        if (move != p->my_thread->killers[ply][0]) {
-            p->my_thread->killers[ply][1] = p->my_thread->killers[ply][0];
-            p->my_thread->killers[ply][0] = move;
+        SearchThread *my_thread = p->my_thread;
+        if (move != my_thread->killers[ply][0]) {
+            my_thread->killers[ply][1] = my_thread->killers[ply][0];
+            my_thread->killers[ply][0] = move;
         }
         Piece piece = p->pieces[move_from(move)];
-        p->my_thread->history[piece][move_to(move)] += depth > 17 ? 0 : depth * depth;
+        int bonus = depth * depth;
+        my_thread->history[piece][move_to(move)] += bonus;
 
-        if (ply > 0) {
+        for (int i = 0; i < quiets_count; ++i) {
+            Move q = quiets[i];
+            my_thread->history[p->pieces[move_from(q)]][move_to(q)] -= bonus;
+        }
+
+        if ((p-1)->current_move) {
             save_counter(p, move);
         }
     }
@@ -281,7 +288,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
                 (tte->flag == FLAG_BETA && tte_score >= beta) ||
                 (tte->flag == FLAG_ALPHA && tte_score <= alpha))) {
                     if (tte_score >= beta && !in_check && tte_move) {
-                        save_killer(p, tte_move, depth, ply);
+                        save_killer(p, tte_move, depth, ply, nullptr, 0);
                     }
                     return tte_score;
             }
@@ -361,6 +368,8 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
     MoveGen movegen = new_movegen(p, ply, depth, tte_move, NORMAL_SEARCH, in_check);
 
     Move best_move = 0;
+    Move quiets[64];
+    int quiets_count = 0;
     int best_score = -INFINITE;
     int num_moves = 0;
 
@@ -408,6 +417,9 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
         Position *position = make_move(p, move);
         ++p->my_thread->nodes;
         p->current_move = move;
+        if (!capture_or_promo && quiets_count < 64) {
+            quiets[quiets_count++] = move;
+        }
 
         int score;
 
@@ -469,7 +481,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
                 if (is_principal && score < beta) {
                     alpha = score;
                 } else {
-                    save_killer(p, move, depth, ply);
+                    save_killer(p, move, depth, ply, quiets, quiets_count);
                     set_tte(p->hash, move, depth, score_to_tt(score, ply), FLAG_BETA);
                     return score;
                 }
@@ -484,7 +496,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
     uint8_t flag = is_principal && best_move ? FLAG_EXACT : FLAG_ALPHA;
     set_tte(p->hash, best_move, depth, score_to_tt(best_score, ply), flag);
     if (!in_check && best_move) {
-        save_killer(p, best_move, depth, ply);
+        save_killer(p, best_move, depth, ply, quiets, quiets_count);
     }
     assert(best_score >= -MATE && best_score <= MATE);
     return best_score;
