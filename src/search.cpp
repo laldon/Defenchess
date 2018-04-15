@@ -398,7 +398,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
         bool important = in_check || capture_or_promo || checks || move == tte_move || is_advanced_pawn_push(p, move);
 
         int extension = 0;
-        if (depth >= 14 &&
+        if (depth >= 8 &&
             move == tte_move &&
             !root_node &&
             !excluded_move &&
