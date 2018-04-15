@@ -276,6 +276,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
     }
 
     p->current_move = 0;
+    p->my_thread->killers[ply + 2][0] = p->my_thread->killers[ply + 2][1] = 0;
 
     Move tte_move = 0;
     int tte_score;

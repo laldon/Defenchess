@@ -498,7 +498,6 @@ struct MoveGen {
     uint8_t    head;
     uint8_t    tail;
     int        end_bad_captures;
-    int        ply;
 };
 
 const MoveGen blank_movegen = {
