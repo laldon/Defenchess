@@ -509,8 +509,7 @@ const MoveGen blank_movegen = {
     0, // stage
     0, // head
     0, // tail
-    0, // end bad captures
-    0 // ply
+    0 // end bad captures
 };
 
 struct SearchThread {
