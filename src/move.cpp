@@ -224,6 +224,9 @@ bool is_pseudolegal(Position *p, Move move) {
         if (rank(to, p->color) == RANK_8) {
             return false;
         }
+        if (col(from) != col(to) && !(p->board & bfi[to])) {  // Enpassant
+            return false;
+        }
         b = generate_pawn_targets<ALL>(p, from);
     } else if (p_type == white_knight) {
         b = generate_knight_targets(from);
