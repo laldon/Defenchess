@@ -246,7 +246,7 @@ MoveGen new_movegen(Position *p, int ply, int depth, Move tte_move, uint8_t type
         p, // Position
         tm, // tte_move
         {my_thread->killers[ply][0], my_thread->killers[ply][1]}, // killer 2
-        (p-1)->current_move ? my_thread->counter_moves[p->pieces[prev_to]][prev_to] : Move(0), // counter move
+        (ply > 0) ? my_thread->counter_moves[p->pieces[prev_to]][prev_to] : Move(0), // counter move
         movegen_stage, // stage
         0, // head
         0, // tail
