@@ -20,7 +20,7 @@ NAME    = Defenchess
 OPT     = -O3
 ext     =
 ext2    = -pthread
-version = 1.2f
+version = 1.2
 
 ifeq ($(OS),Windows_NT)
     ext = .exe
