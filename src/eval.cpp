@@ -590,16 +590,16 @@ Score evaluate_space(Evaluation *eval, Position *p, Color color) {
 
     Color opp_c = opponent_color(color);
     Bitboard space_mask = color == white ? CENTER_FILE & (RANK_2BB | RANK_3BB | RANK_4BB) : CENTER_FILE & (RANK_5BB | RANK_6BB | RANK_7BB);
-    Bitboard safe_zones = space_mask & ~p->bbs[pawn(color)] & ~eval->targets[pawn(opp_c)] & (eval->targets[color] | ~eval->targets[opp_c]);
+    Bitboard safe_zones = space_mask & ~p->bbs[pawn(color)] & ~eval->targets[pawn(opp_c)];
 
     Bitboard pawns = p->bbs[pawn(color)];
     pawns |= (color == white ? pawns >> 8 : pawns << 8);
     pawns |= (color == white ? pawns >> 16 : pawns << 16);
 
-    int bonus = count((color == white ? safe_zones << 32 : safe_zones >> 32) | (pawns & safe_zones));
+    int bonus = count(safe_zones) + count(pawns & safe_zones);
     int weight = eval->num_pieces[color] - 2 * count(eval->semi_open_files[white] & eval->semi_open_files[black]);
 
-    return {bonus * weight * weight / 30 , 0};
+    return {bonus * weight * weight / 32 , 0};
 }
 
 void evaluate_bishops(Evaluation *eval, Position *p) {
