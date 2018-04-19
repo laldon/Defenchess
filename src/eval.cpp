@@ -584,7 +584,7 @@ Score evaluate_passer(Evaluation *eval, Position *p, Color color) {
 
 Score evaluate_space(Evaluation *eval, Position *p, Color color) {
     //Implementation from stockfish
-    if (p->non_pawn_material[white] + p->non_pawn_material[black] < 6400) {
+    if (p->non_pawn_material[white] + p->non_pawn_material[black] < 6300) {
         return 0;
     }
 
