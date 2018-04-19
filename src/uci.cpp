@@ -74,7 +74,7 @@ bool word_equal(int index, string comparison_str) {
 }
 
 void uci() {
-    cout << "id name Defenchess 1.2f x64" << endl << "id author Can Cetin & Dogac Eldenk" << endl;
+    cout << "id name Defenchess 1.2 x64" << endl << "id author Can Cetin & Dogac Eldenk" << endl;
 #ifndef NDEBUG
     cout << "debug mode on" << std::endl;
 #endif
