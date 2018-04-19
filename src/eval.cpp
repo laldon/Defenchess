@@ -582,6 +582,26 @@ Score evaluate_passer(Evaluation *eval, Position *p, Color color) {
     return passer_score;
 }
 
+Score evaluate_space(Evaluation *eval, Position *p, Color color) {
+    //Implementation from stockfish
+    if (p->non_pawn_material[white] + p->non_pawn_material[black] < 6400) {
+        return 0;
+    }
+
+    Color opp_c = opponent_color(color);
+    Bitboard space_mask = color == white ? CENTER_FILE & (RANK_2BB | RANK_3BB | RANK_4BB) : CENTER_FILE & (RANK_5BB | RANK_6BB | RANK_7BB);
+    Bitboard safe_zones = space_mask & ~p->bbs[pawn(color)] & ~eval->targets[pawn(opp_c)] & (eval->targets[color] | ~eval->targets[opp_c]);
+
+    Bitboard pawns = p->bbs[pawn(color)];
+    pawns |= (color == white ? pawns >> 8 : pawns << 8);
+    pawns |= (color == white ? pawns >> 16 : pawns << 16);
+
+    int bonus = count((color == white ? safe_zones << 32 : safe_zones >> 32) | (pawns & safe_zones));
+    int weight = eval->num_pieces[color] - 2 * count(eval->semi_open_files[white] & eval->semi_open_files[black]);
+
+    return {bonus * weight * weight / 30 , 0};
+}
+
 void evaluate_bishops(Evaluation *eval, Position *p) {
     eval->score_white += evaluate_bishop(eval, p, white);
     eval->score_black += evaluate_bishop(eval, p, black);
@@ -627,6 +647,11 @@ void evaluate_mobility(Evaluation *eval) {
 void evaluate_passers(Evaluation *eval, Position *p) {
     eval->score_white += evaluate_passer(eval, p, white);
     eval->score_black += evaluate_passer(eval, p, black);
+}
+
+void evaluate_spaces(Evaluation *eval, Position *p) {
+    eval->score_white += evaluate_space(eval, p, white);
+    eval->score_black += evaluate_space(eval, p, black);
 }
 
 void pre_eval(Evaluation *eval, Position *p) {
@@ -729,6 +754,7 @@ int evaluate(Position *p) {
     evaluate_threats(&eval, p);
     evaluate_mobility(&eval);
     evaluate_passers(&eval, p);
+    evaluate_spaces(&eval, p);
 
     eval.score += (eval.score_white - eval.score_black);
     eval.score += eval_material->score;
