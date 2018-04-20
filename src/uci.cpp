@@ -78,7 +78,7 @@ void uci() {
 #ifndef NDEBUG
     cout << "debug mode on" << std::endl;
 #endif
-    cout << "option name Hash type spin default 256 min 16 max 16384" << endl;
+    cout << "option name Hash type spin default 256 min 1 max 16384" << endl;
     cout << "option name Threads type spin default 1 min 1 max " << MAX_THREADS << endl;
     cout << "uciok" << endl;
 }
