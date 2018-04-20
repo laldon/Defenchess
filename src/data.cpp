@@ -84,7 +84,7 @@ int root_ply = 0;
 int mvvlva_values[12][14];
 Move pv_at_depth[MAX_PLY * 2];
 
-int reductions[64][64];
+int reductions[2][2][64][64];
 
 PV pv[MAX_PLY + 1];
 PV main_pv;
@@ -626,9 +626,20 @@ void init_distance() {
 }
 
 void init_lmr() {
-    for (int depth = 0; depth < 64; ++depth) {
-        for (int num_moves = 0; num_moves < 64; ++num_moves) {
-            reductions[depth][num_moves] = (int) (log(depth) * log(num_moves) / 2);
+    for (int imp = 0; imp <= 1; ++imp) {
+        for (int depth = 0; depth < 64; ++depth) {
+            for (int num_moves = 0; num_moves < 64; ++num_moves) {
+                // reductions[depth][num_moves] = (int) (log(depth) * log(num_moves) / 2);
+                double r = log(depth) * log(num_moves) / 1.95;
+
+                reductions[0][imp][depth][num_moves] = int(std::round(r));
+                reductions[1][imp][depth][num_moves] = std::max(reductions[0][imp][depth][num_moves] - 1, 0);
+
+                // Increase reduction for non-PV nodes when eval is not improving
+                if (!imp && r > 1.0) {
+                    reductions[0][imp][depth][num_moves]++;
+                }
+            }
         }
     }
 }
