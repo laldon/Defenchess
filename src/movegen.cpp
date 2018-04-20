@@ -131,7 +131,7 @@ Move next_move(MoveGen *movegen) {
             movegen->tail = movegen->end_bad_captures;
             generate_moves<SILENT>(movegen, movegen->position);
             score_moves(movegen, SCORE_QUIET);
-            insertion_sort(movegen->moves, movegen->head, movegen->tail, -1000 * movegen->depth);
+            insertion_sort(movegen->moves, movegen->head, movegen->tail, -2000 * movegen->depth);
             ++movegen->stage;
 
         case QUIETS:
