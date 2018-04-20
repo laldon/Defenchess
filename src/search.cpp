@@ -439,11 +439,11 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
                     ++reduction;
                 }
 
-                // Piece piece = p->pieces[move_from(move)];
-                // int quiet_score = p->my_thread->history[piece][move_to(move)] +
-                //                   p->my_thread->countermove_history[piece][move_to(move)] - 2000;
+                Piece piece = p->pieces[move_from(move)];
+                int quiet_score = p->my_thread->history[piece][move_to(move)] +
+                                  p->my_thread->countermove_history[piece][move_to(move)] - 2000;
 
-                // reduction = std::max(0, reduction - quiet_score / 10000);
+                reduction = std::max(0, reduction - quiet_score / 10000);
             }
 
             score = -alpha_beta(position, -alpha - 1, -alpha, std::max(0, new_depth - reduction), checks, true);
