@@ -398,7 +398,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
         new_depth = depth - 1 + extension;
 
         if (!root_node && !important && p->non_pawn_material[p->color] && best_score > MATED_IN_MAX_PLY) {
-            int reduction = lmr(is_principal, improving, depth, num_moves);
+            int reduction = lmr(is_principal, depth, num_moves);
             if (depth < 8 && num_moves >= futility_move_counts[improving][depth]) {
                 continue;
             }
@@ -431,19 +431,13 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
             // late move reductions
             int reduction = 0;
             if (depth >= 3 && num_moves > 1 && !capture_or_promo) {
-                reduction = lmr(is_principal, improving, depth, num_moves);
+                reduction = lmr(is_principal, depth, num_moves);
                 if (in_check) {
                     --reduction;
                 }
                 if (cut) {
                     ++reduction;
                 }
-
-                // Piece piece = p->pieces[move_from(move)];
-                // int quiet_score = p->my_thread->history[piece][move_to(move)] +
-                //                   p->my_thread->countermove_history[piece][move_to(move)] - 2000;
-
-                // reduction = std::max(0, reduction - quiet_score / 10000);
             }
 
             score = -alpha_beta(position, -alpha - 1, -alpha, std::max(0, new_depth - reduction), checks, true);

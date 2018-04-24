@@ -546,7 +546,7 @@ inline uint64_t sum_nodes() {
 
 extern Move pv_at_depth[MAX_PLY * 2];
 
-extern int reductions[2][2][64][64];
+extern int reductions[2][64][64];
 
 inline int PLY(Position *p) { return p->my_thread->search_ply - root_ply; }
 
