@@ -415,7 +415,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
                 if (singular_value < rbeta) {
                     extension = 1;
                 }
-        } else if (checks && see_capture(p, move) >= 0 && !prunable) {
+        } else if (checks && !prunable && see_capture(p, move) >= 0) {
             extension = 1;
         }
         new_depth = depth - 1 + extension;
