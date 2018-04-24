@@ -216,15 +216,6 @@ enum MoveGenType {
     ALL = 2
 };
 
-enum MoveGenMoveType {
-    TT_MOVE = 0,
-    CAPTURE_MOVE = 1,
-    KILLER_MOVE = 2,
-    COUNTER_MOVE = 3,
-    QUIET_MOVE = 4,
-    EMPTY_MOVE = 5
-};
-
 enum _Piece {
     empty = 0,
     white_occupy = 0,
@@ -499,7 +490,7 @@ struct MoveGen {
     uint8_t    head;
     uint8_t    tail;
     int        end_bad_captures;
-    int        ply;
+    int        depth;
 };
 
 const MoveGen blank_movegen = {
@@ -556,7 +547,7 @@ inline uint64_t sum_nodes() {
 
 extern Move pv_at_depth[MAX_PLY * 2];
 
-extern int reductions[64][64];
+extern int reductions[2][64][64];
 
 inline int PLY(Position *p) { return p->my_thread->search_ply - root_ply; }
 
