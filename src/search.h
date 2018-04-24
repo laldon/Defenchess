@@ -30,8 +30,8 @@ const int futility_move_counts[2][8] = {
     {5, 6, 9, 14, 21, 30, 41, 54}, // improving
 };
 
-inline int lmr(int depth, int num_moves) {
-    return reductions[std::min(depth, 63)][std::min(num_moves, 63)];
+inline int lmr(bool is_pv, int depth, int num_moves) {
+    return reductions[is_pv][std::min(depth, 63)][std::min(num_moves, 63)];
 }
 
 int think(Position *p);
