@@ -84,7 +84,7 @@ int root_ply = 0;
 int mvvlva_values[12][14];
 Move pv_at_depth[MAX_PLY * 2];
 
-int reductions[64][64];
+int reductions[2][64][64];
 
 PV pv[MAX_PLY + 1];
 PV main_pv;
@@ -628,7 +628,8 @@ void init_distance() {
 void init_lmr() {
     for (int depth = 0; depth < 64; ++depth) {
         for (int num_moves = 0; num_moves < 64; ++num_moves) {
-            reductions[depth][num_moves] = (int) (log(depth) * log(num_moves) / 2);
+            reductions[0][depth][num_moves] = int(log(depth) * log(num_moves) / 1.95);
+            reductions[1][depth][num_moves] = std::max(reductions[0][depth][num_moves] - 1, 0);
         }
     }
 }

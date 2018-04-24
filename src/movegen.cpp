@@ -30,7 +30,7 @@ bool scored_move_compare_greater(ScoredMove lhs, ScoredMove rhs) { return lhs.sc
 void print_movegen(MoveGen *movegen) {
     std::cout << "movegen: ";
     for (int i = movegen->head; i < movegen->tail; i++) {
-        std::cout << move_to_str_stock(movegen->moves[i].move) << ", ";
+        std::cout << move_to_str_stock(movegen->moves[i].move) << "(" << movegen->moves[i].score << "), ";
     }
     std::cout << std::endl;
 }
@@ -58,6 +58,19 @@ void score_moves(MoveGen *movegen, ScoreType score_type) {
 ScoredMove pick_best(ScoredMove *moves, uint8_t head, uint8_t tail) {
     std::swap(moves[head], *std::max_element(moves + head, moves + tail, scored_move_compare));
     return moves[head];
+}
+
+void insertion_sort(ScoredMove *moves, uint8_t head, uint8_t tail, int limit) {
+    uint8_t i, j;
+    for (i = head + 1; i < tail; ++i) {
+        if (moves[i].score >= limit) {
+            ScoredMove tmp = moves[i];
+            for (j = i; j != head && moves[j - 1].score < tmp.score; --j) {
+                moves[j] = moves[j - 1];
+            }
+            moves[j] = tmp;
+        }
+    }
 }
 
 Move next_move(MoveGen *movegen) {
@@ -118,7 +131,7 @@ Move next_move(MoveGen *movegen) {
             movegen->tail = movegen->end_bad_captures;
             generate_moves<SILENT>(movegen, movegen->position);
             score_moves(movegen, SCORE_QUIET);
-            std::sort(movegen->moves + movegen->head, movegen->moves + movegen->tail, scored_move_compare_greater);
+            insertion_sort(movegen->moves, movegen->head, movegen->tail, -500 * movegen->depth);
             ++movegen->stage;
 
         case QUIETS:
@@ -251,7 +264,7 @@ MoveGen new_movegen(Position *p, int ply, int depth, Move tte_move, uint8_t type
         0, // head
         0, // tail
         0, // end bad captures
-        ply // ply
+        depth // depth
     };
     return movegen;
 }
