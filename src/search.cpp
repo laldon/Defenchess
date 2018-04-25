@@ -438,7 +438,11 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
                 if (cut) {
                     ++reduction;
                 }
-                reduction = std::max(reduction, 0);
+
+                Piece piece = p->pieces[move_from(move)];
+                int quiet_score = p->my_thread->history[piece][move_to(move)] +
+                                  p->my_thread->countermove_history[piece][move_to(move)];
+                reduction = std::max(reduction - quiet_score / 2500, 0);
             }
 
             score = -alpha_beta(position, -alpha - 1, -alpha, std::max(0, new_depth - reduction), checks, true);
@@ -588,9 +592,9 @@ int think(Position *p) {
         std::cout << "info depth " << depth << " seldepth " << main_pv.size << " multipv 1 tbhits 0 score ";
 
         if (current_guess <= MATED_IN_MAX_PLY) {
-            std::cout << "mate " << (-MATE - current_guess) / 2;
+            std::cout << "mate " << ((-MATE - current_guess) / 2 + 1);
         } else if (current_guess >= MATE_IN_MAX_PLY) {
-            std::cout << "mate " << (MATE - current_guess) / 2;
+            std::cout << "mate " << ((MATE - current_guess) / 2 + 1);
         } else {
             std::cout << "cp " << current_guess * 100 / PAWN_END;
         }
