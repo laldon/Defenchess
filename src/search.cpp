@@ -438,6 +438,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
                 if (cut) {
                     ++reduction;
                 }
+                reduction = std::max(reduction, 0);
             }
 
             score = -alpha_beta(position, -alpha - 1, -alpha, std::max(0, new_depth - reduction), checks, true);
