@@ -52,8 +52,8 @@ bool see_capture(Position *p, Move move) {
     int piece_value = piece_values[p->pieces[to]];
     int capturer_value = piece_values[p->pieces[from]];
 
-    int balance = piece_value;
-    if (balance >= capturer_value) {
+    int balance = piece_value - capturer_value;
+    if (balance >= 0) {
         return true;
     }
 
@@ -66,10 +66,7 @@ bool see_capture(Position *p, Move move) {
             break;
         }
 
-        if (opponent_to_move)
-            balance -= capturer_value;
-        else
-            balance += capturer_value;
+        balance += piece_values[p->pieces[smallest_attacker]];;
 
         opponent_to_move = !opponent_to_move;
 
@@ -77,9 +74,9 @@ bool see_capture(Position *p, Move move) {
             break;
         }
 
+        balance = - balance - 1;
         color = opponent_color(color);
         board ^= bfi[smallest_attacker];
-        capturer_value = piece_values[p->pieces[smallest_attacker]];
     }
     return opponent_to_move;
 }
