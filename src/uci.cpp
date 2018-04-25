@@ -288,7 +288,9 @@ void loop() {
     while (true) {
         getline(cin, in_str);
         word_list = split_words(in_str);
-        run_command(word_list[0]);
+        if (word_list.size() > 0) {
+            run_command(word_list[0]);
+        }
     }
 
 }
