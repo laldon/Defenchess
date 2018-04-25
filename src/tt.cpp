@@ -27,10 +27,10 @@ TTEntry *tt;
 PawnTTEntry *pawntt;
 
 const uint64_t one_mb = 1024ULL * 1024ULL;
-uint64_t tt_size = one_mb * 1024ULL; // 256 MB
+uint64_t tt_size = one_mb * 256ULL; // 256 MB
 uint64_t tt_mask = (uint64_t)(tt_size / sizeof(TTEntry) - 1);
 
-const uint64_t pawntt_size = one_mb * 1ULL; // 1 MB
+const uint64_t pawntt_size = one_mb * 8ULL; // 1 MB
 const uint64_t pawntt_mod = (uint64_t)(pawntt_size / sizeof(PawnTTEntry));
 
 void init_tt() {
