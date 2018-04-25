@@ -42,7 +42,6 @@ void init_tt() {
 }
 
 void reset_tt(int megabytes) {
-    return;
     tt_size = one_mb * (uint64_t) (megabytes);
     tt = (TTEntry*) realloc(tt, tt_size);
     tt_mask = (uint64_t)(tt_size / sizeof(TTEntry) - 1);
