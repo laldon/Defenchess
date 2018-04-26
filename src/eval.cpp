@@ -223,14 +223,15 @@ int shelter(Evaluation *eval, Position *p, Color color) {
 }
 
 void evaluate_pawns(Evaluation *eval, Position *p) {
-    if (eval->pawntte) {
+    PawnTTEntry *pawntte = eval->pawntte;
+    if (pawntte) {
         evaluate_pawn_init(eval, p, white);
         evaluate_pawn_init(eval, p, black);
-        eval->score_pawn = eval->pawntte->score;
-        eval->pawn_passers[white] = eval->pawntte->pawn_passers[white];
-        eval->pawn_passers[black] = eval->pawntte->pawn_passers[black];
-        eval->semi_open_files[white] = eval->pawntte->semi_open_files[white];
-        eval->semi_open_files[black] = eval->pawntte->semi_open_files[black];
+        eval->score_pawn = pawntte->score;
+        eval->pawn_passers[white] = pawntte->pawn_passers[white];
+        eval->pawn_passers[black] = pawntte->pawn_passers[black];
+        eval->semi_open_files[white] = pawntte->semi_open_files[white];
+        eval->semi_open_files[black] = pawntte->semi_open_files[black];
         return;
     }
 

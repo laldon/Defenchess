@@ -34,6 +34,7 @@ endif
 
 all:
 	$(CC) $(CFLAGS) $(OPT) src/*.cpp -o $(NAME)_dev$(ext) $(ext2)
+	./$(NAME)_dev$(ext)
 
 winrelease:
 	$(CC) $(CFLAGS) -static $(OPT) -DNDEBUG src/*.cpp -o $(NAME)_$(version).exe $(ext2)
