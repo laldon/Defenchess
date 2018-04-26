@@ -167,7 +167,6 @@ void evaluate_pawn_init(Evaluation *eval, Position *p, Color color) {
     Bitboard my_pawns = p->bbs[pawn(color)];
     while (my_pawns) {
         Square outpost = pop(&my_pawns);
-        eval->semi_open_files[color] &= ~(1 << col(outpost));
         // King threats
         Bitboard king_threats = PAWN_CAPTURE_MASK[outpost][color] & eval->king_zone[opp_c];
         if (king_threats) {
@@ -230,6 +229,8 @@ void evaluate_pawns(Evaluation *eval, Position *p) {
         eval->score_pawn = eval->pawntte->score;
         eval->pawn_passers[white] = eval->pawntte->pawn_passers[white];
         eval->pawn_passers[black] = eval->pawntte->pawn_passers[black];
+        eval->semi_open_files[white] = eval->pawntte->semi_open_files[white];
+        eval->semi_open_files[black] = eval->pawntte->semi_open_files[black];
         return;
     }
 

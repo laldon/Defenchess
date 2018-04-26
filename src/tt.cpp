@@ -108,6 +108,8 @@ void set_pawntte(uint64_t pawn_hash, Evaluation* eval, Position *p, int white_sh
     pawntte->score = eval->score_pawn;
     pawntte->pawn_passers[white] = eval->pawn_passers[white];
     pawntte->pawn_passers[black] = eval->pawn_passers[black];
+    pawntte->semi_open_files[white] = eval->semi_open_files[white];
+    pawntte->semi_open_files[black] = eval->semi_open_files[black];
     pawntte->shelter_values[white] = white_shelter_value;
     pawntte->shelter_values[black] = black_shelter_value;
     pawntte->castling = p->castling;
