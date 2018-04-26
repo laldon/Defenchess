@@ -321,6 +321,24 @@ typedef struct Score {
 
 extern Score pst[14][64];
 
+typedef struct TTEntry {
+    uint32_t hash;
+    Move     move;
+    int8_t  depth;
+    int      score;
+    uint8_t  flag;
+} TTEntry;
+
+typedef struct PawnTTEntry {
+    uint16_t pawn_hash;
+    Score    score;
+    Bitboard pawn_passers[2];
+    int      semi_open_files[2];
+    Square   king_index[2];
+    int      shelter_values[2];
+    uint8_t  castling;
+} PawnTTEntry;
+
 typedef struct CopyThingSize {
     //? COPIED 
     uint64_t     pawn_hash;
@@ -360,24 +378,6 @@ struct Position {
 };
 
 const int position_size = sizeof(CopyThingSize);
-
-typedef struct TTEntry {
-    uint32_t hash;
-    Move     move;
-    int8_t  depth;
-    int      score;
-    uint8_t  flag;
-} TTEntry;
-
-typedef struct PawnTTEntry {
-    uint16_t pawn_hash;
-    Score    score;
-    Bitboard pawn_passers[2];
-    int      semi_open_files[2];
-    Square   king_index[2];
-    int      shelter_values[2];
-    uint8_t  castling;
-} PawnTTEntry;
 
 typedef struct Evaluation {
     // Position *position;
