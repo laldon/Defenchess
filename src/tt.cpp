@@ -39,7 +39,7 @@ void init_tt() {
     std::memset(tt, 0, tt_size);
     pawntt = (PawnTTEntry*) malloc(pawntt_size);
     std::memset(pawntt, 0, pawntt_size);
-    std::cout << sizeof(PawnTTEntry) << std::endl;
+    // std::cout << sizeof(PawnTTEntry) << std::endl;
 }
 
 void reset_tt(int megabytes) {
