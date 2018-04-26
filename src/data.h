@@ -72,6 +72,7 @@ extern uint8_t timer_count;
 
 const uint8_t can_king_castle_mask[2] = {1, 4};
 const uint8_t can_queen_castle_mask[2] = {2, 8};
+const uint8_t can_castle_mask[2] = {3, 12};
 
 const Bitboard MASK_ISOLATED[8] = {
     0x0202020202020202, 0x0505050505050505, 0x0A0A0A0A0A0A0A0A, 0x1414141414141414,
@@ -371,8 +372,10 @@ typedef struct TTEntry {
 typedef struct PawnTTEntry {
     uint32_t pawn_hash;
     Score    score;
-    Bitboard pawn_passers;
+    Bitboard pawn_passers[2];
+    Square   king_index[2];
     int16_t  shelter_values[2];
+    uint8_t  castling;
 } PawnTTEntry;
 
 typedef struct Evaluation {

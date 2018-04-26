@@ -33,7 +33,7 @@ void move_piece(Position *p, Square from, Square to, Piece piece, Color curr_c) 
 
     uint64_t h = polyglotCombined[piece][from] ^ polyglotCombined[piece][to];
     p->hash ^= h;
-    if (is_pawn(piece) || is_king(piece)) {
+    if (is_pawn(piece)) {
         p->pawn_hash ^= h;
     }
     p->score += pst[piece][to] - pst[piece][from];

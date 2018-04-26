@@ -202,33 +202,45 @@ int evaluate_pawn_shelter(Position *p, Color color, Square index) {
     return pawn_shelter_value;
 }
 
+int calculate_king_shelter(Position *p, Color color) {
+    int pawn_shelter_value = evaluate_pawn_shelter(p, color, p->king_index[color]);
+    if (p->castling & can_king_castle_mask[color]) {
+        pawn_shelter_value = std::max(pawn_shelter_value, evaluate_pawn_shelter(p, color, relative_square(G1, color)));
+    }
+    if (p->castling & can_queen_castle_mask[color]) {
+        pawn_shelter_value = std::max(pawn_shelter_value, evaluate_pawn_shelter(p, color, relative_square(C1, color)));
+    }
+    return pawn_shelter_value;
+}
+
+int shelter(Evaluation *eval, Position *p, Color color) {
+    if (eval->pawntte->king_index[color] == p->king_index[color] &&
+        (eval->pawntte->castling & can_castle_mask[color]) == (p->castling & can_castle_mask[color])) {
+            return eval->pawntte->shelter_values[color];
+        } else {
+            eval->pawntte->shelter_values[color] = calculate_king_shelter(p, color);
+            return eval->pawntte->shelter_values[color];
+        }
+}
+
 void evaluate_pawns(Evaluation *eval, Position *p) {
     if (eval->pawntte) {
         evaluate_pawn_init(eval, p, white);
         evaluate_pawn_init(eval, p, black);
         eval->score_pawn = eval->pawntte->score;
-        eval->pawn_passers[white] = eval->pawntte->pawn_passers & p->bbs[pawn(white)];
-        eval->pawn_passers[black] = eval->pawntte->pawn_passers & p->bbs[pawn(black)];
+        eval->pawn_passers[white] = eval->pawntte->pawn_passers[white];
+        eval->pawn_passers[black] = eval->pawntte->pawn_passers[black];
         return;
     }
 
     Score score_white = evaluate_pawn_structure(eval, p, white);
     Score score_black = evaluate_pawn_structure(eval, p, black);
     eval->score_pawn = score_white - score_black;
-    int shelter_values[2];
 
-    for (Color color : {white, black}) {
-        int pawn_shelter_value = evaluate_pawn_shelter(p, color, p->king_index[color]);
-        if (p->castling & can_king_castle_mask[color]) {
-            pawn_shelter_value = std::max(pawn_shelter_value, evaluate_pawn_shelter(p, color, relative_square(G1, color)));
-        }
-        if (p->castling & can_queen_castle_mask[color]) {
-            pawn_shelter_value = std::max(pawn_shelter_value, evaluate_pawn_shelter(p, color, relative_square(C1, color)));
-        }
-        shelter_values[color] = pawn_shelter_value;
-    }
+    int white_shelter_value = calculate_king_shelter(p, white);
+    int black_shelter_value = calculate_king_shelter(p, black);
 
-    set_pawntte(p->pawn_hash, eval, shelter_values);
+    set_pawntte(p->pawn_hash, eval, p, white_shelter_value, black_shelter_value);
 }
 
 Score evaluate_bishop(Evaluation *eval, Position *p, Color color) {
@@ -408,7 +420,7 @@ Score evaluate_king(Evaluation *eval, Position *p, Color color) {
     Square outpost = p->king_index[color];
     Bitboard king_targets = generate_king_targets(outpost);
 
-    int pawn_shelter_value = eval->pawntte->shelter_values[color];
+    int pawn_shelter_value = shelter(eval, p, color);
     king_score.midgame += pawn_shelter_value;
 
     if (p->bbs[pawn(color)]) {

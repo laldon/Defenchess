@@ -31,7 +31,7 @@ extern uint64_t tt_mask;
 void set_tte(uint64_t hash, Move m, int depth, int score, uint8_t flag);
 TTEntry *get_tte(uint64_t hash);
 
-void set_pawntte(uint64_t pawn_hash, Evaluation* eval, int *shelter_values);
+void set_pawntte(uint64_t pawn_hash, Evaluation* eval, Position *p, int white_shelter_value, int black_shelter_value);
 PawnTTEntry *get_pawntte(uint64_t pawn_hash);
 
 int score_to_tt(int score, uint16_t ply);
