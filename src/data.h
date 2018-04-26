@@ -370,7 +370,7 @@ typedef struct TTEntry {
 } TTEntry;
 
 typedef struct PawnTTEntry {
-    uint32_t pawn_hash;
+    uint16_t pawn_hash;
     Score    score;
     Bitboard pawn_passers[2];
     int      semi_open_files[2];
