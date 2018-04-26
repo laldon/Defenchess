@@ -235,14 +235,11 @@ void evaluate_pawns(Evaluation *eval, Position *p) {
         return;
     }
 
-    Score score_white = evaluate_pawn_structure(eval, p, white);
-    Score score_black = evaluate_pawn_structure(eval, p, black);
-    eval->score_pawn = score_white - score_black;
+    Score whitey = evaluate_pawn_structure(eval, p, white);
+    Score blacky = evaluate_pawn_structure(eval, p, black);
+    eval->score_pawn = whitey - blacky;
 
-    int white_shelter_value = calculate_king_shelter(p, white);
-    int black_shelter_value = calculate_king_shelter(p, black);
-
-    set_pawntte(p->pawn_hash, eval, p, white_shelter_value, black_shelter_value);
+    set_pawntte(p->pawn_hash, eval, p, calculate_king_shelter(p, white), calculate_king_shelter(p, black));
 }
 
 Score evaluate_bishop(Evaluation *eval, Position *p, Color color) {
