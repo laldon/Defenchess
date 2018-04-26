@@ -30,7 +30,7 @@ const uint64_t one_mb = 1024ULL * 1024ULL;
 uint64_t tt_size = one_mb * 256ULL; // 256 MB
 uint64_t tt_mask = (uint64_t)(tt_size / sizeof(TTEntry) - 1);
 
-const uint64_t pawntt_size = sizeof(PawnTTEntry) * 16384ULL;
+const uint64_t pawntt_size = sizeof(PawnTTEntry) * 32768ULL;
 const uint64_t pawntt_mask = (uint64_t)(pawntt_size / sizeof(PawnTTEntry) - 1);
 // const uint64_t pawntt_mod = (uint64_t)(pawntt_size / sizeof(PawnTTEntry));
 
