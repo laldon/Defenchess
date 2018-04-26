@@ -212,13 +212,13 @@ int calculate_king_shelter(Position *p, Color color) {
     return pawn_shelter_value;
 }
 
-int shelter(Evaluation *eval, Position *p, Color color) {
-    if (eval->pawntte->king_index[color] == p->king_index[color] &&
-        (eval->pawntte->castling & can_castle_mask[color]) == (p->castling & can_castle_mask[color])) {
-            return eval->pawntte->shelter_values[color];
+int shelter(PawnTTEntry *pawntte, Position *p, Color color) {
+    if (pawntte->king_index[color] == p->king_index[color] &&
+        castling_mask(pawntte->castling, color) == castling_mask(p->castling, color)) {
+            return pawntte->shelter_values[color];
         } else {
-            eval->pawntte->shelter_values[color] = calculate_king_shelter(p, color);
-            return eval->pawntte->shelter_values[color];
+            pawntte->shelter_values[color] = calculate_king_shelter(p, color);
+            return pawntte->shelter_values[color];
         }
 }
 
@@ -422,7 +422,7 @@ Score evaluate_king(Evaluation *eval, Position *p, Color color) {
     Square outpost = p->king_index[color];
     Bitboard king_targets = generate_king_targets(outpost);
 
-    int pawn_shelter_value = shelter(eval, p, color);
+    int pawn_shelter_value = shelter(eval->pawntte, p, color);
     king_score.midgame += pawn_shelter_value;
 
     if (p->bbs[pawn(color)]) {

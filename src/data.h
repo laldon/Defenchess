@@ -648,6 +648,10 @@ inline Square pawn_forward(Square s, Color color) {return color == white ? s + 8
 
 inline int move_type(Move m) {return m & 3;}
 
+inline uint8_t castling_mask(uint8_t castling, Color color) {
+    return castling & can_castle_mask[color];
+}
+
 // inline bool is_castling(Move m_type) {return (m_type == CASTLING);}
 
 // inline bool is_capture(Move m_type) {return (m_type & CAPTURE);}
