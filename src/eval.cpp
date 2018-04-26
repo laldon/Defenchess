@@ -167,6 +167,7 @@ void evaluate_pawn_init(Evaluation *eval, Position *p, Color color) {
     Bitboard my_pawns = p->bbs[pawn(color)];
     while (my_pawns) {
         Square outpost = pop(&my_pawns);
+        eval->semi_open_files[color] &= ~(1 << col(outpost));
         // King threats
         Bitboard king_threats = PAWN_CAPTURE_MASK[outpost][color] & eval->king_zone[opp_c];
         if (king_threats) {
@@ -178,24 +179,56 @@ void evaluate_pawn_init(Evaluation *eval, Position *p, Color color) {
     }
 }
 
+int evaluate_pawn_shelter(Position *p, Color color, Square index) {
+    int pawn_shelter_value = 150;
+    int middle = std::max(FILE_B, std::min(FILE_G, col(index)));
+
+    int king_rank = rank(index, color);
+    pawn_shelter_value -= (king_rank - RANK_1) * pawn_shelter_penalty[3]; // Take a look at this again sometime
+
+    for (int column = middle - 1; column <= middle + 1; column++) {
+        Bitboard pawns = p->bbs[pawn(color)] & FILE_MASK[column];
+        if (pawns) {
+            Square closest_pawn = color == white ? lsb(pawns) : msb(pawns);
+            int pawn_rank = rank(closest_pawn, color);
+            if (king_rank <= pawn_rank) {
+                pawn_shelter_value -= pawn_shelter_penalty[pawn_rank - king_rank];
+            }
+        } else {
+            pawn_shelter_value -= pawn_shelter_penalty[7];
+        }
+    }
+
+    return pawn_shelter_value;
+}
+
 void evaluate_pawns(Evaluation *eval, Position *p) {
-    PawnTTEntry *pawntte = get_pawntte(p->pawn_hash);
-    if (pawntte) {
+    if (eval->pawntte) {
         evaluate_pawn_init(eval, p, white);
         evaluate_pawn_init(eval, p, black);
-        eval->score_pawn = pawntte->score;
-        eval->pawn_passers[white] = pawntte->pawn_passers[white];
-        eval->pawn_passers[black] = pawntte->pawn_passers[black];
-        eval->semi_open_files[white] = pawntte->semi_open_files[white];
-        eval->semi_open_files[black] = pawntte->semi_open_files[black];
+        eval->score_pawn = eval->pawntte->score;
+        eval->pawn_passers[white] = eval->pawntte->pawn_passers & p->bbs[pawn(white)];
+        eval->pawn_passers[black] = eval->pawntte->pawn_passers & p->bbs[pawn(black)];
         return;
     }
 
-    Score whitey = evaluate_pawn_structure(eval, p, white);
-    Score blacky = evaluate_pawn_structure(eval, p, black);
-    eval->score_pawn = whitey - blacky;
+    Score score_white = evaluate_pawn_structure(eval, p, white);
+    Score score_black = evaluate_pawn_structure(eval, p, black);
+    eval->score_pawn = score_white - score_black;
+    int shelter_values[2];
 
-    set_pawntte(p->pawn_hash, eval);
+    for (Color color : {white, black}) {
+        int pawn_shelter_value = evaluate_pawn_shelter(p, color, p->king_index[color]);
+        if (p->castling & can_king_castle_mask[color]) {
+            pawn_shelter_value = std::max(pawn_shelter_value, evaluate_pawn_shelter(p, color, relative_square(G1, color)));
+        }
+        if (p->castling & can_queen_castle_mask[color]) {
+            pawn_shelter_value = std::max(pawn_shelter_value, evaluate_pawn_shelter(p, color, relative_square(C1, color)));
+        }
+        shelter_values[color] = pawn_shelter_value;
+    }
+
+    set_pawntte(p->pawn_hash, eval, shelter_values);
 }
 
 Score evaluate_bishop(Evaluation *eval, Position *p, Color color) {
@@ -369,42 +402,13 @@ Score evaluate_queen(Evaluation *eval, Position *p, Color color) {
     return queen_score;
 }
 
-int evaluate_pawn_shelter(Position *p, Color color, Square index) {
-    int pawn_shelter_value = 150;
-    int middle = std::max(FILE_B, std::min(FILE_G, col(index)));
-
-    int king_rank = rank(index, color);
-    pawn_shelter_value -= (king_rank - RANK_1) * pawn_shelter_penalty[3]; // Take a look at this again sometime
-
-    for (int column = middle - 1; column <= middle + 1; column++) {
-        Bitboard pawns = p->bbs[pawn(color)] & FILE_MASK[column];
-        if (pawns) {
-            Square closest_pawn = color == white ? lsb(pawns) : msb(pawns);
-            int pawn_rank = rank(closest_pawn, color);
-            if (king_rank <= pawn_rank) {
-                pawn_shelter_value -= pawn_shelter_penalty[pawn_rank - king_rank];
-            }
-        } else {
-            pawn_shelter_value -= pawn_shelter_penalty[7];
-        }
-    }
-
-    return pawn_shelter_value;
-}
-
 Score evaluate_king(Evaluation *eval, Position *p, Color color) {
     Score king_score = {0, 0};
     Color opp_c = opponent_color(color);
     Square outpost = p->king_index[color];
     Bitboard king_targets = generate_king_targets(outpost);
 
-    int pawn_shelter_value = evaluate_pawn_shelter(p, color, outpost);
-    if (p->castling & can_king_castle_mask[color]) {
-        pawn_shelter_value = std::max(pawn_shelter_value, evaluate_pawn_shelter(p, color, relative_square(G1, color)));
-    }
-    if (p->castling & can_queen_castle_mask[color]) {
-        pawn_shelter_value = std::max(pawn_shelter_value, evaluate_pawn_shelter(p, color, relative_square(C1, color)));
-    }
+    int pawn_shelter_value = eval->pawntte->shelter_values[color];
     king_score.midgame += pawn_shelter_value;
 
     if (p->bbs[pawn(color)]) {
@@ -666,6 +670,8 @@ void pre_eval(Evaluation *eval, Position *p) {
     Bitboard low_ranks_black = RANK_6BB | RANK_7BB;
     Bitboard b_black = p->bbs[pawn(black)] & ((p->board << 8) | low_ranks_black);
     eval->mobility_area[black] = ~(b_black | p->bbs[king(black)] | eval->targets[white_pawn]);
+
+    eval->pawntte = get_pawntte(p->pawn_hash);
 }
 
 int scaling_factor(Evaluation *eval, Position *p, Material *eval_material) {

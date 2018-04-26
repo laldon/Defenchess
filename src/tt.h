@@ -28,25 +28,10 @@ void reset_tt(int megabytes);
 extern uint64_t tt_size;
 extern uint64_t tt_mask;
 
-typedef struct TTEntry {
-    uint32_t hash;
-    Move     move;
-    int8_t  depth;
-    int      score;
-    uint8_t  flag;
-} TTEntry;
-
-typedef struct PawnTTEntry {
-    uint32_t pawn_hash;
-    Score    score;
-    Bitboard pawn_passers[2];
-    int      semi_open_files[2];
-} PawnTTEntry;
-
 void set_tte(uint64_t hash, Move m, int depth, int score, uint8_t flag);
 TTEntry *get_tte(uint64_t hash);
 
-void set_pawntte(uint64_t pawn_hash, Evaluation* eval);
+void set_pawntte(uint64_t pawn_hash, Evaluation* eval, int *shelter_values);
 PawnTTEntry *get_pawntte(uint64_t pawn_hash);
 
 int score_to_tt(int score, uint16_t ply);
