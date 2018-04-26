@@ -57,6 +57,7 @@ const int tempo = 12;
 const int ATTACK_VALUES[12] = {0,0,0,0,80,80,55,55,45,45,10,10};
 
 int evaluate(Position *p);
+int evaluate_pawn_shelter(Position *p, Color color, Square index);
 void init_eval();
 
 inline Color winning_side(Position *p) {

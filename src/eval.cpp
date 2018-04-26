@@ -178,29 +178,6 @@ void evaluate_pawn_init(Evaluation *eval, Position *p, Color color) {
     }
 }
 
-int evaluate_pawn_shelter(Position *p, Color color, Square index) {
-    int pawn_shelter_value = 150;
-    int middle = std::max(FILE_B, std::min(FILE_G, col(index)));
-
-    int king_rank = rank(index, color);
-    pawn_shelter_value -= (king_rank - RANK_1) * pawn_shelter_penalty[3]; // Take a look at this again sometime
-
-    for (int column = middle - 1; column <= middle + 1; column++) {
-        Bitboard pawns = p->bbs[pawn(color)] & FILE_MASK[column];
-        if (pawns) {
-            Square closest_pawn = color == white ? lsb(pawns) : msb(pawns);
-            int pawn_rank = rank(closest_pawn, color);
-            if (king_rank <= pawn_rank) {
-                pawn_shelter_value -= pawn_shelter_penalty[pawn_rank - king_rank];
-            }
-        } else {
-            pawn_shelter_value -= pawn_shelter_penalty[7];
-        }
-    }
-
-    return pawn_shelter_value;
-}
-
 int calculate_king_shelter(Position *p, Color color) {
     int pawn_shelter_value = evaluate_pawn_shelter(p, color, p->king_index[color]);
     if (p->castling & can_king_castle_mask[color]) {
@@ -411,6 +388,29 @@ Score evaluate_queen(Evaluation *eval, Position *p, Color color) {
         ++eval->num_pieces[color];
     }
     return queen_score;
+}
+
+int evaluate_pawn_shelter(Position *p, Color color, Square index) {
+    int pawn_shelter_value = 150;
+    int middle = std::max(FILE_B, std::min(FILE_G, col(index)));
+
+    int king_rank = rank(index, color);
+    pawn_shelter_value -= (king_rank - RANK_1) * pawn_shelter_penalty[3]; // Take a look at this again sometime
+
+    for (int column = middle - 1; column <= middle + 1; column++) {
+        Bitboard pawns = p->bbs[pawn(color)] & FILE_MASK[column];
+        if (pawns) {
+            Square closest_pawn = color == white ? lsb(pawns) : msb(pawns);
+            int pawn_rank = rank(closest_pawn, color);
+            if (king_rank <= pawn_rank) {
+                pawn_shelter_value -= pawn_shelter_penalty[pawn_rank - king_rank];
+            }
+        } else {
+            pawn_shelter_value -= pawn_shelter_penalty[7];
+        }
+    }
+
+    return pawn_shelter_value;
 }
 
 Score evaluate_king(Evaluation *eval, Position *p, Color color) {
