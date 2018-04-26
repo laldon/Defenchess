@@ -381,44 +381,26 @@ const int position_size = sizeof(CopyThingSize);
 
 typedef struct Evaluation {
     // Position *position;
-    Bitboard    targets[14];
-    Score       score;
-    Score       score_pawn;
-    Score       score_white;
-    Score       score_black;
-    int         num_pieces[14];
-    int         num_king_attackers[2];
-    int         num_king_zone_attacks[2];
-    int         king_zone_score[2];
-    Bitboard    double_targets[2];
-    Bitboard    king_zone[2];
-    int         semi_open_files[2];
-    Bitboard    mobility_area[2];
-    Score       mobility_score[2];
-    Bitboard    pawn_passers[2];
-    Square      bishop_squares[2];
+    Bitboard targets[14];
+    Score    score;
+    Score    score_pawn;
+    Score    score_white;
+    Score    score_black;
+    int      num_pieces[14];
+    int      num_king_attackers[2];
+    int      num_king_zone_attacks[2];
+    int      king_zone_score[2];
+    Bitboard double_targets[2];
+    Bitboard king_zone[2];
+    int      semi_open_files[2];
+    Bitboard mobility_area[2];
+    Score    mobility_score[2];
+    Bitboard pawn_passers[2];
+    Square   bishop_squares[2];
     PawnTTEntry *pawntte;
 } Evaluation;
 
-const Evaluation init_evaluation = Evaluation{
-    {}, // targets
-    {}, // score
-    {}, // score_pawn
-    {}, // score_white
-    {}, // score_black
-    {}, // num_pieces
-    {}, // num_king_attackers
-    {}, // num_king_zone_attackers
-    {}, // king_zone_score
-    {}, // double_targets
-    {}, // king_zone
-    {}, // semi_open_files
-    {}, // mobility_area
-    {}, // mobility_score
-    {}, // pawn_passers
-    {}, // bishop_squares
-    0   // *pawntte
-};
+const Evaluation init_evaluation = Evaluation{{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, 0};
 
 enum EndgameType {
     NORMAL_ENDGAME,
