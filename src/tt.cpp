@@ -31,14 +31,15 @@ uint64_t tt_size = one_mb * 256ULL; // 256 MB
 uint64_t tt_mask = (uint64_t)(tt_size / sizeof(TTEntry) - 1);
 
 const uint64_t pawntt_size = one_mb * 1ULL; // 1 MB
-const uint64_t pawntt_mod = (uint64_t)(pawntt_size / sizeof(PawnTTEntry));
+const uint64_t pawntt_mask = (uint64_t)(pawntt_size / sizeof(PawnTTEntry) - 1);
+// const uint64_t pawntt_mod = (uint64_t)(pawntt_size / sizeof(PawnTTEntry));
 
 void init_tt() {
     tt = (TTEntry*) malloc(tt_size);
     std::memset(tt, 0, tt_size);
     pawntt = (PawnTTEntry*) malloc(pawntt_size);
     std::memset(pawntt, 0, pawntt_size);
-    std::cout << sizeof(PawnTTEntry) << std::endl;
+    // std::cout << sizeof(PawnTTEntry) << std::endl;
 }
 
 void reset_tt(int megabytes) {
@@ -101,17 +102,18 @@ TTEntry *get_tte(uint64_t hash) {
 }
 
 void set_pawntte(uint64_t pawn_hash, Evaluation* eval, int *shelter_values) {
-    uint64_t index = pawn_hash % pawntt_mod;
+    uint64_t index = pawn_hash & pawntt_mask;
     PawnTTEntry *pawntte = &pawntt[index];
     pawntte->pawn_hash = (uint32_t)(pawn_hash >> 32);
     pawntte->score = eval->score_pawn;
     pawntte->pawn_passers = eval->pawn_passers[white] | eval->pawn_passers[black];
     pawntte->shelter_values[white] = shelter_values[white];
     pawntte->shelter_values[black] = shelter_values[black];
+    eval->pawntte = pawntte;
 }
 
 PawnTTEntry *get_pawntte(uint64_t pawn_hash) {
-    uint64_t index = pawn_hash % pawntt_mod;
+    uint64_t index = pawn_hash & pawntt_mask;
     PawnTTEntry *pawntte = &pawntt[index];
     if (pawntte->pawn_hash == (uint32_t)(pawn_hash >> 32)) {
         return pawntte;
