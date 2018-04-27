@@ -211,6 +211,11 @@ Score evaluate_bishop(Evaluation *eval, Position *p, Color color) {
         if (p->pinned[color] & bfi[outpost])
             bishop_targets &= BETWEEN_MASK[p->king_index[color]][outpost];
 
+        // Protected bishop
+        if (bfi[outpost] & eval->targets[pawn(color)]) {
+            bishop_score += protected_piece_bonus;
+        }
+
         // Bishop with same colored pawns
         bishop_score -= bishop_pawn_penalty * count(COLOR_MASKS[TILE_COLOR[outpost]] & p->bbs[pawn(color)]);
 
@@ -249,6 +254,11 @@ Score evaluate_knight(Evaluation *eval, Position *p, Color color) {
 
         if (p->pinned[color] & bfi[outpost])
             knight_targets &= BETWEEN_MASK[p->king_index[color]][outpost];
+
+        // Protected knight
+        if (bfi[outpost] & eval->targets[pawn(color)]) {
+            knight_score += protected_piece_bonus;
+        }
 
         // Hidden behind pawn
         if (rank(outpost, color) < RANK_5 && is_pawn(p->pieces[pawn_forward(outpost, color)])) {
