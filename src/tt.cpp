@@ -101,7 +101,7 @@ TTEntry *get_tte(uint64_t hash) {
 }
 
 void set_pawntte(uint64_t pawn_hash, Evaluation* eval, Position *p, int white_shelter_value, int black_shelter_value) {
-    uint64_t index = pawn_hash % pawntt_mask;
+    uint64_t index = pawn_hash % pawntt_mod;
     PawnTTEntry *pawntte = &pawntt[index];
     pawntte->pawn_hash = (uint32_t)(pawn_hash >> 32);
     pawntte->score = eval->score_pawn;
@@ -118,7 +118,7 @@ void set_pawntte(uint64_t pawn_hash, Evaluation* eval, Position *p, int white_sh
 }
 
 PawnTTEntry *get_pawntte(uint64_t pawn_hash) {
-    uint64_t index = pawn_hash % pawntt_mask;
+    uint64_t index = pawn_hash % pawntt_mod;
     PawnTTEntry *pawntte = &pawntt[index];
     if (pawntte->pawn_hash == (uint32_t)(pawn_hash >> 32)) {
         return pawntte;
