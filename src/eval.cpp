@@ -59,6 +59,16 @@ const Score rook_threat_bonus[12] = {
     // { 0,  0}, { 0,  0}  // King should never be called
 };
 
+const Score can_reach_center[2][2] = {
+    { {15, 4}, {20, 8} }, // Knight
+    { { 5, 0}, {10, 3} }  // Bishop
+};
+
+const Bitboard center_ranks[2] = {
+    RANK_4BB | RANK_5BB | RANK_6BB, // White
+    RANK_3BB | RANK_4BB | RANK_5BB  // Black
+};
+
 Score connected[2][2][3][8];
 const int connection_bonus[8] = { 0, 8, 15, 10, 45, 60, 100, 200 };
 
@@ -202,6 +212,7 @@ Score evaluate_bishop(Evaluation *eval, Position *p, Color color) {
     Score bishop_score = {0, 0};
     Color opp_c = opponent_color(color);
     Bitboard my_bishops = p->bbs[bishop(color)];
+    Bitboard safe_center = center_ranks[color] & ~eval->targets[pawn(opp_c)];
 
     while (my_bishops) {
         Square outpost = pop(&my_bishops);
@@ -211,9 +222,11 @@ Score evaluate_bishop(Evaluation *eval, Position *p, Color color) {
         if (p->pinned[color] & bfi[outpost])
             bishop_targets &= BETWEEN_MASK[p->king_index[color]][outpost];
 
-        // Protected bishop
-        if (bfi[outpost] & eval->targets[pawn(color)]) {
-            bishop_score += protected_piece_bonus;
+        // Bishop is at or can reach center
+        if (safe_center & bfi[outpost]) {
+            bishop_score += can_reach_center[1][bool(eval->targets[pawn(color)] & bfi[outpost])] * 2;
+        } else if ((safe_center &= bishop_targets) & ~p->bbs[color]) {
+            bishop_score += can_reach_center[1][bool(eval->targets[pawn(color)] & safe_center)];
         }
 
         // Bishop with same colored pawns
@@ -247,6 +260,7 @@ Score evaluate_knight(Evaluation *eval, Position *p, Color color) {
     Score knight_score = {0, 0};
     Color opp_c = opponent_color(color);
     Bitboard my_knights = p->bbs[knight(color)];
+    Bitboard safe_center = center_ranks[color] & ~eval->targets[pawn(opp_c)];
 
     while (my_knights) {
         Square outpost = pop(&my_knights);
@@ -255,9 +269,11 @@ Score evaluate_knight(Evaluation *eval, Position *p, Color color) {
         if (p->pinned[color] & bfi[outpost])
             knight_targets &= BETWEEN_MASK[p->king_index[color]][outpost];
 
-        // Protected knight
-        if (bfi[outpost] & eval->targets[pawn(color)]) {
-            knight_score += protected_piece_bonus;
+        // Knight is at or can reach center
+        if (safe_center & bfi[outpost]) {
+            knight_score += can_reach_center[0][bool(eval->targets[pawn(color)] & bfi[outpost])] * 2;
+        } else if ((safe_center &= knight_targets) & ~p->bbs[color]) {
+            knight_score += can_reach_center[0][bool(eval->targets[pawn(color)] & safe_center)];
         }
 
         // Hidden behind pawn
