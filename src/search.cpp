@@ -127,7 +127,7 @@ int alpha_beta_quiescence(Position *p, int alpha, int beta, int depth, bool in_c
         pv[ply].size = 0;
     }
     if (ply >= MAX_PLY) {
-        return evaluate(p);
+        return evaluate(p, false);
     }
 
     if (is_draw(p)) {
@@ -159,7 +159,7 @@ int alpha_beta_quiescence(Position *p, int alpha, int beta, int depth, bool in_c
         if (is_null) {
             p->static_eval = best_score = tempo * 2 - (p-1)->static_eval;
         } else {
-            p->static_eval = best_score = evaluate(p);
+            p->static_eval = best_score = evaluate(p, false);
         }
         if (best_score >= beta) {
             if (!tte) {
@@ -257,7 +257,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
     }
 
     if (ply >= MAX_PLY) {
-        return evaluate(p);
+        return evaluate(p, false);
     }
 
     if (is_draw(p)) {
@@ -306,7 +306,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
         if (is_null) {
             p->static_eval = tempo * 2 - (p-1)->static_eval;
         } else {
-            p->static_eval = evaluate(p);
+            p->static_eval = evaluate(p, true);
         }
     }
 

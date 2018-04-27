@@ -696,7 +696,7 @@ int scaling_factor(Evaluation *eval, Position *p, Material *eval_material) {
     return SCALE_NORMAL;
 }
 
-int evaluate(Position *p) {
+int evaluate(Position *p, bool quick) {
     assert(!is_checked(p));
 
     Evaluation eval = init_evaluation;
@@ -720,7 +720,7 @@ int evaluate(Position *p) {
     eval.score += eval.score_pawn;
 
     int early = (eval.score.midgame + eval.score.endgame) / 2;
-    if (std::abs(early) > 880) {
+    if (std::abs(early) > 880 || quick) {
         return p->color == white ? early : -early;
     }
 
@@ -803,7 +803,7 @@ void print_eval(Position *p){
     std::cout << "  Queen       Score : " << score_str(Queen_score[white]) << "|" << score_str(Queen_score[black]) << "|" << score_str(Queen_score[white] - Queen_score[black]) << std::endl;
 
     std::cout << std::endl << "  Total       Score : " << score_str(whitey) << "|" << score_str(blacky) << "|" << score_str(eval.score_pawn + p->score + whitey - blacky + eval_material->score) << std::endl;
-    int CP = 100 * p->color == white ? evaluate(p) : -evaluate(p);
+    int CP = 100 * p->color == white ? evaluate(p, false) : -evaluate(p, false);
     double percentage = (double)(256 - eval_material->phase) / 256.0 * 100.0;
     std::cout << std::endl;
     std::cout << "                                                   Phase: " << percentage << "%" << std::endl;
