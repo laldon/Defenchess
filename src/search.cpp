@@ -247,6 +247,10 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
     assert(-MATE <= alpha && alpha < beta && beta <= MATE);
     assert(0 <= depth);
     assert(in_check == is_checked(p));
+    if (depth < 1) {
+        return alpha_beta_quiescence(p, alpha, beta, 0, in_check);
+    }
+
     int ply = PLY(p);
     if (is_main_thread(p)) {
         pv[ply].size = 0;
@@ -299,9 +303,6 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
 
     bool is_null = ply > 0 && p->board == (p-1)->board;
     if (!in_check) {
-        if (depth < 1) {
-            return alpha_beta_quiescence(p, alpha, beta, 0, in_check);
-        }
         if (is_null) {
             p->static_eval = tempo * 2 - (p-1)->static_eval;
         } else {
