@@ -25,6 +25,13 @@
 
 void print_eval(Position *p);
 
+enum EvalPieceType {
+    KNIGHT,
+    BISHOP,
+    ROOK,
+    QUEEN
+};
+
 // Bonuses
 const Score
     protected_piece_bonus = {10, 0},

@@ -69,6 +69,13 @@ const Bitboard center_ranks[2] = {
     RANK_3BB | RANK_4BB | RANK_5BB  // Black
 };
 
+const Score king_distance[4] = {
+    {2,  3}, // Knight
+    {2,  2}, // Bishop
+    {2,  0}, // Rook
+    {1, -1}  // Queen
+};
+
 Score connected[2][2][3][8];
 const int connection_bonus[8] = { 0, 8, 15, 10, 45, 60, 100, 200 };
 
@@ -85,26 +92,26 @@ void init_eval() {
     // Init mobility
     // Knights (max 8 moves)
     for (int i = 0; i <= 8; ++i) {
-        mobility_bonus[0][i].midgame = int(30 * log((double) i + 1)) - 50;
-        mobility_bonus[0][i].endgame = int(30 * log((double) i + 1)) - 50;
+        mobility_bonus[KNIGHT][i].midgame = int(30 * log((double) i + 1)) - 50;
+        mobility_bonus[KNIGHT][i].endgame = int(30 * log((double) i + 1)) - 50;
     }
 
     // Bishops (max 13 moves)
     for (int i = 0; i <= 13; ++i) {
-        mobility_bonus[1][i].midgame = int(30 * log((double) i + 1)) - 30;
-        mobility_bonus[1][i].endgame = int(30 * log((double) i + 1)) - 30;
+        mobility_bonus[BISHOP][i].midgame = int(30 * log((double) i + 1)) - 30;
+        mobility_bonus[BISHOP][i].endgame = int(30 * log((double) i + 1)) - 30;
     }
 
     // Rooks (max 14 moves)
     for (int i = 0; i <= 14; ++i) {
-        mobility_bonus[2][i].midgame = int(25 * log((double) i + 1)) - 40;
-        mobility_bonus[2][i].endgame = int(50 * log((double) i + 1)) - 40;
+        mobility_bonus[ROOK][i].midgame = int(25 * log((double) i + 1)) - 40;
+        mobility_bonus[ROOK][i].endgame = int(50 * log((double) i + 1)) - 40;
     }
 
     // Queens (max 28 moves)
     for (int i = 0; i <= 28; ++i) {
-        mobility_bonus[3][i].midgame = int(40 * log((double) (i / 3) + 1)) - 20;
-        mobility_bonus[3][i].endgame = int(70 * log((double) (i / 4) + 1)) - 20;
+        mobility_bonus[QUEEN][i].midgame = int(40 * log((double) (i / 3) + 1)) - 20;
+        mobility_bonus[QUEEN][i].endgame = int(70 * log((double) (i / 4) + 1)) - 20;
     }
 }
 
@@ -224,10 +231,12 @@ Score evaluate_bishop(Evaluation *eval, Position *p, Color color) {
 
         // Bishop is at or can reach center
         if (safe_center & bfi[outpost]) {
-            bishop_score += can_reach_center[1][bool(eval->targets[pawn(color)] & bfi[outpost])] * 2;
+            bishop_score += can_reach_center[BISHOP][bool(eval->targets[pawn(color)] & bfi[outpost])] * 2;
         } else if ((safe_center &= bishop_targets) & ~p->bbs[color]) {
-            bishop_score += can_reach_center[1][bool(eval->targets[pawn(color)] & safe_center)];
+            bishop_score += can_reach_center[BISHOP][bool(eval->targets[pawn(color)] & safe_center)];
         }
+
+        bishop_score -= king_distance[BISHOP] * distance(outpost, p->king_index[color]);
 
         // Bishop with same colored pawns
         bishop_score -= bishop_pawn_penalty * count(COLOR_MASKS[TILE_COLOR[outpost]] & p->bbs[pawn(color)]);
@@ -271,10 +280,12 @@ Score evaluate_knight(Evaluation *eval, Position *p, Color color) {
 
         // Knight is at or can reach center
         if (safe_center & bfi[outpost]) {
-            knight_score += can_reach_center[0][bool(eval->targets[pawn(color)] & bfi[outpost])] * 2;
+            knight_score += can_reach_center[KNIGHT][bool(eval->targets[pawn(color)] & bfi[outpost])] * 2;
         } else if ((safe_center &= knight_targets) & ~p->bbs[color]) {
-            knight_score += can_reach_center[0][bool(eval->targets[pawn(color)] & safe_center)];
+            knight_score += can_reach_center[KNIGHT][bool(eval->targets[pawn(color)] & safe_center)];
         }
+
+        knight_score -= king_distance[KNIGHT] * distance(outpost, p->king_index[color]);
 
         // Hidden behind pawn
         if (rank(outpost, color) < RANK_5 && is_pawn(p->pieces[pawn_forward(outpost, color)])) {
@@ -339,6 +350,8 @@ Score evaluate_rook(Evaluation *eval, Position *p, Color color) {
             }
         }
 
+        rook_score -= king_distance[ROOK] * distance(outpost, p->king_index[color]);
+
         // King threats
         Bitboard king_threats = rook_targets & eval->king_zone[opp_c];
         if (king_threats) {
@@ -369,6 +382,8 @@ Score evaluate_queen(Evaluation *eval, Position *p, Color color) {
         // Mobility
         int mobility = count(queen_targets & eval->mobility_area[color]);
         eval->mobility_score[color] += mobility_bonus[3][mobility];
+
+        queen_score -= king_distance[QUEEN] * distance(outpost, p->king_index[color]);
 
         // King threats
         Bitboard king_threats = queen_targets & eval->king_zone[opp_c];
