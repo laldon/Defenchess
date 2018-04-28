@@ -399,7 +399,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
         bool prunable = depth < 8 && num_moves >= futility_move_counts[improving][depth];
 
         int extension = 0;
-        if (depth >= 8 &&
+        if (depth >= 10 &&
             move == tte_move &&
             !root_node &&
             !excluded_move &&
