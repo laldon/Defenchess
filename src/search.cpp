@@ -201,7 +201,7 @@ int alpha_beta_quiescence(Position *p, int alpha, int beta, int depth, bool in_c
                                 best_score > MATED_IN_MAX_PLY &&
                                 capture == empty;
 
-        if ((!in_check || evasion_prunable) && move_type(move) != PROMOTION && see_capture(p, move) < 0) {
+        if ((!in_check || evasion_prunable) && move_type(move) != PROMOTION && !see_capture(p, move)) {
             continue;
         }
 
@@ -415,7 +415,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
                 if (singular_value < rbeta) {
                     extension = 1;
                 }
-        } else if (checks && !prunable && see_capture(p, move) >= 0) {
+        } else if (checks && !prunable && see_capture(p, move)) {
             extension = 1;
         }
         new_depth = depth - 1 + extension;
@@ -461,6 +461,11 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
                 if (cut) {
                     ++reduction;
                 }
+
+                // Piece piece = p->pieces[move_from(move)];
+                // int quiet_score = p->my_thread->history[piece][move_to(move)] +
+                //                   p->my_thread->countermove_history[piece][move_to(move)];
+                reduction = std::max(reduction, 0);
             }
 
             score = -alpha_beta(position, -alpha - 1, -alpha, std::max(0, new_depth - reduction), checks, true);
@@ -614,9 +619,9 @@ int think(Position *p) {
         std::cout << "info depth " << depth << " seldepth " << main_pv.size << " multipv 1 tbhits 0 score ";
 
         if (current_guess <= MATED_IN_MAX_PLY) {
-            std::cout << "mate " << (-MATE - current_guess) / 2;
+            std::cout << "mate " << ((-MATE - current_guess) / 2 + 1);
         } else if (current_guess >= MATE_IN_MAX_PLY) {
-            std::cout << "mate " << (MATE - current_guess) / 2;
+            std::cout << "mate " << ((MATE - current_guess) / 2 + 1);
         } else {
             std::cout << "cp " << current_guess * 100 / PAWN_END;
         }

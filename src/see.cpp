@@ -38,35 +38,45 @@ int get_smallest_attacker(Position *p, Bitboard board, Color color, Square squar
     return curr_index;
 }
 
-int see(Position *p, Bitboard board, Color color, int piece_value, Square to) {
-    int val = 0;
-    int smallest_attacker = get_smallest_attacker(p, board, color, to);
-
-    if (smallest_attacker >= 0) {
-        board ^= bfi[smallest_attacker];
-        val = piece_value - see(p, board, opponent_color(color), piece_values[p->pieces[smallest_attacker]], to);
-    }
-    return val;
-}
-
-int see_capture(Position *p, Move move) {
+bool see_capture(Position *p, Move move) {
     Move m_type = move_type(move);
-    if (m_type == ENPASSANT) {
-        return PAWN_MID;
+    if (m_type != NORMAL) {
+        return true;
     }
 
     Bitboard board = p->board;
     Square from = move_from(move);
     Square to = move_to(move);
+    Color color = piece_color(p->pieces[from]);
     
     int piece_value = piece_values[p->pieces[to]];
     int capturer_value = piece_values[p->pieces[from]];
 
-    if (is_promotion(move_type(move))) {
-        piece_value = piece_values[promotion_piece(move, white)] - piece_values[white_pawn];
+    int balance = piece_value - capturer_value;
+    if (balance >= 0) {
+        return true;
     }
 
     board ^= bfi[from];
-    return piece_value - see(p, board, piece_color(p->pieces[from]), capturer_value, to);
-}
+    bool opponent_to_move = true;
 
+    while (true) {
+        int smallest_attacker = get_smallest_attacker(p, board, color, to);
+        if (smallest_attacker == -1) {
+            break;
+        }
+
+        balance += piece_values[p->pieces[smallest_attacker]];;
+
+        opponent_to_move = !opponent_to_move;
+
+        if (balance < 0) {
+            break;
+        }
+
+        balance = - balance - 1;
+        color = opponent_color(color);
+        board ^= bfi[smallest_attacker];
+    }
+    return opponent_to_move;
+}
