@@ -69,13 +69,6 @@ const Bitboard center_ranks[2] = {
     RANK_3BB | RANK_4BB | RANK_5BB  // Black
 };
 
-const Score king_distance[4] = {
-    {2,  3}, // Knight
-    {2,  2}, // Bishop
-    {2,  0}, // Rook
-    {1, -1}  // Queen
-};
-
 Score connected[2][2][3][8];
 const int connection_bonus[8] = { 0, 8, 15, 10, 45, 60, 100, 200 };
 
@@ -236,8 +229,6 @@ Score evaluate_bishop(Evaluation *eval, Position *p, Color color) {
             bishop_score += can_reach_center[BISHOP][bool(eval->targets[pawn(color)] & safe_center)];
         }
 
-        bishop_score -= king_distance[BISHOP] * distance(outpost, p->king_index[color]);
-
         // Bishop with same colored pawns
         bishop_score -= bishop_pawn_penalty * count(COLOR_MASKS[TILE_COLOR[outpost]] & p->bbs[pawn(color)]);
 
@@ -284,8 +275,6 @@ Score evaluate_knight(Evaluation *eval, Position *p, Color color) {
         } else if ((safe_center &= knight_targets) & ~p->bbs[color]) {
             knight_score += can_reach_center[KNIGHT][bool(eval->targets[pawn(color)] & safe_center)];
         }
-
-        knight_score -= king_distance[KNIGHT] * distance(outpost, p->king_index[color]);
 
         // Hidden behind pawn
         if (rank(outpost, color) < RANK_5 && is_pawn(p->pieces[pawn_forward(outpost, color)])) {
@@ -350,8 +339,6 @@ Score evaluate_rook(Evaluation *eval, Position *p, Color color) {
             }
         }
 
-        rook_score -= king_distance[ROOK] * distance(outpost, p->king_index[color]);
-
         // King threats
         Bitboard king_threats = rook_targets & eval->king_zone[opp_c];
         if (king_threats) {
@@ -382,8 +369,6 @@ Score evaluate_queen(Evaluation *eval, Position *p, Color color) {
         // Mobility
         int mobility = count(queen_targets & eval->mobility_area[color]);
         eval->mobility_score[color] += mobility_bonus[3][mobility];
-
-        queen_score -= king_distance[QUEEN] * distance(outpost, p->king_index[color]);
 
         // King threats
         Bitboard king_threats = queen_targets & eval->king_zone[opp_c];
