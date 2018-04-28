@@ -78,7 +78,7 @@ void uci() {
 #ifndef NDEBUG
     cout << "debug mode on" << std::endl;
 #endif
-    cout << "option name Hash type spin default 256 min 16 max 16384" << endl;
+    cout << "option name Hash type spin default 256 min 1 max 16384" << endl;
     cout << "option name Threads type spin default 1 min 1 max " << MAX_THREADS << endl;
     cout << "uciok" << endl;
 }
@@ -225,6 +225,11 @@ void cmd_fen() {
     }
 }
 
+void see() {
+    Move move = uci2move(root_position, word_list[1]);
+    cout << see_capture(root_position, move) << endl;
+}
+
 void cmd_position() {
     if (word_list[1] == "fen") 
         cmd_fen();
@@ -278,6 +283,8 @@ void run_command(string s) {
         generate();
     if (s == "stop")
         stop();
+    if (s == "see")
+        see();
 }
 
 void loop() {
@@ -288,7 +295,9 @@ void loop() {
     while (true) {
         getline(cin, in_str);
         word_list = split_words(in_str);
-        run_command(word_list[0]);
+        if (word_list.size() > 0) {
+            run_command(word_list[0]);
+        }
     }
 
 }

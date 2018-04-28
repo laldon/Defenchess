@@ -201,7 +201,7 @@ int alpha_beta_quiescence(Position *p, int alpha, int beta, int depth, bool in_c
                                 best_score > MATED_IN_MAX_PLY &&
                                 capture == empty;
 
-        if ((!in_check || evasion_prunable) && move_type(move) != PROMOTION && see_capture(p, move) < 0) {
+        if ((!in_check || evasion_prunable) && move_type(move) != PROMOTION && !see_capture(p, move)) {
             continue;
         }
 
@@ -392,13 +392,13 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
         bool important = in_check || capture_or_promo || checks || move == tte_move || is_advanced_pawn_push(p, move);
 
         int extension = 0;
-        if (checks && see_capture(p, move) >= 0) {
+        if (checks && see_capture(p, move)) {
             extension = 1;
         }
         new_depth = depth - 1 + extension;
 
         if (!root_node && !important && p->non_pawn_material[p->color] && best_score > MATED_IN_MAX_PLY) {
-            int reduction = lmr(depth, num_moves);
+            int reduction = lmr(is_principal, depth, num_moves);
             if (depth < 8 && num_moves >= futility_move_counts[improving][depth]) {
                 continue;
             }
@@ -431,16 +431,18 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
             // late move reductions
             int reduction = 0;
             if (depth >= 3 && num_moves > 1 && !capture_or_promo) {
-                reduction = lmr(depth, num_moves);
+                reduction = lmr(is_principal, depth, num_moves);
                 if (in_check) {
-                    --reduction;
-                }
-                if (is_principal) {
                     --reduction;
                 }
                 if (cut) {
                     ++reduction;
                 }
+
+                // Piece piece = p->pieces[move_from(move)];
+                // int quiet_score = p->my_thread->history[piece][move_to(move)] +
+                //                   p->my_thread->countermove_history[piece][move_to(move)];
+                reduction = std::max(reduction, 0);
             }
 
             score = -alpha_beta(position, -alpha - 1, -alpha, std::max(0, new_depth - reduction), checks, true);
@@ -590,9 +592,9 @@ int think(Position *p) {
         std::cout << "info depth " << depth << " seldepth " << main_pv.size << " multipv 1 tbhits 0 score ";
 
         if (current_guess <= MATED_IN_MAX_PLY) {
-            std::cout << "mate " << (-MATE - current_guess) / 2;
+            std::cout << "mate " << ((-MATE - current_guess) / 2 + 1);
         } else if (current_guess >= MATE_IN_MAX_PLY) {
-            std::cout << "mate " << (MATE - current_guess) / 2;
+            std::cout << "mate " << ((MATE - current_guess) / 2 + 1);
         } else {
             std::cout << "cp " << current_guess * 100 / PAWN_END;
         }
