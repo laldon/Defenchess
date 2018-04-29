@@ -28,6 +28,7 @@
 #include <vector>
 #include <map>
 #include <iostream>
+#include "tb.h"
 
 using namespace std;
 
@@ -254,6 +255,12 @@ void setoption() {
     }
 }
 
+void tb() {
+    // do tb
+    unsigned result = probe(root_position);
+    cout << result << endl;
+}
+
 void ucinewgame() {
     clear_tt();
 }
@@ -285,6 +292,8 @@ void run_command(string s) {
         stop();
     if (s == "see")
         see();
+    if (s == "tb")
+        tb();
 }
 
 void loop() {
