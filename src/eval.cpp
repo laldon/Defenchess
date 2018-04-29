@@ -59,16 +59,6 @@ const Score rook_threat_bonus[12] = {
     // { 0,  0}, { 0,  0}  // King should never be called
 };
 
-const Score can_reach_center[2][2] = {
-    { {15, 4}, {20, 8} }, // Knight
-    { { 5, 0}, {10, 3} }  // Bishop
-};
-
-const Bitboard center_ranks[2] = {
-    RANK_4BB | RANK_5BB | RANK_6BB, // White
-    RANK_3BB | RANK_4BB | RANK_5BB  // Black
-};
-
 Score connected[2][2][3][8];
 const int connection_bonus[8] = { 0, 8, 15, 10, 45, 60, 100, 200 };
 
@@ -85,26 +75,26 @@ void init_eval() {
     // Init mobility
     // Knights (max 8 moves)
     for (int i = 0; i <= 8; ++i) {
-        mobility_bonus[KNIGHT][i].midgame = int(30 * log((double) i + 1)) - 50;
-        mobility_bonus[KNIGHT][i].endgame = int(30 * log((double) i + 1)) - 50;
+        mobility_bonus[0][i].midgame = int(30 * log((double) i + 1)) - 50;
+        mobility_bonus[0][i].endgame = int(30 * log((double) i + 1)) - 50;
     }
 
     // Bishops (max 13 moves)
     for (int i = 0; i <= 13; ++i) {
-        mobility_bonus[BISHOP][i].midgame = int(30 * log((double) i + 1)) - 30;
-        mobility_bonus[BISHOP][i].endgame = int(30 * log((double) i + 1)) - 30;
+        mobility_bonus[1][i].midgame = int(30 * log((double) i + 1)) - 30;
+        mobility_bonus[1][i].endgame = int(30 * log((double) i + 1)) - 30;
     }
 
     // Rooks (max 14 moves)
     for (int i = 0; i <= 14; ++i) {
-        mobility_bonus[ROOK][i].midgame = int(25 * log((double) i + 1)) - 40;
-        mobility_bonus[ROOK][i].endgame = int(50 * log((double) i + 1)) - 40;
+        mobility_bonus[2][i].midgame = int(25 * log((double) i + 1)) - 40;
+        mobility_bonus[2][i].endgame = int(50 * log((double) i + 1)) - 40;
     }
 
     // Queens (max 28 moves)
     for (int i = 0; i <= 28; ++i) {
-        mobility_bonus[QUEEN][i].midgame = int(40 * log((double) (i / 3) + 1)) - 20;
-        mobility_bonus[QUEEN][i].endgame = int(70 * log((double) (i / 4) + 1)) - 20;
+        mobility_bonus[3][i].midgame = int(40 * log((double) (i / 3) + 1)) - 20;
+        mobility_bonus[3][i].endgame = int(70 * log((double) (i / 4) + 1)) - 20;
     }
 }
 
@@ -212,7 +202,6 @@ Score evaluate_bishop(Evaluation *eval, Position *p, Color color) {
     Score bishop_score = {0, 0};
     Color opp_c = opponent_color(color);
     Bitboard my_bishops = p->bbs[bishop(color)];
-    Bitboard safe_center = center_ranks[color] & ~eval->targets[pawn(opp_c)];
 
     while (my_bishops) {
         Square outpost = pop(&my_bishops);
@@ -222,11 +211,9 @@ Score evaluate_bishop(Evaluation *eval, Position *p, Color color) {
         if (p->pinned[color] & bfi[outpost])
             bishop_targets &= BETWEEN_MASK[p->king_index[color]][outpost];
 
-        // Bishop is at or can reach center
-        if (safe_center & bfi[outpost]) {
-            bishop_score += can_reach_center[BISHOP][bool(eval->targets[pawn(color)] & bfi[outpost])] * 2;
-        } else if ((safe_center &= bishop_targets) & ~p->bbs[color]) {
-            bishop_score += can_reach_center[BISHOP][bool(eval->targets[pawn(color)] & safe_center)];
+        // Protected bishop
+        if (bfi[outpost] & eval->targets[pawn(color)]) {
+            bishop_score += protected_piece_bonus;
         }
 
         // Bishop with same colored pawns
@@ -260,7 +247,6 @@ Score evaluate_knight(Evaluation *eval, Position *p, Color color) {
     Score knight_score = {0, 0};
     Color opp_c = opponent_color(color);
     Bitboard my_knights = p->bbs[knight(color)];
-    Bitboard safe_center = center_ranks[color] & ~eval->targets[pawn(opp_c)];
 
     while (my_knights) {
         Square outpost = pop(&my_knights);
@@ -269,11 +255,9 @@ Score evaluate_knight(Evaluation *eval, Position *p, Color color) {
         if (p->pinned[color] & bfi[outpost])
             knight_targets &= BETWEEN_MASK[p->king_index[color]][outpost];
 
-        // Knight is at or can reach center
-        if (safe_center & bfi[outpost]) {
-            knight_score += can_reach_center[KNIGHT][bool(eval->targets[pawn(color)] & bfi[outpost])] * 2;
-        } else if ((safe_center &= knight_targets) & ~p->bbs[color]) {
-            knight_score += can_reach_center[KNIGHT][bool(eval->targets[pawn(color)] & safe_center)];
+        // Protected knight
+        if (bfi[outpost] & eval->targets[pawn(color)]) {
+            knight_score += protected_piece_bonus;
         }
 
         // Hidden behind pawn
