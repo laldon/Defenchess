@@ -366,6 +366,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
         tte = get_tte(pos_hash);
         if (tte) {
             tte_move = tte->move;
+            tte_score = tt_to_score(tte->score, ply);
         }
     }
 
@@ -396,7 +397,6 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
         bool checks = gives_check(p, move);
         bool capture_or_promo = is_capture_or_promotion(p, move);
         bool important = in_check || capture_or_promo || checks || move == tte_move || is_advanced_pawn_push(p, move);
-        bool prunable = depth < 8 && num_moves >= futility_move_counts[improving][depth];
 
         int extension = 0;
         if (depth >= 10 &&
@@ -415,14 +415,14 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
                 if (singular_value < rbeta) {
                     extension = 1;
                 }
-        } else if (checks && !prunable && see_capture(p, move)) {
+        } else if (checks && see_capture(p, move)) {
             extension = 1;
         }
         new_depth = depth - 1 + extension;
 
         if (!root_node && !important && p->non_pawn_material[p->color] && best_score > MATED_IN_MAX_PLY) {
             int reduction = lmr(is_principal, depth, num_moves);
-            if (prunable) {
+            if (depth < 8 && num_moves >= futility_move_counts[improving][depth]) {
                 continue;
             }
             // Reduced depth of the next LMR search
