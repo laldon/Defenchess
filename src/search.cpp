@@ -360,7 +360,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
 
     // Internal iterative deepening
     int new_depth = depth;
-    if (!tte_move && depth >= 8) {
+    if (!tte_move && depth >= 6 && (is_principal || p->static_eval + 75 >= beta)) {
         new_depth = 3 * depth / 4 - 2;
         alpha_beta(p, alpha, beta, new_depth, in_check, cut);
         tte = get_tte(pos_hash);
@@ -399,7 +399,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
         bool important = in_check || capture_or_promo || checks || move == tte_move || is_advanced_pawn_push(p, move);
 
         int extension = 0;
-        if (depth >= 8 &&
+        if (depth >= 12 &&
             move == tte_move &&
             !root_node &&
             !excluded_move &&
