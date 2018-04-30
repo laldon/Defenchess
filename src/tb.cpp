@@ -29,7 +29,6 @@ void init_syzygy(std::string syzygy_path) {
     tb_initialized = tb_init(syzygy_path.c_str());
     if (tb_initialized) {
         SYZYGY_LARGEST = int(TB_LARGEST);
-        std::cout << "tb initialized" << std::endl;
     }
 }
 
