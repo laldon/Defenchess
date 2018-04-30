@@ -301,15 +301,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
     // Probe tablebase
     if (!root_node && tb_initialized) {
         if (count(p->board) <= SYZYGY_LARGEST && p->last_irreversible == 0 && p->castling == 0) {
-            int wdl = -111;
-            try {
-                wdl = probe_syzygy_wdl(p);
-            } catch (...) {
-                show_position_png(p);
-                std::cout << "color: " << int(p->color) << std::endl;
-                exit(1);
-            }
-
+            int wdl = probe_syzygy_wdl(p);
             if (wdl != SYZYGY_FAIL) {
                 ++p->my_thread->tb_hits;
                 int tb_score = wdl == SYZYGY_LOSS ? MATED_IN_MAX_PLY + ply + 1
