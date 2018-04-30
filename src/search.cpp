@@ -29,6 +29,7 @@
 #include "tb.h"
 
 bool main_thread_finished = false;
+std::vector<Move> root_moves = {};
 
 void print_pv() {
     int i = 0;
@@ -278,12 +279,12 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
 
     p->current_move = 0;
 
-    Move tte_move = 0;
     int tte_score;
     tte_score = p->static_eval = UNDEFINED;
     TTEntry *tte = get_tte(p->hash);
+    Move tte_move = root_node ? root_moves[0] :
+                    tte       ? tte->move     : 0;
     if (tte) {
-        tte_move = tte->move;
         if (tte->depth >= depth) {
             tte_score = tt_to_score(tte->score, ply);
             if (!is_principal &&
@@ -300,23 +301,21 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
 
     // Probe tablebase
     if (!root_node && tb_initialized) {
-        if (count(p->board) <= SYZYGY_LARGEST && p->last_irreversible == 0 && p->castling == 0) {
-            int wdl = probe_syzygy_wdl(p);
-            if (wdl != SYZYGY_FAIL) {
-                ++p->my_thread->tb_hits;
-                int tb_score = wdl == SYZYGY_LOSS ? MATED_IN_MAX_PLY + ply + 1
-                             : wdl == SYZYGY_WIN  ? MATE_IN_MAX_PLY  - ply - 1 : 0;
+        int wdl = probe_syzygy_wdl(p);
+        if (wdl != SYZYGY_FAIL) {
+            ++p->my_thread->tb_hits;
+            int tb_score = wdl == SYZYGY_LOSS ? MATED_IN_MAX_PLY + ply + 1
+                            : wdl == SYZYGY_WIN  ? MATE_IN_MAX_PLY  - ply - 1 : 0;
 
-                uint8_t flag = wdl == SYZYGY_LOSS ? FLAG_ALPHA
-                             : wdl == SYZYGY_WIN  ? FLAG_BETA : FLAG_EXACT;
+            uint8_t flag = wdl == SYZYGY_LOSS ? FLAG_ALPHA
+                            : wdl == SYZYGY_WIN  ? FLAG_BETA : FLAG_EXACT;
 
-                if (flag == FLAG_EXACT ||
-                    (flag == FLAG_BETA && tb_score >= beta) ||
-                    (flag == FLAG_ALPHA && tb_score <= alpha)) {
-                        set_tte(p->hash, 0, MAX_PLY - 1, score_to_tt(tb_score, ply), flag);
-                        return tb_score;
-                    }
-            }
+            if (flag == FLAG_EXACT ||
+                (flag == FLAG_BETA && tb_score >= beta) ||
+                (flag == FLAG_ALPHA && tb_score <= alpha)) {
+                    set_tte(p->hash, 0, MAX_PLY - 1, score_to_tt(tb_score, ply), flag);
+                    return tb_score;
+                }
         }
     }
 
@@ -407,6 +406,10 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
         assert(is_pseudolegal(p, move));
         assert(!is_move_empty(move));
         assert(0 < depth || in_check);
+
+        if (root_node && !std::count(root_moves.begin(), root_moves.end(), move)) {
+            continue;
+        }
 
         ++num_moves;
 
@@ -534,26 +537,28 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
 void think(Position *p) {
     // First check TB
     Move tb_move;
+    bool in_check = is_checked(p);
     int wdl = probe_syzygy_dtz(p, &tb_move);
     if (wdl != SYZYGY_FAIL) {
-        int tb_score = wdl == SYZYGY_LOSS ? -TABLEBASE_WIN
-                     : wdl == SYZYGY_WIN  ?  TABLEBASE_WIN : 0;
-        std::cout << "info score cp " << (tb_score * 100 / PAWN_END) << std::endl;
-        std::cout << "bestmove " << move_to_str(tb_move) << std::endl;
-        return;
-    }
-
-    Material *eval_material = get_material(p);
-    bool in_check = is_checked(p);
-    MoveGen movegen = new_movegen(p, 0, 0, 0, NORMAL_SEARCH, in_check);
-    if (in_check) {
-        generate_evasions(&movegen, p);
+        root_moves.push_back(tb_move);
     } else {
-        generate_moves<ALL>(&movegen, p);
-    }
-    if (eval_material->endgame_type == DRAW_ENDGAME || (in_check && movegen.tail - movegen.head == 1)) {
-        std::cout << "bestmove " << move_to_str(movegen.moves[0].move) << std::endl;
-        return;
+        Material *eval_material = get_material(p);
+
+        // Clear root moves
+        root_moves.clear();
+
+        TTEntry *tte = get_tte(p->hash);
+        Move tte_move = tte ? tte->move : 0;
+        MoveGen movegen = new_movegen(p, 0, 0, tte_move, NORMAL_SEARCH, in_check);
+        while (Move move = next_move(&movegen)) {
+            if (is_legal(p, move)) {
+                root_moves.push_back(move);            
+            }
+        }
+        if (eval_material->endgame_type == DRAW_ENDGAME || (in_check && root_moves.size() == 1)) {
+            std::cout << "bestmove " << move_to_str(movegen.moves[0].move) << std::endl;
+            return;
+        }
     }
     int previous_guess = -MATE;
     int current_guess = -MATE;

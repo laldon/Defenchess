@@ -23,6 +23,7 @@
 #include "target.h"
 #include "eval.h"
 #include <algorithm>
+#include <vector>
 
 const int razoring_margin[4] = {0, 333, 353, 324};
 const int futility_move_counts[2][8] = {

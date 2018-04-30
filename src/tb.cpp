@@ -47,6 +47,10 @@ int result_to_wdl(unsigned result) {
 }
 
 int probe_syzygy_wdl(Position *p) {
+    if (count(p->board) > SYZYGY_LARGEST || p->last_irreversible != 0 || p->castling != 0) {
+        return SYZYGY_FAIL;
+    }
+
     unsigned result = tb_probe_wdl(
         uint64_t(p->bbs[white]),
         uint64_t(p->bbs[black]),
@@ -65,7 +69,7 @@ int probe_syzygy_wdl(Position *p) {
 }
 
 int probe_syzygy_dtz(Position *p, Move *move) {
-    if (count(p->board) > SYZYGY_LARGEST) {
+    if (count(p->board) > SYZYGY_LARGEST || p->last_irreversible != 0 || p->castling != 0) {
         return SYZYGY_FAIL;
     }
 
