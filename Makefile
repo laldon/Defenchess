@@ -37,26 +37,25 @@ all:
 	./$(NAME)_dev$(ext)
 
 winrelease:
-	$(CC) $(CFLAGS) -static $(OPT) -DNDEBUG src/*.cpp -o $(NAME)_$(version).exe $(ext2)
+	$(CC) $(CFLAGS) -static $(OPT) -DNDEBUG src/fathom/src/tbprobe.cpp src/*.cpp -o $(NAME)_$(version).exe $(ext2)
 
 winfeature:
-	$(CC) $(CFLAGS) -static $(OPT) -DNDEBUG src/*.cpp -o $(NAME)_$(version)_$(feature).exe $(ext2)
+	$(CC) $(CFLAGS) -static $(OPT) -DNDEBUG src/fathom/src/tbprobe.cpp src/*.cpp -o $(NAME)_$(version)_$(feature).exe $(ext2)
 
 release:
-	$(CC) $(CFLAGS) $(OPT) -DNDEBUG src/*.cpp -o $(NAME)_$(version)$(ext) $(ext2)
+	$(CC) $(CFLAGS) $(OPT) -DNDEBUG src/fathom/src/tbprobe.cpp src/*.cpp -o $(NAME)_$(version)$(ext) $(ext2)
 
 feature:
-	$(CC) $(CFLAGS) $(OPT) -DNDEBUG src/*.cpp -o $(NAME)_$(version)_$(feature)$(ext) $(ext2)
+	$(CC) $(CFLAGS) $(OPT) -DNDEBUG src/fathom/src/tbprobe.cpp src/*.cpp -o $(NAME)_$(version)_$(feature)$(ext) $(ext2)
 
 crossrelease:
-	$(CRC) $(CFLAGS) $(OPT) -DNDEBUG src/*.cpp -o $(NAME)_$(version)$(ext) $(ext2)
+	$(CRC) $(CFLAGS) $(OPT) -DNDEBUG src/fathom/src/tbprobe.cpp src/*.cpp -o $(NAME)_$(version)$(ext) $(ext2)
 
 crossfeature:
-	$(CRC) $(CFLAGS) $(OPT) -DNDEBUG src/*.cpp -o $(NAME)_$(version)_$(feature)$(ext) $(ext2)
+	$(CRC) $(CFLAGS) $(OPT) -DNDEBUG src/fathom/src/tbprobe.cpp src/*.cpp -o $(NAME)_$(version)_$(feature)$(ext) $(ext2)
 
 perft:
-	$(CC) $(CFLAGS) $(OPT) -D__PERFT__ src/*.cpp -o $(NAME)_perft$(ext) $(ext2)
+	$(CC) $(CFLAGS) $(OPT) -D__PERFT__ src/fathom/src/tbprobe.cpp src/*.cpp -o $(NAME)_perft$(ext) $(ext2)
 
 debug:
-	$(CC) $(CFLAGS) -g -D__DEBUG__ src/*.cpp -o $(NAME)_debug$(ext) $(ext2)
-
+	$(CC) $(CFLAGS) -g -D__DEBUG__ src/fathom/src/tbprobe.cpp src/*.cpp -o $(NAME)_debug$(ext) $(ext2)
