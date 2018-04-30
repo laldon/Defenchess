@@ -515,6 +515,7 @@ struct SearchThread {
     int         history[14][64];
     int         countermove_history[14][64];
     uint64_t    nodes;
+    uint64_t    tb_hits;
 };
 
 inline bool is_main_thread(Position *p) {return p->my_thread->thread_id == 0;}
@@ -530,9 +531,10 @@ extern int root_ply;
 extern int think_depth_limit;
 extern int num_threads;
 
-inline void initialize_nodes() {
+inline void initialize_threads() {
     for (int i = 0; i < num_threads; ++i) {
         search_threads[i].nodes = 0;
+        search_threads[i].tb_hits = 0;
     }
 }
 
@@ -540,6 +542,14 @@ inline uint64_t sum_nodes() {
     uint64_t s = 0;
     for (int i = 0; i < num_threads; ++i) {
         s += search_threads[i].nodes;
+    }
+    return s;
+}
+
+inline uint64_t sum_tb_hits() {
+    uint64_t s = 0;
+    for (int i = 0; i < num_threads; ++i) {
+        s += search_threads[i].tb_hits;
     }
     return s;
 }

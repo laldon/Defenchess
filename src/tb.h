@@ -20,8 +20,20 @@
 #define TB_H
 
 #include "data.h"
+#include <iostream>
 
-void init();
-unsigned probe(Position *p);
+extern bool tb_initialized;
+extern unsigned SYZYGY_LARGEST;
+
+enum SyzygyResult {
+    SYZYGY_LOSS,
+    SYZYGY_DRAW,
+    SYZYGY_WIN,
+    SYZYGY_FAIL
+};
+
+void init_syzygy(std::string syzygy_path);
+int probe_syzygy_wdl(Position *p);
+int probe_syzygy_dtz(Position *p);
 
 #endif

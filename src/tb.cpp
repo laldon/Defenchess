@@ -17,16 +17,20 @@
 */
 
 #include "tb.h"
-#include "fathom/src/tbprobe.cpp"
-#include <iostream>
+#include "fathom/src/tbprobe.h"
+#include "bitboard.h"
 
-void init() {
-    const std::string syzygy_path = "/Users/can/Downloads/syzygy";
-    tb_init(syzygy_path.c_str());
+bool tb_initialized = false;
+unsigned SYZYGY_LARGEST = 0;
+
+void init_syzygy(std::string syzygy_path) {
+    tb_initialized = tb_init(syzygy_path.c_str());
+    SYZYGY_LARGEST = TB_LARGEST;
+    std::cout << tb_initialized << std::endl;
 }
 
-unsigned probe(Position *p) {
-    return tb_probe_wdl(
+int probe_syzygy_wdl(Position *p) {
+    unsigned result = tb_probe_wdl(
         uint64_t(p->bbs[white]),
         uint64_t(p->bbs[black]),
         uint64_t(p->bbs[king(white)] | p->bbs[king(black)]),
@@ -38,6 +42,48 @@ unsigned probe(Position *p) {
         unsigned(p->last_irreversible),
         unsigned(p->castling),
         unsigned(p->enpassant),
-        bool(p->color)
+        !bool(p->color)
     );
+    if (result == TB_LOSS) {
+        return SYZYGY_LOSS;
+    } else if (result == TB_BLESSED_LOSS || result == TB_DRAW || result == TB_CURSED_WIN) {
+        return SYZYGY_DRAW;
+    } else if (result == TB_WIN) {
+        return SYZYGY_WIN;
+    } else if (result == TB_RESULT_FAILED) {
+        return SYZYGY_FAIL;
+    }
+    assert(false);
+    return -1;
+}
+
+int probe_syzygy_dtz(Position *p, Move *move) {
+    if (count(p->board) > SYZYGY_LARGEST) {
+        return SYZYGY_FAIL;
+    }
+
+    unsigned result = tb_probe_root(
+        uint64_t(p->bbs[white]),
+        uint64_t(p->bbs[black]),
+        uint64_t(p->bbs[king(white)] | p->bbs[king(black)]),
+        uint64_t(p->bbs[queen(white)] | p->bbs[queen(black)]),
+        uint64_t(p->bbs[rook(white)] | p->bbs[rook(black)]),
+        uint64_t(p->bbs[bishop(white)] | p->bbs[bishop(black)]),
+        uint64_t(p->bbs[knight(white)] | p->bbs[knight(black)]),
+        uint64_t(p->bbs[pawn(white)] | p->bbs[pawn(black)]),
+        unsigned(p->last_irreversible),
+        unsigned(p->castling),
+        unsigned(p->enpassant),
+        !bool(p->color),
+        nullptr
+    );
+
+    if (result == TB_RESULT_STALEMATE || result == TB_RESULT_CHECKMATE || result == TB_RESULT_FAILED) {
+        return SYZYGY_FAIL;
+    }
+
+    move = 0;
+
+    assert(false);
+    return -1;
 }

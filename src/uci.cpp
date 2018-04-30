@@ -240,25 +240,27 @@ void cmd_position() {
 }
 
 void setoption() {
-    if (word_list[1] == "name") {
-        if (word_list[2] == "Hash") {
-            if (word_list[3] == "value") {
-                int megabytes = stoi(word_list[4]);
-                reset_tt(megabytes);
-            }
-        }
-        if (word_list[2] == "Threads") {
-            if (word_list[3] == "value") {
-                num_threads = std::min(MAX_THREADS, stoi(word_list[4]));
-            }
-        }
+    if (word_list[1] != "name" || word_list[3] != "value") {
+        return;
+    }
+    string name = word_list[2];
+    string value = word_list[4];
+
+    if (name == "Hash") {
+        reset_tt(stoi(value));
+    } else if (name == "Threads") {
+        num_threads = std::min(MAX_THREADS, stoi(value));
+    } else if (name == "SyzygyPath") {
+        init_syzygy(value);
     }
 }
 
 void tb() {
     // do tb
-    unsigned result = probe(root_position);
-    cout << result << endl;
+    // int result = probe_syzygy(root_position);
+    // cout << result << endl;
+    string path = "/Users/can/syzygy";
+    init_syzygy(path.c_str());
 }
 
 void ucinewgame() {

@@ -26,13 +26,14 @@
 #include "see.h"
 #include <sys/time.h>
 #include <algorithm>
+#include "tb.h"
 
 bool main_thread_finished = false;
 
 void print_pv() {
     int i = 0;
     while (i < main_pv.size) {
-        std::cout << move_to_str_stock(main_pv.moves[i]) << " ";
+        std::cout << move_to_str(main_pv.moves[i]) << " ";
         ++i;
     }
     std::cout << std::endl;
@@ -297,6 +298,29 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
         }
     }
 
+    // Probe tablebase
+    if (!root_node && tb_initialized) {
+        if (count(p->board) <= SYZYGY_LARGEST && p->last_irreversible == 0 && p->castling == 0) {
+            int wdl = probe_syzygy_wdl(p);
+
+            if (wdl != SYZYGY_FAIL) {
+                ++p->my_thread->tb_hits;
+                int tb_score = wdl == SYZYGY_LOSS ? MATED_IN_MAX_PLY + ply + 1
+                             : wdl == SYZYGY_WIN  ? MATE_IN_MAX_PLY  - ply - 1 : 0;
+
+                uint8_t flag = wdl == SYZYGY_LOSS ? FLAG_ALPHA
+                             : wdl == SYZYGY_WIN  ? FLAG_BETA : FLAG_EXACT;
+
+                if (flag == FLAG_EXACT ||
+                    (flag == FLAG_BETA && tb_score >= beta) ||
+                    (flag == FLAG_ALPHA && tb_score <= alpha)) {
+                        set_tte(p->hash, 0, MAX_PLY - 1, score_to_tt(tb_score, ply), flag);
+                        return tb_score;
+                    }
+            }
+        }
+    }
+
     bool is_null = ply > 0 && p->board == (p-1)->board;
     if (!in_check) {
         if (depth < 1) {
@@ -509,6 +533,13 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
 }
 
 int think(Position *p) {
+    // First check TB
+    Move tb_move;
+    if (probe_syzygy_dtz(p, &tb_move) != SYZYGY_FAIL) {
+        std::cout << "bestmove " << move_to_str(tb_move) << std::endl;
+        return;
+    }
+
     Material *eval_material = get_material(p);
     bool in_check = is_checked(p);
     MoveGen movegen = new_movegen(p, 0, 0, 0, NORMAL_SEARCH, in_check);
@@ -518,7 +549,7 @@ int think(Position *p) {
         generate_moves<ALL>(&movegen, p);
     }
     if (eval_material->endgame_type == DRAW_ENDGAME || (in_check && movegen.tail - movegen.head == 1)) {
-        std::cout << "bestmove " << move_to_str_stock(movegen.moves[0].move) << std::endl;
+        std::cout << "bestmove " << move_to_str(movegen.moves[0].move) << std::endl;
         return 0;
     }
     int previous_guess = -MATE;
@@ -530,7 +561,7 @@ int think(Position *p) {
 
     std::memset(pv_at_depth, 0, sizeof(pv_at_depth));
 
-    initialize_nodes();
+    initialize_threads();
     while (depth <= think_depth_limit) {
         int aspiration = 20;
         int alpha = -MATE;
@@ -589,7 +620,9 @@ int think(Position *p) {
 
         gettimeofday(&curr_time, NULL);
         int time_taken = time_passed();
-        std::cout << "info depth " << depth << " seldepth " << main_pv.size << " multipv 1 tbhits 0 score ";
+        uint64_t tb_hits = sum_tb_hits();
+        std::cout << "info depth " << depth << " seldepth " << main_pv.size << " multipv 1 ";
+        std::cout << "tbhits " << tb_hits << " score ";
 
         if (current_guess <= MATED_IN_MAX_PLY) {
             std::cout << "mate " << ((-MATE - current_guess) / 2 + 1);
@@ -618,9 +651,9 @@ int think(Position *p) {
         ++depth;
     }
     gettimeofday(&curr_time, NULL);
-    std::cout << "bestmove " << move_to_str_stock(main_pv.moves[0]);
+    std::cout << "bestmove " << move_to_str(main_pv.moves[0]);
     if (main_pv.size > 1) {
-        std::cout << " ponder " << move_to_str_stock(main_pv.moves[1]);
+        std::cout << " ponder " << move_to_str(main_pv.moves[1]);
     }
     std::cout << std::endl;
     return current_guess;

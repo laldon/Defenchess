@@ -28,7 +28,7 @@ inline Move _movecast(Square from, Square to, Square type_o) {
     return (from << 10) | (to << 4) | type_o;
 }
 
-std::string move_to_str_stock(Move m);
+std::string move_to_str(Move m);
 
 std::string i2n(int i);
 std::string int_to_notation(int a);
