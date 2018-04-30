@@ -19,14 +19,32 @@
 #include "tb.h"
 #include "fathom/src/tbprobe.h"
 #include "bitboard.h"
+#include "move.h"
+#include <iostream>
 
 bool tb_initialized = false;
-unsigned SYZYGY_LARGEST = 0;
+int SYZYGY_LARGEST = 0;
 
 void init_syzygy(std::string syzygy_path) {
     tb_initialized = tb_init(syzygy_path.c_str());
-    SYZYGY_LARGEST = TB_LARGEST;
-    std::cout << tb_initialized << std::endl;
+    if (tb_initialized) {
+        SYZYGY_LARGEST = int(TB_LARGEST);
+        std::cout << "tb initialized" << std::endl;
+    }
+}
+
+int result_to_wdl(unsigned result) {
+    if (result == TB_LOSS) {
+        return SYZYGY_LOSS;
+    } else if (result == TB_BLESSED_LOSS || result == TB_DRAW || result == TB_CURSED_WIN) {
+        return SYZYGY_DRAW;
+    } else if (result == TB_WIN) {
+        return SYZYGY_WIN;
+    } else if (result == TB_RESULT_FAILED) {
+        return SYZYGY_FAIL;
+    }
+    assert(false);
+    return -1;
 }
 
 int probe_syzygy_wdl(Position *p) {
@@ -44,17 +62,7 @@ int probe_syzygy_wdl(Position *p) {
         unsigned(p->enpassant),
         !bool(p->color)
     );
-    if (result == TB_LOSS) {
-        return SYZYGY_LOSS;
-    } else if (result == TB_BLESSED_LOSS || result == TB_DRAW || result == TB_CURSED_WIN) {
-        return SYZYGY_DRAW;
-    } else if (result == TB_WIN) {
-        return SYZYGY_WIN;
-    } else if (result == TB_RESULT_FAILED) {
-        return SYZYGY_FAIL;
-    }
-    assert(false);
-    return -1;
+    return result_to_wdl(result);
 }
 
 int probe_syzygy_dtz(Position *p, Move *move) {
@@ -82,8 +90,28 @@ int probe_syzygy_dtz(Position *p, Move *move) {
         return SYZYGY_FAIL;
     }
 
-    move = 0;
+    unsigned wdl = TB_GET_WDL(result);
+    Square from = Square(TB_GET_FROM(result));
+    Square to = Square(TB_GET_TO(result));
+    Square enpassant = Square(TB_GET_EP(result));
+    unsigned promo = TB_GET_PROMOTES(result);
 
-    assert(false);
-    return -1;
+    if (promo != TB_PROMOTES_NONE) {
+        *move = _movecast(from, to, PROMOTION);
+        if (promo == TB_PROMOTES_QUEEN) {
+            *move = _promoteq(*move);
+        } else if (promo == TB_PROMOTES_ROOK) {
+            *move = _promoter(*move);
+        } else if (promo == TB_PROMOTES_BISHOP) {
+            *move = _promoteb(*move);
+        } else if (promo == TB_PROMOTES_KNIGHT) {
+            *move = _promoten(*move);
+        }
+    } else if (enpassant != 0) {
+        *move = _movecast(from, p->enpassant, ENPASSANT);
+    } else {
+        *move = _movecast(from, to, NORMAL);
+    }
+
+    return result_to_wdl(wdl);
 }

@@ -34,7 +34,7 @@ inline int lmr(bool is_pv, int depth, int num_moves) {
     return reductions[is_pv][std::min(depth, 63)][std::min(num_moves, 63)];
 }
 
-int think(Position *p);
+void think(Position *p);
 void print_pv();
 
 #endif

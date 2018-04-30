@@ -23,7 +23,7 @@
 #include <iostream>
 
 extern bool tb_initialized;
-extern unsigned SYZYGY_LARGEST;
+extern int SYZYGY_LARGEST;
 
 enum SyzygyResult {
     SYZYGY_LOSS,
@@ -34,6 +34,6 @@ enum SyzygyResult {
 
 void init_syzygy(std::string syzygy_path);
 int probe_syzygy_wdl(Position *p);
-int probe_syzygy_dtz(Position *p);
+int probe_syzygy_dtz(Position *p, Move *move);
 
 #endif

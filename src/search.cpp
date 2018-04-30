@@ -301,7 +301,14 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
     // Probe tablebase
     if (!root_node && tb_initialized) {
         if (count(p->board) <= SYZYGY_LARGEST && p->last_irreversible == 0 && p->castling == 0) {
-            int wdl = probe_syzygy_wdl(p);
+            int wdl = -111;
+            try {
+                wdl = probe_syzygy_wdl(p);
+            } catch (...) {
+                show_position_png(p);
+                std::cout << "color: " << int(p->color) << std::endl;
+                exit(1);
+            }
 
             if (wdl != SYZYGY_FAIL) {
                 ++p->my_thread->tb_hits;
@@ -532,10 +539,14 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
     return best_score;
 }
 
-int think(Position *p) {
+void think(Position *p) {
     // First check TB
     Move tb_move;
-    if (probe_syzygy_dtz(p, &tb_move) != SYZYGY_FAIL) {
+    int wdl = probe_syzygy_dtz(p, &tb_move);
+    if (wdl != SYZYGY_FAIL) {
+        int tb_score = wdl == SYZYGY_LOSS ? -TABLEBASE_WIN
+                     : wdl == SYZYGY_WIN  ?  TABLEBASE_WIN : 0;
+        std::cout << "info score cp " << (tb_score * 100 / PAWN_END) << std::endl;
         std::cout << "bestmove " << move_to_str(tb_move) << std::endl;
         return;
     }
@@ -550,7 +561,7 @@ int think(Position *p) {
     }
     if (eval_material->endgame_type == DRAW_ENDGAME || (in_check && movegen.tail - movegen.head == 1)) {
         std::cout << "bestmove " << move_to_str(movegen.moves[0].move) << std::endl;
-        return 0;
+        return;
     }
     int previous_guess = -MATE;
     int current_guess = -MATE;
@@ -656,5 +667,5 @@ int think(Position *p) {
         std::cout << " ponder " << move_to_str(main_pv.moves[1]);
     }
     std::cout << std::endl;
-    return current_guess;
+    return;
 }
