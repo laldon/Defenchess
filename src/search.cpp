@@ -547,9 +547,7 @@ void think(Position *p) {
         // Clear root moves
         root_moves.clear();
 
-        TTEntry *tte = get_tte(p->hash);
-        Move tte_move = tte ? tte->move : 0;
-        MoveGen movegen = new_movegen(p, 0, 0, tte_move, NORMAL_SEARCH, in_check);
+        MoveGen movegen = new_movegen(p, 0, 0, 0, NORMAL_SEARCH, in_check);
         while (Move move = next_move(&movegen)) {
             if (is_legal(p, move)) {
                 root_moves.push_back(move);            
