@@ -279,12 +279,12 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
 
     p->current_move = 0;
 
+    Move tte_move = 0;
     int tte_score;
     tte_score = p->static_eval = UNDEFINED;
     TTEntry *tte = get_tte(p->hash);
-    Move tte_move = root_node ? root_moves[0] :
-                    tte       ? tte->move     : 0;
     if (tte) {
+        tte_move = tte->move;
         if (tte->depth >= depth) {
             tte_score = tt_to_score(tte->score, ply);
             if (!is_principal &&
