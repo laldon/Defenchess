@@ -143,45 +143,8 @@ unsigned TB_LARGEST = 0;
 #define rook_attacks(s, occ)    TB_ROOK_ATTACKS(s, occ)
 #define rook_attacks_init()     /* NOP */
 #define queen_attacks(s, occ)   TB_QUEEN_ATTACKS(s, occ)
-#ifdef TB_PAWN_ATTACKS
 #define pawn_attacks(s, c)      TB_PAWN_ATTACKS(s, c)
 #define pawn_attacks_init()     /* NOP */
-#else       /* TB_PAWN_ATTACKS */
-
-static uint64_t pawn_attacks_table[2][64];
-
-#define pawn_attacks(s, c)      pawn_attacks_table[(c)][(s)]
-
-static void pawn_attacks_init(void)
-{
-    for (unsigned s = 0; s < 64; s++)
-    {
-        int r = rank(s);
-        int f = file(s);
-
-        uint64_t b = 0;
-        if (r != 7)
-        {
-            if (f != 0)
-                b |= board(square(r+1, f-1));
-            if (f != 7)
-                b |= board(square(r+1, f+1));
-        }
-        pawn_attacks_table[1][s] = b;
-
-        b = 0;
-        if (r != 0)
-        {
-            if (f != 0)
-                b |= board(square(r-1, f-1));
-            if (f != 7)
-                b |= board(square(r-1, f+1));
-        }
-        pawn_attacks_table[0][s] = b;
-    }
-}
-
-#endif      /* TB_PAWN_ATTACKS */
 
 static void prt_str(const struct pos *pos, char *str, bool mirror)
 {

@@ -153,6 +153,6 @@
  *       nothing.  Etc.
  * NOTE: This definition must not include en passant captures.
  */
-/* #define TB_PAWN_ATTACKS(square, color)   <DEFINITION> */
+#define TB_PAWN_ATTACKS(square, color)   PAWN_CAPTURE_MASK[(square)][(!color)]
 
 #endif
