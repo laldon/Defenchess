@@ -166,7 +166,6 @@ const uint64_t _pawn_line_white = 0x000000000000FF00;
 const uint64_t _pawn_line_black = 0x00FF000000000000;
 
 const int
-    TABLEBASE_WIN = 8000,
     KNOWN_WIN = 10000,
     MATE = 32000,
     INFINITE = 32001,
