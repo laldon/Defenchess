@@ -538,15 +538,15 @@ void think(Position *p) {
     // First check TB
     Move tb_move;
     bool in_check = is_checked(p);
+
+    // Clear root moves
+    root_moves.clear();
+
     int wdl = probe_syzygy_dtz(p, &tb_move);
     if (wdl != SYZYGY_FAIL) {
         root_moves.push_back(tb_move);
     } else {
         Material *eval_material = get_material(p);
-
-        // Clear root moves
-        root_moves.clear();
-
         MoveGen movegen = new_movegen(p, 0, 0, 0, NORMAL_SEARCH, in_check);
         while (Move move = next_move(&movegen)) {
             if (is_legal(p, move)) {
