@@ -305,15 +305,15 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
         if (wdl != SYZYGY_FAIL) {
             ++p->my_thread->tb_hits;
             int tb_score = wdl == SYZYGY_LOSS ? MATED_IN_MAX_PLY + ply + 1
-                            : wdl == SYZYGY_WIN  ? MATE_IN_MAX_PLY  - ply - 1 : 0;
+                         : wdl == SYZYGY_WIN  ? MATE_IN_MAX_PLY  - ply - 1 : 0;
 
             uint8_t flag = wdl == SYZYGY_LOSS ? FLAG_ALPHA
-                            : wdl == SYZYGY_WIN  ? FLAG_BETA : FLAG_EXACT;
+                         : wdl == SYZYGY_WIN  ? FLAG_BETA : FLAG_EXACT;
 
             if (flag == FLAG_EXACT ||
                 (flag == FLAG_BETA && tb_score >= beta) ||
                 (flag == FLAG_ALPHA && tb_score <= alpha)) {
-                    set_tte(p->hash, 0, MAX_PLY - 1, score_to_tt(tb_score, ply), flag);
+                    set_tte(p->hash, 0, std::min(depth + 6, MAX_PLY - 1), score_to_tt(tb_score, ply), flag);
                     return tb_score;
                 }
         }
