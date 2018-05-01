@@ -25,6 +25,9 @@
 #ifndef TBCONFIG_H
 #define TBCONFIG_H
 
+#include "../bitboard.h"
+#include "../target.h"
+
 /****************************************************************************/
 /* BUILD CONFIG:                                                            */
 /****************************************************************************/
@@ -34,14 +37,14 @@
  * implementation. To do this supply a macro or function definition
  * here:
  */
-/* #define TB_CUSTOM_POP_COUNT(x) <DEFINITION> */
+#define TB_CUSTOM_POP_COUNT(x) count(x)
 
 /*
  * Define TB_CUSTOM_LSB to override the internal lsb
  * implementation. To do this supply a macro or function definition
  * here:
  */
-/* #define TB_CUSTOM_LSB(x) <DEFINITION> */
+#define TB_CUSTOM_LSB(x) lsb(x)
 
 /*
  * Define TB_CUSTOM_BSWAP32 to override the internal bswap32
@@ -114,25 +117,25 @@
  * Define TB_KING_ATTACKS(square) to return the king attacks bitboard for a
  * king at `square'.
  */
-/* #define TB_KING_ATTACKS(square)          <DEFINITION> */
+#define TB_KING_ATTACKS(square)          generate_king_targets((square))
 
 /*
  * Define TB_KNIGHT_ATTACKS(square) to return the knight attacks bitboard for
  * a knight at `square'.
  */
-/* #define TB_KNIGHT_ATTACKS(square)        <DEFINITION> */
+#define TB_KNIGHT_ATTACKS(square)        generate_knight_targets((square))
 
 /*
  * Define TB_ROOK_ATTACKS(square, occ) to return the rook attacks bitboard
  * for a rook at `square' assuming the given `occ' occupancy bitboard.
  */
-/* #define TB_ROOK_ATTACKS(square, occ)     <DEFINITION> */
+#define TB_ROOK_ATTACKS(square, occ)     generate_rook_targets((occ), (square))
 
 /*
  * Define TB_BISHOP_ATTACKS(square, occ) to return the bishop attacks bitboard
  * for a bishop at `square' assuming the given `occ' occupancy bitboard.
  */
-/* #define TB_BISHOP_ATTACKS(square, occ)   <DEFINITION> */
+#define TB_BISHOP_ATTACKS(square, occ)   generate_bishop_targets((occ), (square))
 
 /*
  * Define TB_QUEEN_ATTACKS(square, occ) to return the queen attacks bitboard
@@ -140,7 +143,7 @@
  * NOTE: If no definition is provided then tbprobe will use:
  *       TB_ROOK_ATTACKS(square, occ) | TB_BISHOP_ATTACKS(square, occ)
  */
-/* #define TB_QUEEN_ATTACKS(square, occ)    <DEFINITION> */
+#define TB_QUEEN_ATTACKS(square, occ)    generate_queen_targets((occ), (square))
 
 /*
  * Define TB_PAWN_ATTACKS(square, color) to return the pawn attacks bitboard

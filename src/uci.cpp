@@ -287,6 +287,10 @@ void run_command(string s) {
         stop();
     if (s == "see")
         see();
+    if (s == "tb") {
+        const string path = "/Users/can/syzygy";
+        init_syzygy(path.c_str());
+    }
 }
 
 void loop() {
