@@ -69,7 +69,7 @@ int probe_syzygy_wdl(Position *p) {
 }
 
 int probe_syzygy_dtz(Position *p, Move *move) {
-    if (count(p->board) > SYZYGY_LARGEST || p->last_irreversible != 0 || p->castling != 0) {
+    if (count(p->board) > SYZYGY_LARGEST) {
         return SYZYGY_FAIL;
     }
 
