@@ -17,7 +17,7 @@
 */
 
 #include "tb.h"
-#include "fathom/src/tbprobe.h"
+#include "fathom/tbprobe.h"
 #include "bitboard.h"
 #include "move.h"
 #include <iostream>
