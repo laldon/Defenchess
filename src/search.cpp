@@ -544,6 +544,12 @@ void think(Position *p) {
 
     int wdl = probe_syzygy_dtz(p, &tb_move);
     if (wdl != SYZYGY_FAIL) {
+        // Return draws immediately
+        if (wdl == SYZYGY_DRAW) {
+            std::cout << "info cp 0" << std::endl;
+            std::cout << "bestmove " << move_to_str(tb_move) << std::endl;
+            return;
+        }
         root_moves.push_back(tb_move);
     } else {
         Material *eval_material = get_material(p);
