@@ -254,6 +254,9 @@ MoveGen new_movegen(Position *p, int ply, int depth, Move tte_move, uint8_t type
     }
 
     SearchThread *my_thread = p->my_thread;
+    if (!tm) {
+        ++movegen_stage;
+    }
     MoveGen movegen = {
         {}, // Moves
         p, // Position

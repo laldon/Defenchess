@@ -211,6 +211,11 @@ int alpha_beta_quiescence(Position *p, int alpha, int beta, int depth, bool in_c
         }
 
         Position *position = make_move(p, move);
+        if (in_check && is_checked_color(position, p->color)) {
+            --num_moves;
+            undo_move(position);
+            continue;
+        }
         ++p->my_thread->nodes;
         int score = -alpha_beta_quiescence(position, -beta, -alpha, depth - 1, checks);
         undo_move(position);
@@ -417,6 +422,11 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
         }
 
         Position *position = make_move(p, move);
+        if (in_check && is_checked_color(position, p->color)) {
+            --num_moves;
+            undo_move(position);
+            continue;
+        }
         ++p->my_thread->nodes;
         p->current_move = move;
         if (!capture_or_promo && quiets_count < 64) {
