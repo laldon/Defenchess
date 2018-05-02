@@ -99,7 +99,7 @@ void debug() {
     show_position_png(root_position);
     MoveGen movegen = new_movegen(root_position, 0, 0, 0, NORMAL_SEARCH, is_checked(root_position));
     while (Move move = next_move(&movegen)) {
-        cout << move_to_str_stock(move) << " ";
+        cout << move_to_str(move) << " ";
     }
     cout << endl;
 }
