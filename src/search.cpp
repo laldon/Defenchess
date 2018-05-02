@@ -546,7 +546,7 @@ void think(Position *p) {
     if (wdl != SYZYGY_FAIL) {
         // Return draws immediately
         if (wdl == SYZYGY_DRAW) {
-            std::cout << "info cp 0" << std::endl;
+            std::cout << "info score cp 0" << std::endl;
             std::cout << "bestmove " << move_to_str(tb_move) << std::endl;
             return;
         }
