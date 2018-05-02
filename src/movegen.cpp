@@ -233,7 +233,8 @@ MoveGen new_movegen(Position *p, int ply, int depth, Move tte_move, uint8_t type
     int movegen_stage;
     Move tm;
     if (in_check) {
-        tm = tte_move && is_pseudolegal(p, tte_move) ? tte_move : Move(0);
+        // tm = tte_move && is_pseudolegal(p, tte_move) ? tte_move : Move(0);
+        tm = Move(0);
         movegen_stage = EVASION_TTE_MOVE;
     } else {
         if (type == NORMAL_SEARCH) {
