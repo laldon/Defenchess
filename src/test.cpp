@@ -50,13 +50,13 @@ void perft_test(){
         Position *st_pos = import_fen(fen[i].c_str());
         Position *p = st_pos;
 
-        // MoveGen movegen = new_movegen(p, 0, 0, 0, NORMAL_SEARCH, in_check);
-        // generate_moves<ALL>(&movegen, p);
         // Generate all moves and test pseudo legal
         // for (Square a = A1; a <= H8; ++a) {
         //     for (Square b = A1; b <= H8; ++b) {
         //         Move gen_move = _movecast(a, b, NORMAL);
         //         if (is_pseudolegal(p, gen_move)) {
+        //             MoveGen movegen = new_movegen(p, 0, 0, 0, NORMAL_SEARCH, is_checked(p));
+        //             generate_moves<ALL>(&movegen, p);
         //             bool found = false;
         //             for (uint8_t move_idx = movegen.head; move_idx < movegen.tail; ++move_idx) {
         //                 if (movegen.moves[move_idx].move == gen_move) {
@@ -137,7 +137,6 @@ uint64_t Perft(int depth, Position *p, bool root, bool in_check) {
         } else {
             //bool checks = gives_check(p, m);
             Position *new_p = make_move(p, m);
-
             bool checks = is_checked(new_p);
             if (is_leaf) {
                 MoveGen movegen_leaf = new_movegen(new_p, PLY(new_p), depth, 0, PERFT_SEARCH, false);
