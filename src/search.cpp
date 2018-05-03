@@ -424,7 +424,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
 
                     undo_move(position);
                     if (value >= rbeta) {
-                        return value;
+                        return rbeta;
                     }
                 }
             }
