@@ -236,7 +236,10 @@ int alpha_beta_quiescence(Position *p, int alpha, int beta, int depth, bool in_c
         ++p->my_thread->nodes;
         int score = -alpha_beta_quiescence(position, -beta, -alpha, depth - 1, checks);
         undo_move(position);
-        assert(score >= -MATE && score <= MATE);
+        assert(is_timeout || main_thread_finished || (score >= -MATE && score <= MATE));
+
+        if (is_timeout)
+            return TIMEOUT;
 
         if (score > best_score) {
             best_score = score;
@@ -414,13 +417,15 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
                     bool checks = gives_check(p, move);
 
                     Position *position = make_move(p, move);
-                    if(-alpha_beta(position, -rbeta, -rbeta + 1, 0, checks, !cut) >= rbeta &&
-                       -alpha_beta(position, -rbeta, -rbeta + 1, depth - 4, checks, !cut) >= rbeta) {
-                            undo_move(position);
-                            return beta;
-                        }
+                    int value = -alpha_beta_quiescence(position, -rbeta, -rbeta + 1, -1, checks);
+                    if (value >= rbeta) {
+                        value = -alpha_beta(position, -rbeta, -rbeta + 1, depth - 4, checks, !cut);
+                    }
 
                     undo_move(position);
+                    if (value >= rbeta) {
+                        return value;
+                    }
                 }
             }
         }
