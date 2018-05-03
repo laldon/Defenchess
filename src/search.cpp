@@ -437,7 +437,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
             }
         }
 
-        if (!root_node && !is_legal(p, move)) {
+        if (!is_legal(p, move)) {
             --num_moves;
             continue;
         }
