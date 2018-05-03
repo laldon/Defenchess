@@ -65,7 +65,7 @@ void perft_test(){
         //                 }
         //             }
         //             if (!found) {
-        //                 std::cout << move_to_str_stock(gen_move) << std::endl;
+        //                 std::cout << move_to_str(gen_move) << std::endl;
         //                 show_position_png(p);
         //             }
         //             assert(found);
@@ -153,7 +153,7 @@ uint64_t Perft(int depth, Position *p, bool root, bool in_check) {
             undo_move(new_p);
         }
         if (root) {
-            std::cout << move_to_str_stock(m) << ": " << move_nodes << std::endl;
+            std::cout << move_to_str(m) << ": " << move_nodes << std::endl;
         }
     }
 

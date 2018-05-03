@@ -28,6 +28,7 @@
 #include <vector>
 #include <map>
 #include <iostream>
+#include "tb.h"
 
 using namespace std;
 
@@ -80,6 +81,7 @@ void uci() {
 #endif
     cout << "option name Hash type spin default 256 min 1 max 16384" << endl;
     cout << "option name Threads type spin default 1 min 1 max " << MAX_THREADS << endl;
+    cout << "option name SyzygyPath type string default <empty>" << endl;
     cout << "uciok" << endl;
 }
 
@@ -97,7 +99,7 @@ void debug() {
     show_position_png(root_position);
     MoveGen movegen = new_movegen(root_position, 0, 0, 0, NORMAL_SEARCH, is_checked(root_position));
     while (Move move = next_move(&movegen)) {
-        cout << move_to_str_stock(move) << " ";
+        cout << move_to_str(move) << " ";
     }
     cout << endl;
 }
@@ -245,18 +247,18 @@ void cmd_position() {
 }
 
 void setoption() {
-    if (word_list[1] == "name") {
-        if (word_list[2] == "Hash") {
-            if (word_list[3] == "value") {
-                int megabytes = stoi(word_list[4]);
-                reset_tt(megabytes);
-            }
-        }
-        if (word_list[2] == "Threads") {
-            if (word_list[3] == "value") {
-                num_threads = std::min(MAX_THREADS, stoi(word_list[4]));
-            }
-        }
+    if (word_list[1] != "name" || word_list[3] != "value") {
+        return;
+    }
+    string name = word_list[2];
+    string value = word_list[4];
+
+    if (name == "Hash") {
+        reset_tt(stoi(value));
+    } else if (name == "Threads") {
+        num_threads = std::min(MAX_THREADS, stoi(value));
+    } else if (name == "SyzygyPath") {
+        init_syzygy(value);
     }
 }
 

@@ -30,7 +30,7 @@ bool scored_move_compare_greater(ScoredMove lhs, ScoredMove rhs) { return lhs.sc
 void print_movegen(MoveGen *movegen) {
     std::cout << "movegen: ";
     for (int i = movegen->head; i < movegen->tail; i++) {
-        std::cout << move_to_str_stock(movegen->moves[i].move) << "(" << movegen->moves[i].score << "), ";
+        std::cout << move_to_str(movegen->moves[i].move) << "(" << movegen->moves[i].score << "), ";
     }
     std::cout << std::endl;
 }
