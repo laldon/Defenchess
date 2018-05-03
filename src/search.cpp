@@ -409,22 +409,17 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
             MoveGen movegen = new_movegen(p, ply, depth, tte_move, NORMAL_SEARCH, in_check);
 
             while ((move = next_move(&movegen)) != 0) {
-                if (!is_legal(p, move)) {
-                    continue;
-                }
-                p->current_move = move;
-                bool checks = gives_check(p, move);
-                Position *position = make_move(p, move);
-                int q_value = -alpha_beta_quiescence(position, -rbeta, -rbeta + 1, -1, checks);
+                if (is_legal(p, move)) {
+                    p->current_move = move;
+                    bool checks = gives_check(p, move);
 
-                if (q_value >= rbeta) {
-                    q_value = -alpha_beta(position, -rbeta, -rbeta + 1, depth - 4, checks, !cut);
-                }
+                    Position *position = make_move(p, move);
+                    int q_value = -alpha_beta(position, -rbeta, -rbeta + 1, depth - 4, checks, !cut);
+                    undo_move(position);
 
-                undo_move(position);
-
-                if (q_value >= rbeta) {
-                    return q_value;
+                    if (q_value >= rbeta) {
+                        return q_value;
+                    }
                 }
             }
         }
