@@ -376,6 +376,31 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
                     return beta;
             }
         }
+
+        // Probcut
+        if (depth >= 5 && abs(beta) < MATE_IN_MAX_PLY) {
+            int rbeta = std::min(beta + 120, INFINITE);
+            MoveGen movegen = new_movegen(p, ply, depth, tte_move, NORMAL_SEARCH, in_check);
+
+            while (Move move = next_move(&movegen)) {
+                if (!is_legal(p, move)) {
+                    continue;
+                }
+                p->current_move = move;
+                Position *position = make_move(p, move);
+                int q_value = -alpha_beta_quiescence(position, -rbeta, -rbeta + 1, -1, is_checked(position));
+
+                if (q_value >= rbeta) {
+                    q_value = -alpha_beta(position, -rbeta, -rbeta + 1, depth - 4, is_checked(position), !cut);
+                }
+
+                undo_move(position);
+
+                if (q_value >= rbeta) {
+                    return q_value;
+                }
+            }
+        }
     }
 
     // Internal iterative deepening
