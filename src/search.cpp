@@ -119,10 +119,30 @@ void save_killer(Position *p, Move move, int depth, int ply, Move *quiets, int q
     }
 }
 
+bool check_time(Position *p) {
+    if (is_main_thread(p)) {
+        if (timer_count == 0) {
+            gettimeofday(&curr_time, NULL);
+            if (time_passed() > myremain) {
+                is_timeout = true;
+                return true;
+            }
+        }
+        ++timer_count;
+    } else if (main_thread_finished) {
+        return true;
+    }
+    return false;
+}
+
 int alpha_beta_quiescence(Position *p, int alpha, int beta, int depth, bool in_check) {
     assert(alpha >= -MATE && alpha < beta && beta <= MATE);
     assert(depth <= 0);
     assert(in_check == is_checked(p));
+
+    if (check_time(p)) {
+        return TIMEOUT;
+    }
 
     int ply = PLY(p);
     if (is_main_thread(p)) {
@@ -249,6 +269,11 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
     assert(-MATE <= alpha && alpha < beta && beta <= MATE);
     assert(0 <= depth);
     assert(in_check == is_checked(p));
+
+    if (check_time(p)) {
+        return TIMEOUT;
+    }
+
     int ply = PLY(p);
     if (is_main_thread(p)) {
         pv[ply].size = 0;
@@ -279,6 +304,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
 
     p->current_move = 0;
 
+    Move move;
     Move tte_move = 0;
     int tte_score;
     tte_score = p->static_eval = UNDEFINED;
@@ -382,13 +408,13 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
             int rbeta = std::min(beta + 120, MATE_IN_MAX_PLY - 1);
             MoveGen movegen = new_movegen(p, ply, depth, tte_move, NORMAL_SEARCH, in_check);
 
-            while (Move move = next_move(&movegen)) {
+            while ((move = next_move(&movegen)) != 0) {
                 if (!is_legal(p, move)) {
                     continue;
                 }
                 p->current_move = move;
                 Position *position = make_move(p, move);
-                int q_value = -alpha_beta_quiescence(position, -rbeta, -rbeta + 1, -1, is_checked(position));
+                int q_value = -alpha_beta_quiescence(position, -rbeta, -rbeta + 1, 0, is_checked(position));
 
                 if (q_value >= rbeta) {
                     q_value = -alpha_beta(position, -rbeta, -rbeta + 1, depth - 4, is_checked(position), !cut);
@@ -427,7 +453,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
         improving = p->static_eval >= (p-2)->static_eval || (p-2)->static_eval == UNDEFINED;
     }
 
-    while (Move move = next_move(&movegen)) {
+    while ((move = next_move(&movegen)) != 0) {
         assert(is_pseudolegal(p, move));
         assert(!is_move_empty(move));
         assert(0 < depth || in_check);
@@ -512,19 +538,6 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
 
         if (is_timeout)
             return TIMEOUT;
-
-        if (is_main_thread(p)) {
-            if (timer_count == 0) {
-                gettimeofday(&curr_time, NULL);
-                if (time_passed() > myremain) {
-                    is_timeout = true;
-                    return TIMEOUT;
-                }
-            }
-            ++timer_count;
-        } else if (main_thread_finished) {
-            return TIMEOUT;
-        }
 
         if (score > best_score) {
             best_score = score;
