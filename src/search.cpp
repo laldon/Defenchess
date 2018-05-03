@@ -414,12 +414,13 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
                     bool checks = gives_check(p, move);
 
                     Position *position = make_move(p, move);
-                    int q_value = -alpha_beta(position, -rbeta, -rbeta + 1, depth - 4, checks, !cut);
-                    undo_move(position);
+                    if(-alpha_beta(position, -rbeta, -rbeta + 1, 0, checks, !cut) >= rbeta &&
+                       -alpha_beta(position, -rbeta, -rbeta + 1, depth - 4, checks, !cut) >= rbeta) {
+                            undo_move(position);
+                            return beta;
+                        }
 
-                    if (q_value >= rbeta) {
-                        return q_value;
-                    }
+                    undo_move(position);
                 }
             }
         }
