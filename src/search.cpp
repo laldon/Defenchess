@@ -405,7 +405,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
 
         // Probcut
         if (depth >= 5 && abs(beta) < MATE_IN_MAX_PLY) {
-            int rbeta = std::min(beta + 100, MATE_IN_MAX_PLY - 1);
+            int rbeta = std::min(beta + 120, MATE_IN_MAX_PLY - 1);
             MoveGen movegen = new_movegen(p, ply, depth, tte_move, NORMAL_SEARCH, in_check);
 
             while ((move = next_move(&movegen)) != 0) {
