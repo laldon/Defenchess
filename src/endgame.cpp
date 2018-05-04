@@ -58,7 +58,7 @@ int evaluate_kxk(Position *p) {
     Square winner_king = p->king_index[winner];
     Square loser_king = p->king_index[loser];
 
-    int result = p->non_pawn_material[winner] +
+    int result = p->info->non_pawn_material[winner] +
                  push_to_edges[loser_king] +
                  push_close[distance(winner_king, loser_king)] +
                  KNOWN_WIN;

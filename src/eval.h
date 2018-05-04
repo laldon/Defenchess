@@ -60,7 +60,7 @@ int evaluate(Position *p);
 void init_eval();
 
 inline Color winning_side(Position *p) {
-    return p->score.endgame > 0 ? white : black;
+    return p->info->score.endgame > 0 ? white : black;
 }
 
 inline std::string score_str(Score sc){

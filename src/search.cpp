@@ -178,7 +178,7 @@ int alpha_beta_quiescence(Position *p, Metadata *metadata, int alpha, int beta, 
         best_score = -INFINITE;
     }
 
-    MoveGen movegen = new_movegen(p, metadata, ply, new_depth, tte_move, QUIESCENCE_SEARCH, in_check);
+    MoveGen movegen = new_movegen(p, 0, ply, new_depth, tte_move, QUIESCENCE_SEARCH, in_check);
 
     Move best_move = 0;
     int num_moves = 0;
@@ -383,16 +383,17 @@ int alpha_beta(Position *p, Metadata *metadata, int alpha, int beta, int depth, 
 
     // Internal iterative deepening
     int new_depth = depth;
-    if (!tte_move && depth >= 6 && (is_principal || p->static_eval + 150 >= beta)) {
+    if (!tte_move && depth >= 6 && (is_principal || metadata->static_eval + 150 >= beta)) {
         new_depth = 3 * depth / 4 - 2;
-        alpha_beta(p, alpha, beta, new_depth, in_check, cut);
-        tte = get_tte(p->hash);
+        alpha_beta(p, metadata+1, alpha, beta, new_depth, in_check, cut);
+        tte = get_tte(info->hash);
         if (tte) {
             tte_move = tte->move;
         }
     }
 
-    MoveGen movegen = new_movegen(p, ply, depth, tte_move, NORMAL_SEARCH, in_check);
+    Square prev_to = move_to((metadata-1)->current_move);
+    MoveGen movegen = new_movegen(p, prev_to, ply, depth, tte_move, NORMAL_SEARCH, in_check);
 
     Move best_move = 0;
     Move quiets[64];
@@ -402,7 +403,7 @@ int alpha_beta(Position *p, Metadata *metadata, int alpha, int beta, int depth, 
 
     bool improving = false;
     if (ply > 1) {
-        improving = p->static_eval >= (p-2)->static_eval || (p-2)->static_eval == UNDEFINED;
+        improving = metadata->static_eval >= (metadata-2)->static_eval || (metadata-2)->static_eval == UNDEFINED;
     }
 
     while (Move move = next_move(&movegen)) {
@@ -426,7 +427,7 @@ int alpha_beta(Position *p, Metadata *metadata, int alpha, int beta, int depth, 
         }
         new_depth = depth - 1 + extension;
 
-        if (!root_node && !important && p->non_pawn_material[p->color] && best_score > MATED_IN_MAX_PLY) {
+        if (!root_node && !important && info->non_pawn_material[p->color] && best_score > MATED_IN_MAX_PLY) {
             int reduction = lmr(is_principal, depth, num_moves);
             if (depth < 8 && num_moves >= futility_move_counts[improving][depth]) {
                 continue;
@@ -435,7 +436,7 @@ int alpha_beta(Position *p, Metadata *metadata, int alpha, int beta, int depth, 
             int lmr_depth = std::max(new_depth - reduction, 0);
 
             // Futility pruning: parent node
-            if (lmr_depth < 7 && p->static_eval + 150 + 120 * lmr_depth <= alpha) {
+            if (lmr_depth < 7 && metadata->static_eval + 150 + 120 * lmr_depth <= alpha) {
                 continue;
             }
         }
@@ -445,9 +446,9 @@ int alpha_beta(Position *p, Metadata *metadata, int alpha, int beta, int depth, 
             continue;
         }
 
-        Position *position = make_move(p, move);
+        make_move(p, move);
         ++p->my_thread->nodes;
-        p->current_move = move;
+        metadata->current_move = move;
         if (!capture_or_promo && quiets_count < 64) {
             quiets[quiets_count++] = move;
         }
@@ -455,7 +456,7 @@ int alpha_beta(Position *p, Metadata *metadata, int alpha, int beta, int depth, 
         int score;
 
         if (is_principal && num_moves == 1) {
-            score = -alpha_beta(position, -beta, -alpha, std::max(0, new_depth), checks, false);
+            score = -alpha_beta(p, metadata+1, -beta, -alpha, std::max(0, new_depth), checks, false);
         } else {
             // late move reductions
             int reduction = 0;
@@ -474,18 +475,18 @@ int alpha_beta(Position *p, Metadata *metadata, int alpha, int beta, int depth, 
                 reduction = std::max(reduction, 0);
             }
 
-            score = -alpha_beta(position, -alpha - 1, -alpha, std::max(0, new_depth - reduction), checks, true);
+            score = -alpha_beta(p, metadata+1, -alpha - 1, -alpha, std::max(0, new_depth - reduction), checks, true);
 
             // Verify late move reduction and re-run the search if necessary.
             if (reduction > 0 && score > alpha) {
-                score = -alpha_beta(position, -alpha - 1, -alpha, std::max(0, new_depth), checks, !cut);
+                score = -alpha_beta(p, metadata+1, -alpha - 1, -alpha, std::max(0, new_depth), checks, !cut);
             }
 
             if (is_principal && score > alpha && score < beta) {
-                score = -alpha_beta(position, -beta, -alpha, std::max(0, new_depth), checks, false);
+                score = -alpha_beta(p, metadata+1, -beta, -alpha, std::max(0, new_depth), checks, false);
             }
         }
-        undo_move(position);
+        undo_move(p, move);
         assert(is_timeout || main_thread_finished || (score >= -MATE && score <= MATE));
 
         if (is_timeout)
@@ -515,9 +516,9 @@ int alpha_beta(Position *p, Metadata *metadata, int alpha, int beta, int depth, 
                     alpha = score;
                 } else {
                     if (!capture_or_promo) {
-                        save_killer(p, move, depth, ply, quiets, quiets_count - 1);
+                        save_killer(p, metadata-1, move, depth, ply, quiets, quiets_count - 1);
                     }
-                    set_tte(p->hash, move, depth, score_to_tt(score, ply), FLAG_BETA);
+                    set_tte(info->hash, move, depth, score_to_tt(score, ply), FLAG_BETA);
                     return score;
                 }
             }
@@ -529,9 +530,9 @@ int alpha_beta(Position *p, Metadata *metadata, int alpha, int beta, int depth, 
     }
 
     uint8_t flag = is_principal && best_move ? FLAG_EXACT : FLAG_ALPHA;
-    set_tte(p->hash, best_move, depth, score_to_tt(best_score, ply), flag);
+    set_tte(info->hash, best_move, depth, score_to_tt(best_score, ply), flag);
     if (!in_check && best_move && !is_capture_or_promotion(p, best_move)) {
-        save_killer(p, best_move, depth, ply, quiets, quiets_count - 1);
+        save_killer(p, metadata-1, best_move, depth, ply, quiets, quiets_count - 1);
     }
     assert(best_score >= -MATE && best_score <= MATE);
     return best_score;
@@ -556,7 +557,7 @@ void think(Position *p) {
         root_moves.push_back(tb_move);
     } else {
         Material *eval_material = get_material(p);
-        MoveGen movegen = new_movegen(p, 0, 0, 0, NORMAL_SEARCH, in_check);
+        MoveGen movegen = new_movegen(p, 0, 0, 0, 0, NORMAL_SEARCH, in_check);
         while (Move move = next_move(&movegen)) {
             if (is_legal(p, move)) {
                 root_moves.push_back(move);            
@@ -594,10 +595,12 @@ void think(Position *p) {
             for (int i = 1; i < num_threads; ++i) {
                 SearchThread *t = &search_threads[i];
                 int thread_depth = depth + (i % 4);
-                t->thread_obj = std::thread(alpha_beta, &(t->positions[t->search_ply]), alpha, beta, thread_depth, in_check, false);
+                t->thread_obj = std::thread(alpha_beta, &(t->position), alpha, beta, thread_depth, in_check, false);
             }
 
-            score = alpha_beta(p, alpha, beta, depth, in_check, false);
+            SearchThread *main_thread = p->my_thread;
+            Metadata *metadata = &main_thread->metadatas[0];
+            score = alpha_beta(p, metadata, alpha, beta, depth, in_check, false);
             main_thread_finished = true;
 
             // Stop threads

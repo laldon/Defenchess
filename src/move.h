@@ -59,10 +59,10 @@ inline bool is_checked_color(Position *p, Color color) {
 
 inline bool is_legal(Position *p, Move m) {
     if (move_type(m) == ENPASSANT) {
-        Position *new_p = make_move(p, m);
+        make_move(p, m);
         // Check if the side that made the move is in check
-        bool checked = is_checked_color(new_p, p->color);
-        undo_move(new_p);
+        bool checked = is_checked_color(p, p->color);
+        undo_move(p, m);
         return !checked;
     }
 
@@ -74,7 +74,7 @@ inline bool is_legal(Position *p, Move m) {
         return std::abs(from - to) == 2 || !targeted_from_with_king(p, p->board, p->color, to);
     }
 
-    Bitboard pinned = p->pinned[p->color];
+    Bitboard pinned = p->info->pinned[p->color];
     return pinned == 0 || !on(pinned, from) || (FROMTO_MASK[from][to] & p->bbs[king(p->color)]);
 }
 
@@ -88,7 +88,7 @@ inline bool is_position_valid(Position *p) {
     if (!is_king(p->pieces[p->king_index[white]]) || !is_king(p->pieces[p->king_index[black]]))
         return false;
 
-    if (p->enpassant != 0 && rank(p->enpassant, p->color) != RANK_6)
+    if (p->info->enpassant != 0 && rank(p->info->enpassant, p->color) != RANK_6)
         return false;
 
     return true;
@@ -109,7 +109,7 @@ inline Move _promoten(Move m) {
 
 inline bool can_king_castle(Position *p) {
     Color curr_c = p->color;
-    if (p->castling & can_king_castle_mask[curr_c]) {
+    if (p->info->castling & can_king_castle_mask[curr_c]) {
         if (!(KING_CASTLE_MASK[curr_c] & p->board)) {
             int sth = lsb(KING_CASTLE_MASK[curr_c]);
             if (!targeted_from_with_king(p, p->board, curr_c, sth-1) &&
@@ -124,7 +124,7 @@ inline bool can_king_castle(Position *p) {
 
 inline bool can_queen_castle(Position *p) {
     Color curr_c = p->color;
-    if (p->castling & can_queen_castle_mask[curr_c]) {
+    if (p->info->castling & can_queen_castle_mask[curr_c]) {
         if (!(QUEEN_CASTLE_MASK[curr_c] & p->board)) {
             int sth = lsb(QUEEN_CASTLE_MASK[curr_c]);
             if (!targeted_from_with_king(p, p->board, curr_c, sth+1) &&

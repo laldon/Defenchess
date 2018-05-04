@@ -59,7 +59,7 @@ Move uci2move(Position *p, string s) {
     if (is_pawn(piece)) {
         if (row(to) == 0 || row(to) == 7) {
             type_o = PROMOTION;
-        } else if (to == p->enpassant) {
+        } else if (to == p->info->enpassant) {
             type_o = ENPASSANT;
         }
     } else if (is_king(piece) && std::abs(from - to) == 2) {
@@ -97,7 +97,7 @@ void perft() {
 void debug() {
     cout << bitstring(root_position->board);
     show_position_png(root_position);
-    MoveGen movegen = new_movegen(root_position, 0, 0, 0, NORMAL_SEARCH, is_checked(root_position));
+    MoveGen movegen = new_movegen(root_position, 0, 0, 0, 0, NORMAL_SEARCH, is_checked(root_position));
     while (Move move = next_move(&movegen)) {
         cout << move_to_str(move) << " ";
     }
@@ -199,7 +199,7 @@ void startpos() {
                 }
             }
             if (m && is_pseudolegal(root_position, m)) {
-                root_position = make_move(root_position, m);
+                make_move(root_position, m);
             }
         }
     }
@@ -227,7 +227,7 @@ void cmd_fen() {
                 }
             }
             if (m && is_pseudolegal(root_position, m)) {
-                root_position = make_move(root_position, m);
+                make_move(root_position, m);
             }
         }
     }

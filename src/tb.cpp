@@ -47,7 +47,8 @@ int result_to_wdl(unsigned result) {
 }
 
 int probe_syzygy_wdl(Position *p) {
-    if (count(p->board) > SYZYGY_LARGEST || p->last_irreversible != 0 || p->castling != 0) {
+    Info *info = p->info;
+    if (count(p->board) > SYZYGY_LARGEST || info->last_irreversible != 0 || info->castling != 0) {
         return SYZYGY_FAIL;
     }
 
@@ -60,15 +61,16 @@ int probe_syzygy_wdl(Position *p) {
         uint64_t(p->bbs[bishop(white)] | p->bbs[bishop(black)]),
         uint64_t(p->bbs[knight(white)] | p->bbs[knight(black)]),
         uint64_t(p->bbs[pawn(white)] | p->bbs[pawn(black)]),
-        unsigned(p->last_irreversible),
-        unsigned(p->castling),
-        unsigned(p->enpassant),
+        unsigned(info->last_irreversible),
+        unsigned(info->castling),
+        unsigned(info->enpassant),
         !bool(p->color)
     );
     return result_to_wdl(result);
 }
 
 int probe_syzygy_dtz(Position *p, Move *move) {
+    Info *info = p->info;
     if (count(p->board) > SYZYGY_LARGEST) {
         return SYZYGY_FAIL;
     }
@@ -82,9 +84,9 @@ int probe_syzygy_dtz(Position *p, Move *move) {
         uint64_t(p->bbs[bishop(white)] | p->bbs[bishop(black)]),
         uint64_t(p->bbs[knight(white)] | p->bbs[knight(black)]),
         uint64_t(p->bbs[pawn(white)] | p->bbs[pawn(black)]),
-        unsigned(p->last_irreversible),
-        unsigned(p->castling),
-        unsigned(p->enpassant),
+        unsigned(info->last_irreversible),
+        unsigned(info->castling),
+        unsigned(info->enpassant),
         !bool(p->color),
         nullptr
     );
@@ -111,7 +113,7 @@ int probe_syzygy_dtz(Position *p, Move *move) {
             *move = _promoten(*move);
         }
     } else if (enpassant != 0) {
-        *move = _movecast(from, p->enpassant, ENPASSANT);
+        *move = _movecast(from, info->enpassant, ENPASSANT);
     } else {
         *move = _movecast(from, to, NORMAL);
     }

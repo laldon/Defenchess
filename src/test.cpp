@@ -129,28 +129,28 @@ uint64_t Perft(int depth, Position *p, bool root, bool in_check) {
     uint64_t move_nodes = 0, nodes = 0;
     const bool is_leaf = depth == 2;
 
-    MoveGen movegen = new_movegen(p, PLY(p), depth, 0, NORMAL_SEARCH, in_check);
+    MoveGen movegen = new_movegen(p, 0, 0, depth, 0, NORMAL_SEARCH, in_check);
     while (Move m = next_move(&movegen)) {
         if (root && depth == 1) {
             move_nodes = 1;
             ++nodes;
         } else {
             //bool checks = gives_check(p, m);
-            Position *new_p = make_move(p, m);
-            bool checks = is_checked(new_p);
+            make_move(p, m);
+            bool checks = is_checked(p);
             if (is_leaf) {
-                MoveGen movegen_leaf = new_movegen(new_p, PLY(new_p), depth, 0, PERFT_SEARCH, false);
+                MoveGen movegen_leaf = new_movegen(p, 0, 0, depth, 0, PERFT_SEARCH, false);
                 if (checks) {
-                    generate_evasions(&movegen_leaf, new_p);
+                    generate_evasions(&movegen_leaf, p);
                 } else {
-                    generate_moves<ALL>(&movegen_leaf, new_p);
+                    generate_moves<ALL>(&movegen_leaf, p);
                 }
                 move_nodes = movegen_leaf.tail;
             } else {
-                move_nodes = Perft(depth - 1, new_p, false, checks);
+                move_nodes = Perft(depth - 1, p, false, checks);
             }
             nodes += move_nodes;
-            undo_move(new_p);
+            undo_move(p, m);
         }
         if (root) {
             std::cout << move_to_str(m) << ": " << move_nodes << std::endl;

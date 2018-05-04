@@ -179,7 +179,7 @@ void evaluate_pawn_init(Evaluation *eval, Position *p, Color color) {
 }
 
 void evaluate_pawns(Evaluation *eval, Position *p) {
-    PawnTTEntry *pawntte = get_pawntte(p->pawn_hash);
+    PawnTTEntry *pawntte = get_pawntte(p->info->pawn_hash);
     if (pawntte) {
         evaluate_pawn_init(eval, p, white);
         evaluate_pawn_init(eval, p, black);
@@ -195,7 +195,7 @@ void evaluate_pawns(Evaluation *eval, Position *p) {
     Score blacky = evaluate_pawn_structure(eval, p, black);
     eval->score_pawn = whitey - blacky;
 
-    set_pawntte(p->pawn_hash, eval);
+    set_pawntte(p->info->pawn_hash, eval);
 }
 
 Score evaluate_bishop(Evaluation *eval, Position *p, Color color) {
@@ -208,7 +208,7 @@ Score evaluate_bishop(Evaluation *eval, Position *p, Color color) {
         eval->bishop_squares[color] = outpost;
         Bitboard bishop_targets = generate_bishop_targets(p->board ^ p->bbs[queen(color)], outpost);
 
-        if (p->pinned[color] & bfi[outpost])
+        if (p->info->pinned[color] & bfi[outpost])
             bishop_targets &= BETWEEN_MASK[p->king_index[color]][outpost];
 
         // Protected bishop
@@ -252,7 +252,7 @@ Score evaluate_knight(Evaluation *eval, Position *p, Color color) {
         Square outpost = pop(&my_knights);
         Bitboard knight_targets = generate_knight_targets(outpost);
 
-        if (p->pinned[color] & bfi[outpost])
+        if (p->info->pinned[color] & bfi[outpost])
             knight_targets &= BETWEEN_MASK[p->king_index[color]][outpost];
 
         // Protected knight
@@ -294,7 +294,7 @@ Score evaluate_rook(Evaluation *eval, Position *p, Color color) {
         int rook_column = col(outpost);
         Bitboard rook_targets = generate_rook_targets(p->board ^ (p->bbs[queen(color)] | p->bbs[rook(color)]), outpost);
 
-        if (p->pinned[color] & bfi[outpost])
+        if (p->info->pinned[color] & bfi[outpost])
             rook_targets &= BETWEEN_MASK[p->king_index[color]][outpost];
 
         // Mobility
@@ -347,7 +347,7 @@ Score evaluate_queen(Evaluation *eval, Position *p, Color color) {
         Square outpost = pop(&my_queens);
         Bitboard queen_targets = generate_queen_targets(p->board, outpost);
 
-        if (p->pinned[color] & bfi[outpost])
+        if (p->info->pinned[color] & bfi[outpost])
             queen_targets &= BETWEEN_MASK[p->king_index[color]][outpost];
 
         // Mobility
@@ -399,10 +399,10 @@ Score evaluate_king(Evaluation *eval, Position *p, Color color) {
     Bitboard king_targets = generate_king_targets(outpost);
 
     int pawn_shelter_value = evaluate_pawn_shelter(p, color, outpost);
-    if (p->castling & can_king_castle_mask[color]) {
+    if (p->info->castling & can_king_castle_mask[color]) {
         pawn_shelter_value = std::max(pawn_shelter_value, evaluate_pawn_shelter(p, color, relative_square(G1, color)));
     }
-    if (p->castling & can_queen_castle_mask[color]) {
+    if (p->info->castling & can_queen_castle_mask[color]) {
         pawn_shelter_value = std::max(pawn_shelter_value, evaluate_pawn_shelter(p, color, relative_square(C1, color)));
     }
     king_score.midgame += pawn_shelter_value;
@@ -422,7 +422,7 @@ Score evaluate_king(Evaluation *eval, Position *p, Color color) {
         king_danger += eval->num_king_attackers[color] * eval->king_zone_score[color] / 12;
         king_danger += eval->num_king_zone_attacks[color] * king_zone_attack_penalty;
 
-        if (p->pinned[color]) {
+        if (p->info->pinned[color]) {
             king_danger += 6;
         }
 
@@ -675,9 +675,10 @@ int scaling_factor(Evaluation *eval, Position *p, Material *eval_material) {
 
     Color winner = winning_side(p);
     Color loser = opponent_color(winner);
+    Info *info = p->info;
 
     if (eval->num_pieces[pawn(winner)] <= 1 &&
-        p->non_pawn_material[winner] <= p->non_pawn_material[loser] + piece_values[white_bishop]) {
+        info->non_pawn_material[winner] <= info->non_pawn_material[loser] + piece_values[white_bishop]) {
             if (eval->num_pieces[pawn(winner)] == 0) {
                 return 4;
             }
@@ -687,7 +688,7 @@ int scaling_factor(Evaluation *eval, Position *p, Material *eval_material) {
     // Opposite bishops
     if (eval->num_pieces[white_bishop] == 1 && eval->num_pieces[black_bishop] == 1 &&
         opposite_colors(eval->bishop_squares[white], eval->bishop_squares[black])) {
-        if (p->non_pawn_material[white] == BISHOP_MID && p->non_pawn_material[black] == BISHOP_MID) {
+        if (info->non_pawn_material[white] == BISHOP_MID && info->non_pawn_material[black] == BISHOP_MID) {
             return 16;
         } else {
             return 24;
@@ -714,7 +715,7 @@ int evaluate(Position *p) {
         }
     }
 
-    eval.score += p->score;
+    eval.score += p->info->score;
 
     evaluate_pawns(&eval, p);
     eval.score += eval.score_pawn;
@@ -744,7 +745,7 @@ void print_eval(Position *p){
     evaluate_pawns(&eval, p);
     Score Pawn_score = eval.score_pawn;
 
-    Score Position_score = p->score;
+    Score Position_score = p->info->score;
 
     eval.score_white = 0;
     eval.score_black = 0;
@@ -802,7 +803,7 @@ void print_eval(Position *p){
     std::cout << "  Rook        Score : " << score_str(Rook_score[white]) << "|" << score_str(Rook_score[black]) << "|" << score_str(Rook_score[white] - Rook_score[black]) << std::endl;
     std::cout << "  Queen       Score : " << score_str(Queen_score[white]) << "|" << score_str(Queen_score[black]) << "|" << score_str(Queen_score[white] - Queen_score[black]) << std::endl;
 
-    std::cout << std::endl << "  Total       Score : " << score_str(whitey) << "|" << score_str(blacky) << "|" << score_str(eval.score_pawn + p->score + whitey - blacky + eval_material->score) << std::endl;
+    std::cout << std::endl << "  Total       Score : " << score_str(whitey) << "|" << score_str(blacky) << "|" << score_str(eval.score_pawn + p->info->score + whitey - blacky + eval_material->score) << std::endl;
     int CP = 100 * p->color == white ? evaluate(p) : -evaluate(p);
     double percentage = (double)(256 - eval_material->phase) / 256.0 * 100.0;
     std::cout << std::endl;

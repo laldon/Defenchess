@@ -25,7 +25,7 @@
 #include "target.h"
 #include <cstring>
 
-MoveGen new_movegen(Position *p, Metadata *metadata, int ply, int depth, Move tt_move, uint8_t type, bool in_check);
+MoveGen new_movegen(Position *p, Square prev_to, int ply, int depth, Move tt_move, uint8_t type, bool in_check);
 
 void generate_evasions(MoveGen *movegen, Position *p);
 void generate_king_evasions(MoveGen *movegen, Position *p);

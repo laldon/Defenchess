@@ -228,8 +228,7 @@ Move next_move(MoveGen *movegen) {
     return 0;
 }
 
-MoveGen new_movegen(Position *p, Metadata *metadata, int ply, int depth, Move tte_move, uint8_t type, bool in_check) {
-    Square prev_to = move_to((metadata-1)->current_move);
+MoveGen new_movegen(Position *p, Square prev_to, int ply, int depth, Move tte_move, uint8_t type, bool in_check) {
     int movegen_stage;
     Move tm;
     if (in_check) {
