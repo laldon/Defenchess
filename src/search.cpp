@@ -595,7 +595,8 @@ void think(Position *p) {
             for (int i = 1; i < num_threads; ++i) {
                 SearchThread *t = &search_threads[i];
                 int thread_depth = depth + (i % 4);
-                t->thread_obj = std::thread(alpha_beta, &(t->position), alpha, beta, thread_depth, in_check, false);
+                Metadata *metadata = &t->metadatas[0];
+                t->thread_obj = std::thread(alpha_beta, &(t->position), metadata, alpha, beta, thread_depth, in_check, false);
             }
 
             SearchThread *main_thread = p->my_thread;

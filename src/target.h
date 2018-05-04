@@ -42,7 +42,7 @@ Bitboard generate_pawn_targets(Position *p, Square index) {
         }
     }
     if (Type != SILENT) {
-        targets |= (p->bbs[opponent_color(color)] | bfi_enpassant[p->enpassant]) & (PAWN_CAPTURE_MASK[index][color]);
+        targets |= (p->bbs[opponent_color(color)] | bfi_enpassant[p->info->enpassant]) & (PAWN_CAPTURE_MASK[index][color]);
     }
     return targets;
 }

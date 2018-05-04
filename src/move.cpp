@@ -123,6 +123,9 @@ void make_move(Position *p, Move move) {
     Move m_type = move_type(move);
     Piece captured = m_type == ENPASSANT ? pawn(opponent) : p->pieces[to];
 
+    if (!(piece_color(piece) == curr_c)) {
+        std::cout << "piece: " << int(piece) << ", color: " << int(curr_c) << std::endl;
+    }
     assert(piece_color(piece) == curr_c);
     assert(!is_king(captured));
 
@@ -178,6 +181,7 @@ void make_move(Position *p, Move move) {
         new_info->hash ^= castlingHash[castling_rights];
     }
 
+    new_info->captured = captured;
     new_info->pinned[white] = pinned_piece_squares(p, white);
     new_info->pinned[black] = pinned_piece_squares(p, black);
 
@@ -213,7 +217,10 @@ void undo_move(Position *p, Move move) {
     Color color = p->color;
     Square from = move_from(move);
     Square to = move_to(move);
-    Piece piece = p->pieces[from];
+    Piece piece = p->pieces[to];
+
+    assert(!is_king(info->captured));
+    assert(p->pieces[from] == empty);
 
     if (move_type(move) == NORMAL) {
         move_piece(p, to, from, piece, color);
@@ -232,6 +239,10 @@ void undo_move(Position *p, Move move) {
         insert_piece(p, rook_from, rook(color));
     } else { // Enpassant
         move_piece(p, to, from, piece, color);
+        assert(is_pawn(piece));
+        assert(to == info->previous->enpassant);
+        assert(rank(to, color) == RANK_6);
+        assert(info->captured == pawn(opponent_color(color)));
         insert_piece(p, pawn_backward(to, color), info->captured);
     }
     p->info = info->previous;
