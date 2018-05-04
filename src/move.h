@@ -61,7 +61,7 @@ inline bool is_legal(Position *p, Move m) {
     if (move_type(m) == ENPASSANT) {
         make_move(p, m);
         // Check if the side that made the move is in check
-        bool checked = is_checked_color(p, p->color);
+        bool checked = is_checked_color(p, opponent_color(p->color));
         undo_move(p, m);
         return !checked;
     }

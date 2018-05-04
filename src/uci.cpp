@@ -102,6 +102,7 @@ void debug() {
         cout << move_to_str(move) << " ";
     }
     cout << endl;
+    cout << "enpassant: " << int(root_position->info->enpassant) << endl;
 }
 
 void quit() {

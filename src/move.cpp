@@ -185,7 +185,7 @@ void make_move(Position *p, Move move) {
     new_info->pinned[white] = pinned_piece_squares(p, white);
     new_info->pinned[black] = pinned_piece_squares(p, black);
 
-    assert(is_position_valid(p));
+    // assert(is_position_valid(p));
 }
 
 void make_null_move(Position *p) {
@@ -222,6 +222,9 @@ void undo_move(Position *p, Move move) {
     assert(!is_king(info->captured));
     assert(p->pieces[from] == empty);
 
+    if (is_king(piece)) {
+        p->king_index[color] = from;
+    }
     if (move_type(move) == NORMAL) {
         move_piece(p, to, from, piece, color);
         if (info->captured) {
