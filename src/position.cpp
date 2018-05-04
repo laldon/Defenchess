@@ -20,40 +20,42 @@
 #include <iostream>
 
 void calculate_score(Position *p) {
-    p->score = Score{0, 0};
+    p->info->score = Score{0, 0};
     Bitboard board = p->board;
 
     while (board) {
         Square outpost = pop(&board);
         Piece piece = p->pieces[outpost];
-        p->score += pst[piece][outpost];
+        p->info->score += pst[piece][outpost];
     }
 }
 
 void calculate_hash(Position *p) {
     Bitboard board = p->board;
+    Info *info = p->info;
 
     while(board) {
         Square square = pop(&board);
         Piece piece = p->pieces[square];
         uint64_t hash = polyglotArray[polyglotPieces[piece] + square];
-        p->hash ^= hash;
+        info->hash ^= hash;
         if (is_pawn(piece)) {
-            p->pawn_hash ^= hash;
+            info->pawn_hash ^= hash;
         }
     }
 
-    p->hash ^= castlingHash[p->castling];
-    if (p->enpassant) {
-        p->hash ^= polyglotEnpassant[col(p->enpassant)];
+    info->hash ^= castlingHash[info->castling];
+    if (info->enpassant) {
+        info->hash ^= polyglotEnpassant[col(info->enpassant)];
     }
     if (p->color == white) {
-        p->hash ^= polyglotWhite;
+        info->hash ^= polyglotWhite;
     }
 }
 
 void calculate_material(Position *p) {
-    p->material_index = 0;
+    Info *info = p->info;
+    p->info->material_index = 0;
     int wp = count(p->bbs[pawn(white)]);
     int wn = count(p->bbs[knight(white)]);
     int wb = count(p->bbs[bishop(white)]);
@@ -77,14 +79,14 @@ void calculate_material(Position *p) {
                 wp * material_balance[white_pawn]   +
                 bp * material_balance[black_pawn];
 
-    p->material_index = index;
+    info->material_index = index;
 
-    p->non_pawn_material[white] = wn * KNIGHT_MID +
+    info->non_pawn_material[white] = wn * KNIGHT_MID +
                                   wb * BISHOP_MID +
                                   wr * ROOK_MID +
                                   wq * QUEEN_MID;
 
-    p->non_pawn_material[black] = bn * KNIGHT_MID +
+    info->non_pawn_material[black] = bn * KNIGHT_MID +
                                   bb * BISHOP_MID +
                                   br * ROOK_MID +
                                   bq * QUEEN_MID;
@@ -138,7 +140,9 @@ Position* import_fen(const char* fen){
     root_ply = 2 * (halfmove_clock - 1) + color;
 
     SearchThread *main_thread = &search_threads[0];
-    Position *p = &(main_thread->positions[root_ply]);
+    Info *info = &(main_thread->infos[root_ply]);
+    Position *p = &main_thread->position;
+    p->info = info;
     main_thread->search_ply = root_ply;
     p->color = color;
 
@@ -222,20 +226,20 @@ Position* import_fen(const char* fen){
         
     }
 
-    p->castling = 0;
+    info->castling = 0;
     for (char *ch = matches[2]; *ch; ch++) {
         switch(*ch) {
         case 'K':
-            p->castling |= 1;
+            info->castling |= 1;
             break;
         case 'Q':
-            p->castling |= 2;
+            info->castling |= 2;
             break;
         case 'k':
-            p->castling |= 4;
+            info->castling |= 4;
             break;
         case 'q':
-            p->castling |= 8;
+            info->castling |= 8;
             break;
         case '-':
             break;
@@ -243,20 +247,20 @@ Position* import_fen(const char* fen){
     }
 
     if (matches[3][0] != '-') {
-        p->enpassant = (Square)(((matches[3][1] - '1') << 3) + matches[3][0] - 'a');
+        info->enpassant = (Square)(((matches[3][1] - '1') << 3) + matches[3][0] - 'a');
     } else {
-        p->enpassant = 0;
+        info->enpassant = 0;
     }
 
     if (matches[4]) {
-        p->last_irreversible = atoi(matches[4]);
+        info->last_irreversible = atoi(matches[4]);
     } else {
-        p->last_irreversible = 0;
+        info->last_irreversible = 0;
     }
     p->board = p->bbs[white] | p->bbs[black];
-    p->hash = p->pawn_hash = 0;
-    p->pinned[white] = pinned_piece_squares(p, white);
-    p->pinned[black] = pinned_piece_squares(p, black);
+    info->hash = info->pawn_hash = 0;
+    info->pinned[white] = pinned_piece_squares(p, white);
+    info->pinned[black] = pinned_piece_squares(p, black);
     calculate_score(p);
     calculate_hash(p);
     calculate_material(p);
@@ -267,7 +271,9 @@ Position* import_fen(const char* fen){
 
 Position* start_pos(){
     SearchThread *main_thread = &search_threads[0];
-    Position *p = &(main_thread->positions[0]);
+    Info *info = &(main_thread->infos[root_ply]);
+    Position *p = &main_thread->position;
+    p->info = info;
 
     Bitboard white_occupied_bb = 0x000000000000FFFF;
     Bitboard black_occupied_bb = 0xFFFF000000000000;
@@ -308,16 +314,16 @@ Position* start_pos(){
     p->king_index[black] = E8;
     add_pieces(p);
     p->color = white;
-    p->castling = 15;
-    p->enpassant = 0;
-    p->hash = p->pawn_hash = 0;
+    info->castling = 15;
+    info->enpassant = 0;
+    info->hash = info->pawn_hash = 0;
     main_thread->search_ply = root_ply = 0;
-    p->pinned[white] = pinned_piece_squares(p, white);
-    p->pinned[black] = pinned_piece_squares(p, black);
+    info->pinned[white] = pinned_piece_squares(p, white);
+    info->pinned[black] = pinned_piece_squares(p, black);
     calculate_score(p);
     calculate_hash(p);
     calculate_material(p);
     p->my_thread = main_thread;
-    p->last_irreversible = 0;
+    info->last_irreversible = 0;
     return p;
 }

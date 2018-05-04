@@ -338,6 +338,7 @@ typedef struct Info {
     uint64_t hash;
     Bitboard pinned[2];
     Piece    captured;
+    Info     *previous;
 } Info;
 
 typedef struct CopiedInfo {
@@ -361,7 +362,7 @@ struct Position {
     SearchThread *my_thread;
 };
 
-const int position_size = sizeof(CopiedInfo);
+const int info_size = sizeof(CopiedInfo);
 
 typedef struct Evaluation {
     // Position *position;
@@ -423,7 +424,7 @@ const int material_balance[14] ={
     0, 0,            // Kings
 };
 
-inline Material *get_material(Position *p) { return &material_base[p->material_index]; }
+inline Material *get_material(Position *p) { return &material_base[p->info->material_index]; }
 
 enum SearchType {
     NORMAL_SEARCH = 0,
@@ -511,7 +512,8 @@ const MoveGen blank_movegen = {
 struct SearchThread {
     std::thread thread_obj;
     Metadata    metadata[1024];
-    Info        info[1024];
+    Info        infos[1024];
+    Position    position;
     int         thread_id;
     int         search_ply;
     Move        killers[MAX_PLY + 1][2];
@@ -621,6 +623,8 @@ inline Square mirror_square(Square s, Color color) {return color == white ? s : 
 inline Square relative_square(Square s, Color color) {return color == white ? s : s ^ A8;}
 
 inline Square pawn_forward(Square s, Color color) {return color == white ? s + 8 : s - 8;}
+
+inline Square pawn_backward(Square s, Color color) {return color == white ? s - 8 : s + 8;}
 
 inline int move_type(Move m) {return m & 3;}
 

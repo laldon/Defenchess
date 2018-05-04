@@ -23,6 +23,24 @@
 #include "movegen.h"
 #include <cstring>
 
+void insert_piece(Position *p, Square at, Piece piece) {
+    Color color = piece_color(piece);
+    p->pieces[at] = piece;
+    Bitboard bb = bfi[at];
+    p->bbs[piece] |= bb;
+    p->bbs[color] |= bb;
+    p->board |= bb;
+}
+
+void remove_piece(Position *p, Square at, Piece piece) {
+    Color color = piece_color(piece);
+    p->pieces[at] = empty;
+    Bitboard bb = bfi[at];
+    p->bbs[piece] ^= bb;
+    p->bbs[color] ^= bb;
+    p->board ^= bb;
+}
+
 void move_piece(Position *p, Square from, Square to, Piece piece, Color curr_c) {
     p->pieces[from] = empty;
     p->pieces[to] = piece;
@@ -32,11 +50,12 @@ void move_piece(Position *p, Square from, Square to, Piece piece, Color curr_c) 
     p->board ^= from_to;
 
     uint64_t h = polyglotCombined[piece][from] ^ polyglotCombined[piece][to];
-    p->hash ^= h;
+    Info *info = p->info;
+    info->hash ^= h;
     if (is_pawn(piece)) {
-        p->pawn_hash ^= h;
+        info->pawn_hash ^= h;
     }
-    p->score += pst[piece][to] - pst[piece][from];
+    info->score += pst[piece][to] - pst[piece][from];
 }
 
 void capture(Position *p, Square to, Piece captured, Color opponent) {
@@ -45,14 +64,15 @@ void capture(Position *p, Square to, Piece captured, Color opponent) {
     p->board ^= bfi[to];
 
     uint64_t h = polyglotCombined[captured][to];
-    p->hash ^= h;
+    Info *info = p->info;
+    info->hash ^= h;
     if (is_pawn(captured)) {
-        p->pawn_hash ^= h;
+        info->pawn_hash ^= h;
     } else {
-        p->non_pawn_material[opponent] -= piece_values[captured];
+        info->non_pawn_material[opponent] -= piece_values[captured];
     }
-    p->material_index -= material_balance[captured];
-    p->score -= pst[captured][to];
+    info->material_index -= material_balance[captured];
+    info->score -= pst[captured][to];
 }
 
 void capture_enpassant(Position *p, Square to, Square enpassant_to, Piece captured, Color opponent) {
@@ -62,10 +82,11 @@ void capture_enpassant(Position *p, Square to, Square enpassant_to, Piece captur
     p->board ^= bfi[enpassant_to];
 
     uint64_t h = polyglotCombined[captured][to];
-    p->hash ^= h;
-    p->pawn_hash ^= h;
-    p->material_index -= material_balance[captured];
-    p->score -= pst[captured][to];
+    Info *info = p->info;
+    info->hash ^= h;
+    info->pawn_hash ^= h;
+    info->material_index -= material_balance[captured];
+    info->score -= pst[captured][to];
 }
 
 void promote(Position *p, Square to, Piece pawn, Piece promotion_type, Color color) {
@@ -74,11 +95,12 @@ void promote(Position *p, Square to, Piece pawn, Piece promotion_type, Color col
     p->bbs[promotion_type] ^= bfi[to];
 
     uint64_t h = polyglotCombined[pawn][to];
-    p->pawn_hash ^= h;
-    p->hash ^= h ^ polyglotCombined[promotion_type][to];
-    p->material_index += material_balance[promotion_type] - material_balance[pawn];
-    p->non_pawn_material[color] += piece_values[promotion_type];
-    p->score += pst[promotion_type][to] - pst[pawn][to];
+    Info *info = p->info;
+    info->pawn_hash ^= h;
+    info->hash ^= h ^ polyglotCombined[promotion_type][to];
+    info->material_index += material_balance[promotion_type] - material_balance[pawn];
+    info->non_pawn_material[color] += piece_values[promotion_type];
+    info->score += pst[promotion_type][to] - pst[pawn][to];
 }
 
 
@@ -86,10 +108,13 @@ Position *make_move(Position *p, Move move) {
     SearchThread *my_thread = p->my_thread;
     ++my_thread->search_ply;
 
-    std::memcpy(my_thread->positions + my_thread->search_ply, my_thread->positions + my_thread->search_ply - 1, position_size);
+    Info *info = p->info;
+    std::memcpy(info + 1, info, info_size);
+    Info *new_info = info + 1;
+    p->info = new_info;
+    new_info->previous = info;
 
-    Position *new_p = &(my_thread->positions[my_thread->search_ply]);
-    ++new_p->last_irreversible;
+    ++new_info->last_irreversible;
     Square from = move_from(move);
     Square to = move_to(move);
     Color curr_c = p->color;
@@ -101,62 +126,62 @@ Position *make_move(Position *p, Move move) {
     assert(piece_color(piece) == curr_c);
     assert(!is_king(captured));
 
-    new_p->enpassant = 0;
-    new_p->hash = p->hash ^ polyglotWhite;
-    new_p->color = opponent;
+    new_info->enpassant = 0;
+    new_info->hash = info->hash ^ polyglotWhite;
+    p->color = opponent;
 
-    if (p->enpassant) {
+    if (info->enpassant) {
         // Clear the enpassant hash from the previous position
-        new_p->hash ^= polyglotEnpassant[col(p->enpassant)];
+        new_info->hash ^= polyglotEnpassant[col(info->enpassant)];
     }
 
     if (captured) {
-        new_p->last_irreversible = 0;
+        new_info->last_irreversible = 0;
         if (m_type == ENPASSANT) {
             Square enpassant_to = ENPASSANT_INDEX[to];
             assert(piece == pawn(curr_c));
-            assert(to == p->enpassant);
-            assert(p->enpassant != 0);
+            assert(to == info->enpassant);
+            assert(info->enpassant != 0);
             assert(rank(to, curr_c) == RANK_6);
             assert(p->pieces[to] == empty);
             assert(p->pieces[enpassant_to] == pawn(opponent));
 
-            capture_enpassant(new_p, to, enpassant_to, captured, opponent);
+            capture_enpassant(p, to, enpassant_to, captured, opponent);
         } else {
-            capture(new_p, to, captured, opponent);
+            capture(p, to, captured, opponent);
         }
     }
 
-    move_piece(new_p, from, to, piece, curr_c);
+    move_piece(p, from, to, piece, curr_c);
     if (is_king(piece)) {
-        new_p->king_index[curr_c] = to;
+        p->king_index[curr_c] = to;
         if (m_type == CASTLING) {
-            new_p->last_irreversible = 0;
-            move_piece(new_p, ROOK_MOVES_CASTLE_FROM[to], ROOK_MOVES_CASTLE_TO[to], ROOK_MOVES_CASTLE_PIECE[to], curr_c);
+            new_info->last_irreversible = 0;
+            move_piece(p, ROOK_MOVES_CASTLE_FROM[to], ROOK_MOVES_CASTLE_TO[to], ROOK_MOVES_CASTLE_PIECE[to], curr_c);
         }
     } else if (is_pawn(piece)) {
-        new_p->last_irreversible = 0;
+        new_info->last_irreversible = 0;
         if ((from ^ to) == 16) {
-            if (new_p->bbs[pawn(opponent)] & ADJACENT_MASK[to]) {
-                new_p->enpassant = ENPASSANT_INDEX[from];
-                new_p->hash ^= polyglotEnpassant[col(new_p->enpassant)];
+            if (p->bbs[pawn(opponent)] & ADJACENT_MASK[to]) {
+                new_info->enpassant = ENPASSANT_INDEX[from];
+                new_info->hash ^= polyglotEnpassant[col(new_info->enpassant)];
             }
         } else if (m_type == PROMOTION) {
             assert(rank(to, curr_c) == RANK_8);
-            promote(new_p, to, piece, promotion_piece(move, curr_c), curr_c);
+            promote(p, to, piece, promotion_piece(move, curr_c), curr_c);
         }
     }
 
-    if (new_p->castling && CASTLING_RIGHTS[from] & CASTLING_RIGHTS[to]) {
+    if (new_info->castling && CASTLING_RIGHTS[from] & CASTLING_RIGHTS[to]) {
         int castling_rights = CASTLING_RIGHTS[from] & CASTLING_RIGHTS[to];
-        new_p->castling &= castling_rights;
-        new_p->hash ^= castlingHash[castling_rights];
+        new_info->castling &= castling_rights;
+        new_info->hash ^= castlingHash[castling_rights];
     }
 
-    new_p->pinned[white] = pinned_piece_squares(new_p, white);
-    new_p->pinned[black] = pinned_piece_squares(new_p, black);
+    new_info->pinned[white] = pinned_piece_squares(p, white);
+    new_info->pinned[black] = pinned_piece_squares(p, black);
 
-    assert(is_position_valid(new_p));
+    assert(is_position_valid(p));
     return new_p;
 }
 
@@ -176,10 +201,38 @@ Position *make_null_move(Position *p) {
     return new_p;
 }
 
-Position *undo_move(Position *p) {
+Position *undo_move(Position *p, Move move) {
     SearchThread *my_thread = p->my_thread;
     --my_thread->search_ply;
-    return &(my_thread->positions[my_thread->search_ply]);
+    p->color ^= 1;
+
+    Info *info = p->info;
+    Color color = p->color;
+    Square from = move_from(move);
+    Square to = move_to(move);
+    Piece piece = p->pieces[from];
+
+    if (move_type(move) == NORMAL) {
+        move_piece(p, to, from, piece, color);
+        if (info->captured) {
+            insert_piece(p, to, info->captured);
+        }
+    } else if (move_type(move) == PROMOTION) {
+        remove_piece(p, to, piece);
+        insert_piece(p, from, pawn(color));
+    } else if (move_type(move) == CASTLING) {
+        Square rook_from = relative_square(col(to) == FILE_G ? H1 : A1, color);
+        Square rook_to = relative_square(col(to) == FILE_G ? F1 : C1, color);
+        remove_piece(p, to, piece);
+        remove_piece(p, rook_to, rook(color));
+        insert_piece(p, from, piece);
+        insert_piece(p, rook_from, rook(color));
+    } else { // Enpassant
+        move_piece(p, to, from, piece, color);
+        insert_piece(p, pawn_backward(to, color), info->captured);
+    }
+    --p->info;
+    return p;
 }
 
 bool is_pseudolegal(Position *p, Move move) {

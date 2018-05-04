@@ -25,7 +25,7 @@
 #include <cstring>
 
 Position* make_move(Position *p, Move m);
-Position* undo_move(Position *p);
+Position* undo_move(Position *p, Move m);
 Position* make_null_move(Position *p);
 
 bool is_pseudolegal(Position *p, Move m);
