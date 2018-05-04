@@ -320,45 +320,48 @@ typedef struct Score {
 
 extern Score pst[14][64];
 
-typedef struct CopyThingSize {
-    //? COPIED 
-    uint64_t     pawn_hash;
-    Piece        pieces[64];
-    Bitboard     bbs[14];
-    Score        score;
-    uint8_t      castling; // black_queenside | black_kingside | white_queenside | white_kingside
-    Square       king_index[2];
-    Bitboard     board;
-    uint8_t      last_irreversible;
-    int          material_index;
-    int          non_pawn_material[2];
-    SearchThread *my_thread;
-} CopyThingSize;
+typedef struct Metadata {
+    Move current_move;
+    int  static_eval;    
+} Metadata;
 
-struct Position {
-    //? COPIED 
-    uint64_t     pawn_hash;
-    Piece        pieces[64];
-    Bitboard     bbs[14];
-    Score        score;
-    uint8_t      castling; // black_queenside | black_kingside | white_queenside | white_kingside
-    Square       king_index[2];
-    Bitboard     board;
-    uint8_t      last_irreversible;
-    int          material_index;
-    int          non_pawn_material[2];
-    SearchThread *my_thread;
-
-    //! NOT TO COPY
-    Square  enpassant; 
-    Color    color;
-    int      static_eval;
-    Move     current_move;
+typedef struct Info {
+    // COPIED 
+    Score    score;
+    uint64_t pawn_hash;
+    uint8_t  castling; // black_queenside | black_kingside | white_queenside | white_kingside
+    uint8_t  last_irreversible;
+    int      material_index;
+    int      non_pawn_material[2];
+    Square   enpassant; 
+    // NOT TO COPY
     uint64_t hash;
     Bitboard pinned[2];
+    Piece    captured;
+} Info;
+
+typedef struct CopiedInfo {
+    // COPIED 
+    Score    score;
+    uint64_t pawn_hash;
+    uint8_t  castling; // black_queenside | black_kingside | white_queenside | white_kingside
+    uint8_t  last_irreversible;
+    int      material_index;
+    int      non_pawn_material[2];
+    Square   enpassant; 
+} CopiedInfo;
+
+struct Position {
+    Piece        pieces[64];
+    Bitboard     bbs[14];
+    Square       king_index[2];
+    Bitboard     board;
+    Info         *info;
+    Color        color;
+    SearchThread *my_thread;
 };
 
-const int position_size = sizeof(CopyThingSize);
+const int position_size = sizeof(CopiedInfo);
 
 typedef struct Evaluation {
     // Position *position;
@@ -507,7 +510,8 @@ const MoveGen blank_movegen = {
 
 struct SearchThread {
     std::thread thread_obj;
-    Position    positions[1024];
+    Metadata    metadata[1024];
+    Info        info[1024];
     int         thread_id;
     int         search_ply;
     Move        killers[MAX_PLY + 1][2];
