@@ -61,19 +61,20 @@ void set_pv(Move move, int ply) {
 }
 
 bool is_draw(Position *p) {
-    if (p->last_irreversible > 3){
-        if (p->last_irreversible > 99)
+    Info *info = p->info;
+    if (info->last_irreversible > 3){
+        if (info->last_irreversible > 99)
             return true;
 
         int repetition_count = 0;
         int index = p->my_thread->search_ply - 2;
-        while (index >= p->my_thread->search_ply - p->last_irreversible) {
+        while (index >= p->my_thread->search_ply - info->last_irreversible) {
             index -= 2;
-            Position *position = &(p->my_thread->positions[index]);
-            if (!position) {
+            Info *info_2 = &(p->my_thread->infos[index]);
+            if (!info_2) {
                 break;
             }
-            if (p->hash == position->hash) {
+            if (info->hash == info_2->hash) {
                 if (index >= root_ply)
                     return true;
 
@@ -90,7 +91,7 @@ bool is_draw(Position *p) {
     return false;
 }
 
-void save_killer(Position *p, Move move, int depth, int ply, Move *quiets, int quiets_count) {
+void save_killer(Position *p, Metadata *metadata, Move move, int depth, int ply, Move *quiets, int quiets_count) {
     SearchThread *my_thread = p->my_thread;
     if (move != my_thread->killers[ply][0]) {
         my_thread->killers[ply][1] = my_thread->killers[ply][0];
@@ -105,8 +106,8 @@ void save_killer(Position *p, Move move, int depth, int ply, Move *quiets, int q
         my_thread->history[p->pieces[move_from(q)]][move_to(q)] -= bonus;
     }
 
-    if ((p-1)->current_move) {
-        Square prev_to = move_to((p-1)->current_move);
+    if (metadata->current_move) {
+        Square prev_to = move_to(metadata->current_move);
         Piece prev_piece = p->pieces[prev_to];
 
         my_thread->counter_moves[prev_piece][prev_to] = move;
@@ -119,7 +120,7 @@ void save_killer(Position *p, Move move, int depth, int ply, Move *quiets, int q
     }
 }
 
-int alpha_beta_quiescence(Position *p, int alpha, int beta, int depth, bool in_check) {
+int alpha_beta_quiescence(Position *p, Metadata *metadata, int alpha, int beta, int depth, bool in_check) {
     assert(alpha >= -MATE && alpha < beta && beta <= MATE);
     assert(depth <= 0);
     assert(in_check == is_checked(p));
@@ -140,8 +141,9 @@ int alpha_beta_quiescence(Position *p, int alpha, int beta, int depth, bool in_c
     int new_depth = in_check || depth >= 0 ? 0 : -1;
 
     Move tte_move = 0;
-    TTEntry *tte = get_tte(p->hash);
-    int tte_score = p->static_eval = UNDEFINED;
+    Info *info = p->info;
+    TTEntry *tte = get_tte(info->hash);
+    int tte_score = metadata->static_eval = UNDEFINED;
     if (tte) {
         tte_move = tte->move;
         if (tte->depth >= new_depth) {
@@ -159,13 +161,13 @@ int alpha_beta_quiescence(Position *p, int alpha, int beta, int depth, bool in_c
     if (!in_check) {
         bool is_null = ply > 0 && p->board == (p-1)->board;
         if (is_null) {
-            p->static_eval = best_score = tempo * 2 - (p-1)->static_eval;
+            metadata->static_eval = best_score = tempo * 2 - (metadata-1)->static_eval;
         } else {
-            p->static_eval = best_score = evaluate(p);
+            metadata->static_eval = best_score = evaluate(p);
         }
         if (best_score >= beta) {
             if (!tte) {
-                set_tte(p->hash, 0, new_depth, score_to_tt(best_score, ply), FLAG_BETA);
+                set_tte(info->hash, 0, new_depth, score_to_tt(best_score, ply), FLAG_BETA);
             }
             return best_score;
         }
@@ -176,14 +178,14 @@ int alpha_beta_quiescence(Position *p, int alpha, int beta, int depth, bool in_c
         best_score = -INFINITE;
     }
 
-    MoveGen movegen = new_movegen(p, ply, new_depth, tte_move, QUIESCENCE_SEARCH, in_check);
+    MoveGen movegen = new_movegen(p, metadata, ply, new_depth, tte_move, QUIESCENCE_SEARCH, in_check);
 
     Move best_move = 0;
     int num_moves = 0;
     while (Move move = next_move(&movegen)) {
         assert(!is_move_empty(move));
         assert(is_pseudolegal(p, move));
-        assert(in_check || p->static_eval != UNDEFINED);
+        assert(in_check || metadata->static_eval != UNDEFINED);
 
         ++num_moves;
         bool checks = gives_check(p, move);
@@ -193,7 +195,7 @@ int alpha_beta_quiescence(Position *p, int alpha, int beta, int depth, bool in_c
 
         assert(capture != empty || in_check || checks);
 
-        int delta = p->static_eval + 120;
+        int delta = metadata->static_eval + 120;
         if (!in_check && !checks && !is_principal && delta > -KNOWN_WIN && !is_advanced_pawn_push(p, move) && delta + piece_values[capture] <= alpha) {
             continue;
         }
@@ -212,10 +214,10 @@ int alpha_beta_quiescence(Position *p, int alpha, int beta, int depth, bool in_c
             continue;
         }
 
-        Position *position = make_move(p, move);
+        make_move(p, move);
         ++p->my_thread->nodes;
-        int score = -alpha_beta_quiescence(position, -beta, -alpha, depth - 1, checks);
-        undo_move(position);
+        int score = -alpha_beta_quiescence(p, metadata+1, -beta, -alpha, depth - 1, checks);
+        undo_move(p, move);
         assert(score >= -MATE && score <= MATE);
 
         if (score > best_score) {
@@ -228,7 +230,7 @@ int alpha_beta_quiescence(Position *p, int alpha, int beta, int depth, bool in_c
                 if (is_principal && score < beta) {
                     alpha = score;
                 } else {
-                    set_tte(p->hash, move, new_depth, score_to_tt(score, ply), FLAG_BETA);
+                    set_tte(info->hash, move, new_depth, score_to_tt(score, ply), FLAG_BETA);
                     return score;
                 }
             }
@@ -240,12 +242,12 @@ int alpha_beta_quiescence(Position *p, int alpha, int beta, int depth, bool in_c
     }
 
     uint8_t flag = is_principal && best_move ? FLAG_EXACT : FLAG_ALPHA;
-    set_tte(p->hash, best_move, new_depth, score_to_tt(best_score, ply), flag);
+    set_tte(info->hash, best_move, new_depth, score_to_tt(best_score, ply), flag);
     assert(best_score >= -MATE && best_score <= MATE);
     return best_score;
 }
 
-int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool cut) {
+int alpha_beta(Position *p, Metadata *metadata, int alpha, int beta, int depth, bool in_check, bool cut) {
     assert(-MATE <= alpha && alpha < beta && beta <= MATE);
     assert(0 <= depth);
     assert(in_check == is_checked(p));
@@ -277,12 +279,13 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
         }
     }
 
-    p->current_move = 0;
+    metadata->current_move = 0;
 
     Move tte_move = 0;
     int tte_score;
-    tte_score = p->static_eval = UNDEFINED;
-    TTEntry *tte = get_tte(p->hash);
+    Info *info = p->info;
+    tte_score = metadata->static_eval = UNDEFINED;
+    TTEntry *tte = get_tte(info->hash);
     if (tte) {
         tte_move = tte->move;
         if (tte->depth >= depth) {
@@ -292,7 +295,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
                 (tte->flag == FLAG_BETA && tte_score >= beta) ||
                 (tte->flag == FLAG_ALPHA && tte_score <= alpha))) {
                     if (tte_score >= beta && !in_check && tte_move && !is_capture_or_promotion(p, tte_move)) {
-                        save_killer(p, tte_move, depth, ply, nullptr, 0);
+                        save_killer(p, metadata-1, tte_move, depth, ply, nullptr, 0);
                     }
                     return tte_score;
             }
@@ -313,7 +316,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
             if (flag == FLAG_EXACT ||
                 (flag == FLAG_BETA && tb_score >= beta) ||
                 (flag == FLAG_ALPHA && tb_score <= alpha)) {
-                    set_tte(p->hash, 0, std::min(depth + 6, MAX_PLY - 1), score_to_tt(tb_score, ply), flag);
+                    set_tte(info->hash, 0, std::min(depth + 6, MAX_PLY - 1), score_to_tt(tb_score, ply), flag);
                     return tb_score;
                 }
         }
@@ -322,25 +325,25 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
     bool is_null = ply > 0 && p->board == (p-1)->board;
     if (!in_check) {
         if (depth < 1) {
-            return alpha_beta_quiescence(p, alpha, beta, 0, in_check);
+            return alpha_beta_quiescence(p, metadata+1, alpha, beta, 0, in_check);
         }
         if (is_null) {
-            p->static_eval = tempo * 2 - (p-1)->static_eval;
+            metadata->static_eval = tempo * 2 - (metadata-1)->static_eval;
         } else {
-            p->static_eval = evaluate(p);
+            metadata->static_eval = evaluate(p);
         }
     }
 
     if (!in_check && !is_principal) {
-        assert(p->static_eval != UNDEFINED);
+        assert(metadata->static_eval != UNDEFINED);
         // Razoring
-        if (depth < 4 && p->static_eval <= alpha - razoring_margin[depth]) {
+        if (depth < 4 && metadata->static_eval <= alpha - razoring_margin[depth]) {
             if (depth <= 1) {
-                return alpha_beta_quiescence(p, alpha, alpha + 1, 0, false);
+                return alpha_beta_quiescence(p, metadata+1, alpha, alpha + 1, 0, false);
             }
 
             int margin = alpha - razoring_margin[depth];
-            int quiescence_value = alpha_beta_quiescence(p, margin, margin + 1, 0, false);
+            int quiescence_value = alpha_beta_quiescence(p, metadata+1, margin, margin + 1, 0, false);
             if (quiescence_value <= margin) {
                 return quiescence_value;
             }
@@ -348,21 +351,21 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
 
         // Futility
         if (depth < 7 &&
-            p->static_eval - 90 * depth >= beta &&
-            p->static_eval < KNOWN_WIN &&
-            p->non_pawn_material[p->color]) {
-                return p->static_eval;
+            metadata->static_eval - 90 * depth >= beta &&
+            metadata->static_eval < KNOWN_WIN &&
+            info->non_pawn_material[p->color]) {
+                return metadata->static_eval;
         }
 
         // Null move pruning
-        if (!is_null && depth > 3 && p->static_eval >= beta && p->non_pawn_material[p->color]) {
-            int R = 3 + depth / 4 + std::min((p->static_eval - beta) / PAWN_MID, 3);
+        if (!is_null && depth > 3 && metadata->static_eval >= beta && info->non_pawn_material[p->color]) {
+            int R = 3 + depth / 4 + std::min((metadata->static_eval - beta) / PAWN_MID, 3);
             int d = std::max(0, depth - R);
 
-            Position *position = make_null_move(p);
+            make_null_move(p);
             ++p->my_thread->nodes;
-            int null_eval = -alpha_beta(position, -beta, -beta + 1, d, false, !cut);
-            undo_move(position);
+            int null_eval = -alpha_beta(p, metadata+1, -beta, -beta + 1, d, false, !cut);
+            undo_null_move(p);
             if (null_eval >= beta) {
                 if (null_eval >= MATE_IN_MAX_PLY)
                     null_eval = beta;
@@ -370,7 +373,7 @@ int alpha_beta(Position *p, int alpha, int beta, int depth, bool in_check, bool 
                 if (depth < 12 && std::abs(beta) < KNOWN_WIN)
                     return null_eval;
 
-                int verification = alpha_beta(p, beta - 1, beta, d, false, false);
+                int verification = alpha_beta(p, metadata+1, beta - 1, beta, d, false, false);
 
                 if (verification >= beta)
                     return beta;

@@ -228,8 +228,8 @@ Move next_move(MoveGen *movegen) {
     return 0;
 }
 
-MoveGen new_movegen(Position *p, int ply, int depth, Move tte_move, uint8_t type, bool in_check) {
-    Square prev_to = move_to((p-1)->current_move);
+MoveGen new_movegen(Position *p, Metadata *metadata, int ply, int depth, Move tte_move, uint8_t type, bool in_check) {
+    Square prev_to = move_to((metadata-1)->current_move);
     int movegen_stage;
     Move tm;
     if (in_check) {
@@ -274,6 +274,7 @@ MoveGen new_movegen(Position *p, int ply, int depth, Move tte_move, uint8_t type
 }
 
 void generate_evasions(MoveGen *movegen, Position *p) {
+    Info *info = p->info;
     generate_king_evasions(movegen, p);
     // How many pieces causing check ?
     Bitboard attackers = targeted_from(p, p->board, p->color, p->king_index[p->color]);
@@ -306,11 +307,11 @@ void generate_evasions(MoveGen *movegen, Position *p) {
         }
 
         // Enpassant capturers
-        if (p->enpassant && ENPASSANT_INDEX[p->enpassant] == attacker_index) {
-            capture_attackers = targeted_from_enpassant(p, opponent_color(p->color), p->enpassant);
+        if (info->enpassant && ENPASSANT_INDEX[info->enpassant] == attacker_index) {
+            capture_attackers = targeted_from_enpassant(p, opponent_color(p->color), info->enpassant);
             while (capture_attackers) {
                 Square index = pop(&capture_attackers);
-                Move m = _movecast(index, p->enpassant, ENPASSANT);
+                Move m = _movecast(index, info->enpassant, ENPASSANT);
                 append_move(m, movegen);
             }
         }
@@ -407,7 +408,7 @@ void generate_quiet_checks(MoveGen *movegen, Position *p) {
     }
 
     //? Possible discover checks
-    Bitboard pinned_pieces = p->pinned[opponent_color(p->color)] & p->bbs[p->color];
+    Bitboard pinned_pieces = p->info->pinned[opponent_color(p->color)] & p->bbs[p->color];
     while (pinned_pieces) {
         Square pin_index = pop(&pinned_pieces);
         Piece pin_piece = piece_type(p->pieces[pin_index]);

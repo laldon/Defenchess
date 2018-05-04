@@ -104,7 +104,7 @@ void promote(Position *p, Square to, Piece pawn, Piece promotion_type, Color col
 }
 
 
-Position *make_move(Position *p, Move move) {
+void make_move(Position *p, Move move) {
     SearchThread *my_thread = p->my_thread;
     ++my_thread->search_ply;
 
@@ -182,26 +182,29 @@ Position *make_move(Position *p, Move move) {
     new_info->pinned[black] = pinned_piece_squares(p, black);
 
     assert(is_position_valid(p));
-    return new_p;
 }
 
-Position *make_null_move(Position *p) {
+void make_null_move(Position *p) {
     SearchThread *my_thread = p->my_thread;
     ++my_thread->search_ply;
-    std::memcpy(my_thread->positions + my_thread->search_ply, my_thread->positions + my_thread->search_ply - 1, sizeof(Position));
-    Position *new_p = &(my_thread->positions[my_thread->search_ply]);
-    ++new_p->last_irreversible;
 
-    if (p->enpassant) {
-        new_p->hash ^= polyglotEnpassant[col(p->enpassant)];
-        new_p->enpassant = 0;
+    Info *info = p->info;
+    std::memcpy(info + 1, info, info_size);
+    Info *new_info = info + 1;
+    p->info = new_info;
+    new_info->previous = info;
+
+    ++new_info->last_irreversible;
+
+    if (info->enpassant) {
+        new_info->hash ^= polyglotEnpassant[col(info->enpassant)];
+        new_info->enpassant = 0;
     }
-    new_p->hash ^= polyglotWhite;
-    new_p->color ^= 1;
-    return new_p;
+    new_info->hash ^= polyglotWhite;
+    p->color ^= 1;
 }
 
-Position *undo_move(Position *p, Move move) {
+void undo_move(Position *p, Move move) {
     SearchThread *my_thread = p->my_thread;
     --my_thread->search_ply;
     p->color ^= 1;
@@ -231,8 +234,12 @@ Position *undo_move(Position *p, Move move) {
         move_piece(p, to, from, piece, color);
         insert_piece(p, pawn_backward(to, color), info->captured);
     }
-    --p->info;
-    return p;
+    p->info = info->previous;
+}
+
+void undo_null_move(Position *p) {
+    p->info = p->info->previous;
+    p->color ^= 1;
 }
 
 bool is_pseudolegal(Position *p, Move move) {
@@ -328,9 +335,9 @@ bool gives_check(Position *p, Move m) {
         }
 
         if (move_type(m) == ENPASSANT) {
-            Position *position = make_move(p, m);
-            undo_move(p);
-            if (is_checked(position)) {
+            make_move(p, m);
+            undo_move(p, m);
+            if (is_checked(p)) {
                 return true;
             }
         } 
@@ -343,9 +350,9 @@ bool gives_check(Position *p, Move m) {
 
         //? Is a rook check ?
         if (move_type(m) == CASTLING) {
-            Position *position = make_move(p, m);
-            undo_move(p);
-            if (is_checked(position)) {
+            make_move(p, m);
+            undo_move(p, m);
+            if (is_checked(p)) {
                 return true;
             }
         }

@@ -24,9 +24,10 @@
 #include "target.h"
 #include <cstring>
 
-Position* make_move(Position *p, Move m);
-Position* undo_move(Position *p, Move m);
-Position* make_null_move(Position *p);
+void make_move(Position *p, Move m);
+void undo_move(Position *p, Move m);
+void make_null_move(Position *p);
+void undo_null_move(Position *p);
 
 bool is_pseudolegal(Position *p, Move m);
 bool gives_check(Position *p, Move m);

@@ -333,8 +333,8 @@ typedef struct Info {
     uint8_t  last_irreversible;
     int      material_index;
     int      non_pawn_material[2];
-    Square   enpassant; 
     // NOT TO COPY
+    Square   enpassant; 
     uint64_t hash;
     Bitboard pinned[2];
     Piece    captured;
@@ -343,13 +343,12 @@ typedef struct Info {
 
 typedef struct CopiedInfo {
     // COPIED 
-    Score    score;
     uint64_t pawn_hash;
+    Score    score;
     uint8_t  castling; // black_queenside | black_kingside | white_queenside | white_kingside
     uint8_t  last_irreversible;
     int      material_index;
     int      non_pawn_material[2];
-    Square   enpassant; 
 } CopiedInfo;
 
 struct Position {
@@ -511,7 +510,7 @@ const MoveGen blank_movegen = {
 
 struct SearchThread {
     std::thread thread_obj;
-    Metadata    metadata[1024];
+    Metadata    metadatas[1024];
     Info        infos[1024];
     Position    position;
     int         thread_id;

@@ -92,7 +92,7 @@ void calculate_material(Position *p) {
                                   bq * QUEEN_MID;
 }
 
-Position* add_pieces(Position* p){
+Position* add_pieces(Position* p) {
     for (int i = 0; i < 64; ++i) {
         if (on(p->board, i)) {
             for (int j = 2; j < 14; ++j) {
