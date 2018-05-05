@@ -41,6 +41,16 @@ void remove_piece(Position *p, Square at, Piece piece) {
     p->board ^= bb;
 }
 
+void move_piece_no_info(Position *p, Square from, Square to, Piece piece, Color curr_c) {
+    // Same as move_piece without the info updates
+    p->pieces[from] = empty;
+    p->pieces[to] = piece;
+    Bitboard from_to = bfi[from] ^ bfi[to];
+    p->bbs[piece] ^= from_to;
+    p->bbs[curr_c] ^= from_to;
+    p->board ^= from_to;
+}
+
 void move_piece(Position *p, Square from, Square to, Piece piece, Color curr_c) {
     p->pieces[from] = empty;
     p->pieces[to] = piece;
@@ -185,7 +195,7 @@ void make_move(Position *p, Move move) {
     new_info->pinned[white] = pinned_piece_squares(p, white);
     new_info->pinned[black] = pinned_piece_squares(p, black);
 
-    // assert(is_position_valid(p));
+    assert(is_position_valid(p));
 }
 
 void make_null_move(Position *p) {
@@ -199,10 +209,10 @@ void make_null_move(Position *p) {
     new_info->previous = info;
 
     ++new_info->last_irreversible;
+    new_info->enpassant = 0;
 
     if (info->enpassant) {
         new_info->hash ^= polyglotEnpassant[col(info->enpassant)];
-        new_info->enpassant = 0;
     }
     new_info->hash ^= polyglotWhite;
     p->color ^= 1;
@@ -226,7 +236,7 @@ void undo_move(Position *p, Move move) {
         p->king_index[color] = from;
     }
     if (move_type(move) == NORMAL) {
-        move_piece(p, to, from, piece, color);
+        move_piece_no_info(p, to, from, piece, color);
         if (info->captured) {
             insert_piece(p, to, info->captured);
         }
@@ -244,7 +254,7 @@ void undo_move(Position *p, Move move) {
         insert_piece(p, from, piece);
         insert_piece(p, rook_from, rook(color));
     } else { // Enpassant
-        move_piece(p, to, from, piece, color);
+        move_piece_no_info(p, to, from, piece, color);
         assert(is_pawn(piece));
         assert(to == info->previous->enpassant);
         assert(rank(to, color) == RANK_6);
@@ -353,10 +363,11 @@ bool gives_check(Position *p, Move m) {
 
         if (move_type(m) == ENPASSANT) {
             make_move(p, m);
-            undo_move(p, m);
             if (is_checked(p)) {
+                undo_move(p, m);
                 return true;
             }
+            undo_move(p, m);
         } 
 
     } else if (piece_type(curr_piece) == white_king) {
@@ -368,10 +379,11 @@ bool gives_check(Position *p, Move m) {
         //? Is a rook check ?
         if (move_type(m) == CASTLING) {
             make_move(p, m);
-            undo_move(p, m);
             if (is_checked(p)) {
+                undo_move(p, m);
                 return true;
             }
+            undo_move(p, m);
         }
 
     } else if (piece_type(curr_piece) == white_queen) {

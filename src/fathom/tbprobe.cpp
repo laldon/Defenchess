@@ -129,7 +129,7 @@ static int probe_dtz(const struct pos *pos, int *success);
 unsigned TB_LARGEST = 0;
 #include "tbcore.cpp"
 
-#define rank(s)                 ((s) >> 3)
+#define rank_tb(s)               ((s) >> 3)
 #define file(s)                 ((s) & 0x07)
 #define board(s)                ((uint64_t)1 << (s))
 #define square(r, f)            (8 * (r) + (f))
@@ -612,16 +612,16 @@ static uint16_t *gen_captures_or_promotions(const struct pos *pos,
         for (att = att & them; att; att = poplsb(att))
         {
             unsigned to = lsb(att);
-            moves = add_move(moves, (rank(to) == 7 || rank(to) == 0), from,
+            moves = add_move(moves, (rank_tb(to) == 7 || rank_tb(to) == 0), from,
                 to);
         }
-        if (pos->turn && rank(from) == 6)
+        if (pos->turn && rank_tb(from) == 6)
         {
             unsigned to = from + 8;
             if ((board(to) & occ) == 0)
                 moves = add_move(moves, true, from, to);
         }
-        else if (!pos->turn && rank(from) == 1)
+        else if (!pos->turn && rank_tb(from) == 1)
         {
             unsigned to = from - 8;
             if ((board(to) & occ) == 0)
@@ -650,14 +650,14 @@ static uint16_t *gen_pawn_quiets_or_promotions(const struct pos *pos,
         {
             att |= board(next);
             unsigned next2 = from + (pos->turn? 16: -16);
-            if ((pos->turn? rank(from) == 1: rank(from) == 6) &&
+            if ((pos->turn? rank_tb(from) == 1: rank_tb(from) == 6) &&
                     ((board(next2) & occ) == 0))
                 att |= board(next2);
         }
         for (; att; att = poplsb(att))
         {
             unsigned to = lsb(att);
-            moves = add_move(moves, (rank(to) == 7 || rank(to) == 0), from,
+            moves = add_move(moves, (rank_tb(to) == 7 || rank_tb(to) == 0), from,
                 to);
         }
     }
@@ -753,14 +753,14 @@ static uint16_t *gen_moves(const struct pos *pos, uint16_t *moves)
         {
             att |= board(next);
             unsigned next2 = from + (pos->turn? 16: -16);
-            if ((pos->turn? rank(from) == 1: rank(from) == 6) &&
+            if ((pos->turn? rank_tb(from) == 1: rank_tb(from) == 6) &&
                     ((board(next2) & occ) == 0))
                 att |= board(next2);
         }
         for (; att; att = poplsb(att))
         {
             unsigned to = lsb(att);
-            moves = add_move(moves, (rank(to) == 7 || rank(to) == 0), from,
+            moves = add_move(moves, (rank_tb(to) == 7 || rank_tb(to) == 0), from,
                 to);
         }
     }
@@ -948,10 +948,10 @@ static bool do_move(struct pos *pos, const struct pos *pos0, uint16_t move)
     else if ((board(from) & pos0->pawns) != 0)
     {
         pos->rule50 = 0;                // Pawn move
-        if (rank(from) == 1 && rank(to) == 3 &&
+        if (rank_tb(from) == 1 && rank_tb(to) == 3 &&
             (pawn_attacks(from+8, true) & pos0->pawns & pos0->black) != 0)
             pos->ep = from+8;
-        else if (rank(from) == 6 && rank(to) == 4 &&
+        else if (rank_tb(from) == 6 && rank_tb(to) == 4 &&
             (pawn_attacks(from-8, false) & pos0->pawns & pos0->white) != 0)
             pos->ep = from-8;
         else if (to == pos0->ep)

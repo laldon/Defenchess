@@ -174,8 +174,8 @@ uint64_t fastPerft(int depth, Position *p, bool root, bool in_check) {
             ++nodes;
         } else {
             undo_test(p, m);
+            bool checks = gives_check(p, m);
             make_move(p, m);
-            bool checks = is_checked(p);
             if (is_leaf) {
                 MoveGen movegen_leaf = new_movegen(p, 0, 0, depth, 0, PERFT_SEARCH, false);
                 if (checks) {
@@ -209,8 +209,8 @@ uint64_t Perft(int depth, Position *p, bool root, bool in_check) {
     while (Move m = next_move(&movegen)) {
         // std::cout << depth << " " << move_to_str(m) << std::endl;
         undo_test(p, m);
+        bool checks = gives_check(p, m);
         make_move(p, m);
-        bool checks = is_checked(p);
         move_nodes = Perft(depth - 1, p, false, checks);
         nodes += move_nodes;
         undo_move(p, m);
