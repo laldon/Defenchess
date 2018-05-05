@@ -175,8 +175,8 @@ Position *make_null_move(Position *p) {
         new_p->hash ^= polyglotEnpassant[col(p->enpassant)];
     }
 
-    new_p->pinned[white] = pinned_piece_squares(new_p, white);
-    new_p->pinned[black] = pinned_piece_squares(new_p, black);
+    // new_p->pinned[white] = pinned_piece_squares(new_p, white);
+    // new_p->pinned[black] = pinned_piece_squares(new_p, black);
 
     return new_p;
 }
