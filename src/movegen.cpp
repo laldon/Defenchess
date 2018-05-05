@@ -228,7 +228,8 @@ Move next_move(MoveGen *movegen) {
     return 0;
 }
 
-MoveGen new_movegen(Position *p, Square prev_to, int ply, int depth, Move tte_move, uint8_t type, bool in_check) {
+MoveGen new_movegen(Position *p, Move previous_move, int ply, int depth, Move tte_move, uint8_t type, bool in_check) {
+    Square prev_to = move_to(previous_move);
     int movegen_stage;
     Move tm;
     if (in_check) {
@@ -262,7 +263,7 @@ MoveGen new_movegen(Position *p, Square prev_to, int ply, int depth, Move tte_mo
         p, // Position
         tm, // tte_move
         {my_thread->killers[ply][0], my_thread->killers[ply][1]}, // killer 2
-        (ply > 0) ? my_thread->counter_moves[p->pieces[prev_to]][prev_to] : Move(0), // counter move
+        previous_move ? my_thread->counter_moves[p->pieces[prev_to]][prev_to] : Move(0), // counter move
         movegen_stage, // stage
         0, // head
         0, // tail

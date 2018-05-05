@@ -180,7 +180,7 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
         best_score = -INFINITE;
     }
 
-    MoveGen movegen = new_movegen(p, 0, ply, new_depth, tte_move, QUIESCENCE_SEARCH, in_check);
+    MoveGen movegen = new_movegen(p, Move(0), ply, new_depth, tte_move, QUIESCENCE_SEARCH, in_check);
 
     Move best_move = 0;
     int num_moves = 0;
@@ -397,8 +397,8 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         }
     }
 
-    Square prev_to = move_to((md-1)->current_move);
-    MoveGen movegen = new_movegen(p, prev_to, ply, depth, tte_move, NORMAL_SEARCH, in_check);
+    Move previous_move = ply > 0 ? (md-1)->current_move : Move(0);
+    MoveGen movegen = new_movegen(p, previous_move, ply, depth, tte_move, NORMAL_SEARCH, in_check);
 
     Move best_move = 0;
     Move quiets[64];
