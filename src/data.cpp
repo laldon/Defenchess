@@ -97,6 +97,7 @@ void get_ready() {
     }
 
     SearchThread *main_thread = &search_threads[0];
+    Position *main_position = &main_thread->position;
     root_ply = main_thread->search_ply;
 
     // Copy over the root position
@@ -106,12 +107,17 @@ void get_ready() {
 
         // Need to fully copy the position and info
         std::memcpy(&t->position, &main_thread->position, sizeof(Position));
-
         Position *t_position = &t->position;
-        Position *main_position = &main_thread->position;
+
         // Also copy the info
+        t_position->info = &(t->infos[root_ply]);
         std::memcpy(&t_position->info, &main_position->info, sizeof(Info));
-        t_position->my_thread = t;
+
+        // Clear the metadata
+        Metadata *md = &t->metadatas[0];
+        md->current_move = Move(0);
+        md->static_eval = UNDEFINED;
+        md->ply = 0;
     }
 
     for (int i = 0; i < MAX_THREADS; ++i) {
@@ -644,11 +650,6 @@ void init_threads() {
         std::memset(&search_thread->position, 0, sizeof(Position));
         search_thread->thread_id = i;
         search_thread->search_ply = 0;
-
-        Metadata *md = &search_thread->metadatas[0];
-        md->current_move = Move(0);
-        md->static_eval = UNDEFINED;
-        md->ply = 0;
     }
 }
 

@@ -270,8 +270,8 @@ void undo_move(Position *p, Move move) {
 void undo_null_move(Position *p) {
     SearchThread *my_thread = p->my_thread;
     --my_thread->search_ply;
-    p->info = p->info->previous;
     p->color ^= 1;
+    p->info = p->info->previous;
 }
 
 bool is_pseudolegal(Position *p, Move move) {
