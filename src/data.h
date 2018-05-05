@@ -322,7 +322,8 @@ extern Score pst[14][64];
 
 typedef struct Metadata {
     Move current_move;
-    int  static_eval;    
+    int  static_eval;
+    int  ply;
 } Metadata;
 
 typedef struct Info {
@@ -562,8 +563,6 @@ inline uint64_t sum_tb_hits() {
 extern Move pv_at_depth[MAX_PLY * 2];
 
 extern int reductions[2][64][64];
-
-inline int PLY(Position *p) { return p->my_thread->search_ply - root_ply; }
 
 inline Color piece_color(Piece p) {return p & 1;}
 

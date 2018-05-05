@@ -645,9 +645,10 @@ void init_threads() {
         search_thread->thread_id = i;
         search_thread->search_ply = 0;
 
-        Metadata *metadata = &search_thread->metadatas[0];
-        metadata->current_move = Move(0);
-        metadata->static_eval = UNDEFINED;
+        Metadata *md = &search_thread->metadatas[0];
+        md->current_move = Move(0);
+        md->static_eval = UNDEFINED;
+        md->ply = 0;
     }
 }
 
