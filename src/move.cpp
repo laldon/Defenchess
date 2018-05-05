@@ -167,12 +167,17 @@ Position *make_null_move(Position *p) {
     Position *new_p = &(my_thread->positions[my_thread->search_ply]);
     ++new_p->last_irreversible;
 
+    new_p->enpassant = 0;
+    new_p->hash = p->hash ^ polyglotWhite;
+    new_p->color ^= 1;
+
     if (p->enpassant) {
         new_p->hash ^= polyglotEnpassant[col(p->enpassant)];
-        new_p->enpassant = 0;
     }
-    new_p->hash ^= polyglotWhite;
-    new_p->color ^= 1;
+
+    new_p->pinned[white] = pinned_piece_squares(new_p, white);
+    new_p->pinned[black] = pinned_piece_squares(new_p, black);
+
     return new_p;
 }
 
