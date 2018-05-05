@@ -106,8 +106,8 @@ void save_killer(Position *p, Metadata *md, Move move, int depth, int ply, Move 
         my_thread->history[p->pieces[move_from(q)]][move_to(q)] -= bonus;
     }
 
-    if (md->current_move) {
-        Square prev_to = move_to(md->current_move);
+    if ((md-1)->current_move) {
+        Square prev_to = move_to((md-1)->current_move);
         Piece prev_piece = p->pieces[prev_to];
 
         my_thread->counter_moves[prev_piece][prev_to] = move;
@@ -299,7 +299,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
                 (tte->flag == FLAG_BETA && tte_score >= beta) ||
                 (tte->flag == FLAG_ALPHA && tte_score <= alpha))) {
                     if (tte_score >= beta && !in_check && tte_move && !is_capture_or_promotion(p, tte_move)) {
-                        save_killer(p, md-1, tte_move, depth, ply, nullptr, 0);
+                        save_killer(p, md, tte_move, depth, ply, nullptr, 0);
                     }
                     return tte_score;
             }
@@ -521,7 +521,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
                     alpha = score;
                 } else {
                     if (!capture_or_promo) {
-                        save_killer(p, md-1, move, depth, ply, quiets, quiets_count - 1);
+                        save_killer(p, md, move, depth, ply, quiets, quiets_count - 1);
                     }
                     set_tte(info->hash, move, depth, score_to_tt(score, ply), FLAG_BETA);
                     return score;
@@ -537,7 +537,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
     uint8_t flag = is_principal && best_move ? FLAG_EXACT : FLAG_ALPHA;
     set_tte(info->hash, best_move, depth, score_to_tt(best_score, ply), flag);
     if (!in_check && best_move && !is_capture_or_promotion(p, best_move)) {
-        save_killer(p, md-1, best_move, depth, ply, quiets, quiets_count - 1);
+        save_killer(p, md, best_move, depth, ply, quiets, quiets_count - 1);
     }
     assert(best_score >= -MATE && best_score <= MATE);
     return best_score;
