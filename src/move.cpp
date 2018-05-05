@@ -169,7 +169,7 @@ Position *make_null_move(Position *p) {
 
     new_p->enpassant = 0;
     new_p->hash = p->hash ^ polyglotWhite;
-    new_p->color ^= 1;
+    new_p->color = opponent_color(p->color);
 
     if (p->enpassant) {
         new_p->hash ^= polyglotEnpassant[col(p->enpassant)];
