@@ -233,9 +233,12 @@ void undo_move(Position *p, Move move) {
     } else if (move_type(move) == PROMOTION) {
         remove_piece(p, to, piece);
         insert_piece(p, from, pawn(color));
+        if (info->captured) {
+            insert_piece(p, to, info->captured);
+        }
     } else if (move_type(move) == CASTLING) {
         Square rook_from = relative_square(col(to) == FILE_G ? H1 : A1, color);
-        Square rook_to = relative_square(col(to) == FILE_G ? F1 : C1, color);
+        Square rook_to = relative_square(col(to) == FILE_G ? F1 : D1, color);
         remove_piece(p, to, piece);
         remove_piece(p, rook_to, rook(color));
         insert_piece(p, from, piece);

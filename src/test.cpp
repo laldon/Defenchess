@@ -160,7 +160,7 @@ void undo_test(Position *p, Move move) {
     assert(r_info->captured == info.captured);
 }
 
-uint64_t Perft(int depth, Position *p, bool root, bool in_check) {
+uint64_t fastPerft(int depth, Position *p, bool root, bool in_check) {
     if (depth == 0) {
         return 1ULL;
     }
@@ -169,14 +169,12 @@ uint64_t Perft(int depth, Position *p, bool root, bool in_check) {
 
     MoveGen movegen = new_movegen(p, 0, 0, depth, 0, NORMAL_SEARCH, in_check);
     while (Move m = next_move(&movegen)) {
-        // std::cout << depth << " " << move_to_str(m) << std::endl;
         if (root && depth == 1) {
             move_nodes = 1;
             ++nodes;
         } else {
             undo_test(p, m);
             make_move(p, m);
-            // std::cout << "color after make: " << int(p->color) << std::endl;
             bool checks = is_checked(p);
             if (is_leaf) {
                 MoveGen movegen_leaf = new_movegen(p, 0, 0, depth, 0, PERFT_SEARCH, false);
@@ -191,7 +189,6 @@ uint64_t Perft(int depth, Position *p, bool root, bool in_check) {
             }
             nodes += move_nodes;
             undo_move(p, m);
-        // std::cout << "color after undo: " << int(p->color) << std::endl;
         }
         if (root) {
             std::cout << move_to_str(m) << ": " << move_nodes << std::endl;
@@ -201,4 +198,26 @@ uint64_t Perft(int depth, Position *p, bool root, bool in_check) {
     return nodes;
 }
 
+uint64_t Perft(int depth, Position *p, bool root, bool in_check) {
+    return fastPerft(depth, p, root, in_check);
+    if (depth == 0) {
+        return 1ULL;
+    }
+    uint64_t move_nodes = 0, nodes = 0;
 
+    MoveGen movegen = new_movegen(p, 0, 0, depth, 0, NORMAL_SEARCH, in_check);
+    while (Move m = next_move(&movegen)) {
+        // std::cout << depth << " " << move_to_str(m) << std::endl;
+        undo_test(p, m);
+        make_move(p, m);
+        bool checks = is_checked(p);
+        move_nodes = Perft(depth - 1, p, false, checks);
+        nodes += move_nodes;
+        undo_move(p, m);
+        if (root) {
+            std::cout << move_to_str(m) << ": " << move_nodes << std::endl;
+        }
+    }
+
+    return nodes;
+}
