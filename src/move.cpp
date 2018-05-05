@@ -252,10 +252,8 @@ void undo_move(Position *p, Move move) {
     } else if (move_type(move) == CASTLING) {
         Square rook_from = relative_square(col(to) == FILE_G ? H1 : A1, color);
         Square rook_to = relative_square(col(to) == FILE_G ? F1 : D1, color);
-        remove_piece(p, to, piece);
-        remove_piece(p, rook_to, rook(color));
-        insert_piece(p, from, piece);
-        insert_piece(p, rook_from, rook(color));
+        move_piece_no_info(p, to, from, piece, color);
+        move_piece_no_info(p, rook_to, rook_from, rook(color), color);
     } else { // Enpassant
         move_piece_no_info(p, to, from, piece, color);
         assert(is_pawn(piece));
