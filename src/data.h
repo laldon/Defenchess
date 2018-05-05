@@ -514,7 +514,7 @@ const MoveGen blank_movegen = {
 
 struct SearchThread {
     std::thread thread_obj;
-    Metadata    metadatas[1024];
+    Metadata    metadatas[MAX_PLY + 1];
     Info        infos[1024];
     Position    position;
     int         thread_id;
