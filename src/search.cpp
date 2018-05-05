@@ -137,6 +137,7 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
         return 0;
     }
 
+    md->current_move = 0;
     (md+1)->ply = ply + 1;
     bool is_principal = beta - alpha > 1;
     int new_depth = in_check || depth >= 0 ? 0 : -1;
@@ -160,7 +161,7 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
 
     int best_score;
     if (!in_check) {
-        bool is_null = ply > 0 && p->board == (p-1)->board;
+        bool is_null = (md-1)->current_move == null_move;
         if (is_null) {
             md->static_eval = best_score = tempo * 2 - (md-1)->static_eval;
         } else {
@@ -217,6 +218,7 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
 
         make_move(p, move);
         ++p->my_thread->nodes;
+        md->current_move = move;
         int score = -alpha_beta_quiescence(p, md+1, -beta, -alpha, depth - 1, checks);
         undo_move(p, move);
         assert(score >= -MATE && score <= MATE);
@@ -324,7 +326,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         }
     }
 
-    bool is_null = ply > 0 && p->board == (p-1)->board;
+    bool is_null = (md-1)->current_move == null_move;
     if (!in_check) {
         if (depth < 1) {
             return alpha_beta_quiescence(p, md+1, alpha, beta, 0, in_check);
@@ -365,6 +367,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
             int d = std::max(0, depth - R);
 
             make_null_move(p);
+            md->current_move = null_move;
             ++p->my_thread->nodes;
             int null_eval = -alpha_beta(p, md+1, -beta, -beta + 1, d, false, !cut);
             undo_null_move(p);

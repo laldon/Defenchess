@@ -210,6 +210,8 @@ enum MoveType{
     PROMOTION   = 2
 };
 
+const Move null_move = Move(~0);
+
 enum MoveGenType {
     SILENT = 0,
     CAPTURE = 1,
@@ -352,6 +354,8 @@ typedef struct CopiedInfo {
     int      non_pawn_material[2];
 } CopiedInfo;
 
+const int info_size = sizeof(CopiedInfo);
+
 struct Position {
     Piece        pieces[64];
     Bitboard     bbs[14];
@@ -361,8 +365,6 @@ struct Position {
     Color        color;
     SearchThread *my_thread;
 };
-
-const int info_size = sizeof(CopiedInfo);
 
 typedef struct Evaluation {
     // Position *position;

@@ -31,6 +31,9 @@ void show_position_png(Position *p){
 }
 
 string move_to_str(Move m) {
+    if (m == null_move) {
+        return "null";
+    }
     std::string move_str = int_to_notation(move_from(m)) + to_string((move_from(m) >> 3) + 1) +
                            int_to_notation(move_to(m)) + to_string((move_to(m) >> 3) + 1);
     if (move_type(m) == PROMOTION) {

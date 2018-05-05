@@ -208,9 +208,11 @@ uint64_t Perft(int depth, Position *p, bool root, bool in_check) {
     MoveGen movegen = new_movegen(p, 0, 0, depth, 0, NORMAL_SEARCH, in_check);
     while (Move m = next_move(&movegen)) {
         // std::cout << depth << " " << move_to_str(m) << std::endl;
-        undo_test(p, m);
+        // undo_test(p, m);
         bool checks = gives_check(p, m);
         make_move(p, m);
+        bool checks_2 = is_checked(p);
+        assert(checks == checks_2);
         move_nodes = Perft(depth - 1, p, false, checks);
         nodes += move_nodes;
         undo_move(p, m);

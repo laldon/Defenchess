@@ -133,9 +133,6 @@ void make_move(Position *p, Move move) {
     Move m_type = move_type(move);
     Piece captured = m_type == ENPASSANT ? pawn(opponent) : p->pieces[to];
 
-    if (!(piece_color(piece) == curr_c)) {
-        std::cout << "piece: " << int(piece) << ", color: " << int(curr_c) << std::endl;
-    }
     assert(piece_color(piece) == curr_c);
     assert(!is_king(captured));
 
@@ -210,12 +207,18 @@ void make_null_move(Position *p) {
 
     ++new_info->last_irreversible;
     new_info->enpassant = 0;
+    new_info->hash = info->hash ^ polyglotWhite;
+    p->color ^= 1;
 
     if (info->enpassant) {
         new_info->hash ^= polyglotEnpassant[col(info->enpassant)];
     }
-    new_info->hash ^= polyglotWhite;
-    p->color ^= 1;
+
+    new_info->captured = empty;
+    new_info->pinned[white] = pinned_piece_squares(p, white);
+    new_info->pinned[black] = pinned_piece_squares(p, black);
+
+    assert(is_position_valid(p));
 }
 
 void undo_move(Position *p, Move move) {
@@ -265,6 +268,8 @@ void undo_move(Position *p, Move move) {
 }
 
 void undo_null_move(Position *p) {
+    SearchThread *my_thread = p->my_thread;
+    --my_thread->search_ply;
     p->info = p->info->previous;
     p->color ^= 1;
 }
