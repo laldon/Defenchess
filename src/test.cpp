@@ -144,20 +144,19 @@ void undo_test(Position *p, Move move) {
     assert(p->board == tmp.board);
     assert(p->color == tmp.color);
 
-    Info *r_info = p->info;
-    assert(r_info->score.midgame == info.score.midgame);
-    assert(r_info->score.endgame == info.score.endgame);
-    assert(r_info->pawn_hash == info.pawn_hash);
-    assert(r_info->last_irreversible == info.last_irreversible);
-    assert(r_info->castling == info.castling);
-    assert(r_info->material_index == info.material_index);
-    assert(r_info->non_pawn_material[white] == info.non_pawn_material[white]);
-    assert(r_info->non_pawn_material[black] == info.non_pawn_material[black]);
-    assert(r_info->enpassant == info.enpassant);
-    assert(r_info->hash == info.hash);
-    assert(r_info->pinned[white] == info.pinned[white]);
-    assert(r_info->pinned[black] == info.pinned[black]);
-    assert(r_info->captured == info.captured);
+    assert(p->info->score.midgame == info.score.midgame);
+    assert(p->info->score.endgame == info.score.endgame);
+    assert(p->info->pawn_hash == info.pawn_hash);
+    assert(p->info->last_irreversible == info.last_irreversible);
+    assert(p->info->castling == info.castling);
+    assert(p->info->material_index == info.material_index);
+    assert(p->info->non_pawn_material[white] == info.non_pawn_material[white]);
+    assert(p->info->non_pawn_material[black] == info.non_pawn_material[black]);
+    assert(p->info->enpassant == info.enpassant);
+    assert(p->info->hash == info.hash);
+    assert(p->info->pinned[white] == info.pinned[white]);
+    assert(p->info->pinned[black] == info.pinned[black]);
+    assert(p->info->captured == info.captured);
 }
 
 uint64_t fastPerft(int depth, Position *p, bool root, bool in_check) {
