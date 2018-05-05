@@ -195,7 +195,7 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
         if (move_type(move) == ENPASSANT)
             capture = white_pawn;
 
-        assert(capture != empty || in_check || checks);
+        assert(capture != no_piece || in_check || checks);
 
         int delta = md->static_eval + 120;
         if (!in_check && !checks && !is_principal && delta > -KNOWN_WIN && !is_advanced_pawn_push(p, move) && delta + piece_values[capture] <= alpha) {
@@ -205,7 +205,7 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
         bool evasion_prunable = in_check &&
                                 (depth != 0 || num_moves > 2) &&
                                 best_score > MATED_IN_MAX_PLY &&
-                                capture == empty;
+                                capture == no_piece;
 
         if ((!in_check || evasion_prunable) && move_type(move) != PROMOTION && !see_capture(p, move)) {
             continue;

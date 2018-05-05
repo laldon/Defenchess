@@ -263,6 +263,14 @@ void setoption() {
     }
 }
 
+void easyoption() {
+    word_list[4] = word_list[2];
+    word_list[2] = word_list[1];
+    word_list[1] = "name";
+    word_list[3] = "value";
+    setoption();
+}
+
 void ucinewgame() {
     clear_tt();
 }
@@ -276,6 +284,8 @@ void run_command(string s) {
         go();
     if (s == "setoption")
         setoption();
+    if (s == "o")
+        easyoption();
     if (s == "eval")
         eval();
     if (s == "isready")

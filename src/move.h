@@ -33,11 +33,11 @@ bool is_pseudolegal(Position *p, Move m);
 bool gives_check(Position *p, Move m);
 
 inline bool is_capture(Position *p, Move move) {
-    return p->pieces[move_to(move)] != empty;
+    return p->pieces[move_to(move)] != no_piece;
 }
 
 inline bool is_capture_or_promotion(Position *p, Move move) {
-    return p->pieces[move_to(move)] != empty || move_type(move) == PROMOTION;
+    return p->pieces[move_to(move)] != no_piece || move_type(move) == PROMOTION;
 }
 
 inline bool is_checked(Position *p) {

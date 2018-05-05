@@ -219,7 +219,7 @@ enum MoveGenType {
 };
 
 enum _Piece {
-    empty = 0,
+    no_piece = 0,
     white_occupy = 0,
     black_occupy = 1,
     white_pawn = 2,

@@ -34,7 +34,7 @@ void insert_piece(Position *p, Square at, Piece piece) {
 
 void remove_piece(Position *p, Square at, Piece piece) {
     Color color = piece_color(piece);
-    p->pieces[at] = empty;
+    p->pieces[at] = no_piece;
     Bitboard bb = bfi[at];
     p->bbs[piece] ^= bb;
     p->bbs[color] ^= bb;
@@ -43,7 +43,7 @@ void remove_piece(Position *p, Square at, Piece piece) {
 
 void move_piece_no_info(Position *p, Square from, Square to, Piece piece, Color curr_c) {
     // Same as move_piece without the info updates
-    p->pieces[from] = empty;
+    p->pieces[from] = no_piece;
     p->pieces[to] = piece;
     Bitboard from_to = bfi[from] ^ bfi[to];
     p->bbs[piece] ^= from_to;
@@ -52,7 +52,7 @@ void move_piece_no_info(Position *p, Square from, Square to, Piece piece, Color 
 }
 
 void move_piece(Position *p, Square from, Square to, Piece piece, Color curr_c) {
-    p->pieces[from] = empty;
+    p->pieces[from] = no_piece;
     p->pieces[to] = piece;
     Bitboard from_to = bfi[from] ^ bfi[to];
     p->bbs[piece] ^= from_to;
@@ -88,7 +88,7 @@ void capture(Position *p, Square to, Piece captured, Color opponent) {
 void capture_enpassant(Position *p, Square to, Square enpassant_to, Piece captured, Color opponent) {
     p->bbs[captured] ^= bfi[enpassant_to];
     p->bbs[opponent] ^= bfi[enpassant_to];
-    p->pieces[enpassant_to] = empty;
+    p->pieces[enpassant_to] = no_piece;
     p->board ^= bfi[enpassant_to];
 
     uint64_t h = polyglotCombined[captured][to];
@@ -153,7 +153,7 @@ void make_move(Position *p, Move move) {
             assert(to == info->enpassant);
             assert(info->enpassant != 0);
             assert(rank(to, curr_c) == RANK_6);
-            assert(p->pieces[to] == empty);
+            assert(p->pieces[to] == no_piece);
             assert(p->pieces[enpassant_to] == pawn(opponent));
 
             capture_enpassant(p, to, enpassant_to, captured, opponent);
@@ -214,7 +214,7 @@ void make_null_move(Position *p) {
         new_info->hash ^= polyglotEnpassant[col(info->enpassant)];
     }
 
-    new_info->captured = empty;
+    new_info->captured = no_piece;
     new_info->pinned[white] = pinned_piece_squares(p, white);
     new_info->pinned[black] = pinned_piece_squares(p, black);
 
@@ -222,8 +222,7 @@ void make_null_move(Position *p) {
 }
 
 void undo_move(Position *p, Move move) {
-    SearchThread *my_thread = p->my_thread;
-    --my_thread->search_ply;
+    --p->my_thread->search_ply;
     p->color ^= 1;
 
     Info *info = p->info;
@@ -233,7 +232,7 @@ void undo_move(Position *p, Move move) {
     Piece piece = p->pieces[to];
 
     assert(!is_king(info->captured));
-    assert(p->pieces[from] == empty);
+    assert(p->pieces[from] == no_piece);
 
     if (is_king(piece)) {
         p->king_index[color] = from;
@@ -266,8 +265,7 @@ void undo_move(Position *p, Move move) {
 }
 
 void undo_null_move(Position *p) {
-    SearchThread *my_thread = p->my_thread;
-    --my_thread->search_ply;
+    --p->my_thread->search_ply;
     p->color ^= 1;
     p->info = p->info->previous;
 }
@@ -295,7 +293,7 @@ bool is_pseudolegal(Position *p, Move move) {
         return false;
     }
 
-    if (piece == empty) {
+    if (piece == no_piece) {
         return false;
     }
     if (piece_color(piece) != p->color) {
