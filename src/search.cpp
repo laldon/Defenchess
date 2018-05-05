@@ -161,7 +161,7 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
 
     int best_score;
     if (!in_check) {
-        bool is_null = (md-1)->current_move == null_move;
+        bool is_null = ply > 0 && (md-1)->current_move == null_move;
         if (is_null) {
             md->static_eval = best_score = tempo * 2 - (md-1)->static_eval;
         } else {
@@ -326,7 +326,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         }
     }
 
-    bool is_null = (md-1)->current_move == null_move;
+    bool is_null = ply > 0 && (md-1)->current_move == null_move;
     if (!in_check) {
         if (depth < 1) {
             return alpha_beta_quiescence(p, md+1, alpha, beta, 0, in_check);
