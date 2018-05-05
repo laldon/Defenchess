@@ -211,8 +211,6 @@ uint64_t Perft(int depth, Position *p, bool root, bool in_check) {
         // undo_test(p, m);
         bool checks = gives_check(p, m);
         make_move(p, m);
-        bool checks_2 = is_checked(p);
-        assert(checks == checks_2);
         move_nodes = Perft(depth - 1, p, false, checks);
         nodes += move_nodes;
         undo_move(p, m);
