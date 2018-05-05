@@ -115,8 +115,7 @@ void promote(Position *p, Square to, Piece pawn, Piece promotion_type, Color col
 
 
 void make_move(Position *p, Move move) {
-    SearchThread *my_thread = p->my_thread;
-    ++my_thread->search_ply;
+    ++p->my_thread->search_ply;
 
     Info *info = p->info;
     std::memcpy(info + 1, info, info_size);
@@ -196,8 +195,7 @@ void make_move(Position *p, Move move) {
 }
 
 void make_null_move(Position *p) {
-    SearchThread *my_thread = p->my_thread;
-    ++my_thread->search_ply;
+    ++p->my_thread->search_ply;
 
     Info *info = p->info;
     std::memcpy(info + 1, info, info_size);

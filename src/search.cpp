@@ -599,12 +599,15 @@ void think(Position *p) {
 
             for (int i = 1; i < num_threads; ++i) {
                 SearchThread *t = &search_threads[i];
+                Position *tp = &t->position;
+                Metadata *tmd = &t->metadatas[0];
                 int thread_depth = depth + (i % 4);
-                t->thread_obj = std::thread(alpha_beta, &(t->position), &t->metadatas[0], alpha, beta, thread_depth, in_check, false);
+                t->thread_obj = std::thread(alpha_beta, tp, tmd, alpha, beta, thread_depth, in_check, false);
             }
 
             SearchThread *main_thread = p->my_thread;
-            score = alpha_beta(p, &main_thread->metadatas[0], alpha, beta, depth, in_check, false);
+            Metadata *md = &main_thread->metadatas[0];
+            score = alpha_beta(p, md, alpha, beta, depth, in_check, false);
             main_thread_finished = true;
 
             // Stop threads

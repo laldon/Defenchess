@@ -284,7 +284,7 @@ void run_command(string s) {
         go();
     if (s == "setoption")
         setoption();
-    if (s == "o")
+    if (s == "so")
         easyoption();
     if (s == "eval")
         eval();
