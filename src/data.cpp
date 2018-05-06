@@ -129,7 +129,7 @@ void get_ready() {
                 t->countermove_history[j][k] = 0;
             }
         }
-        
+
         // Clear the metadata
         Metadata *md = &t->metadatas[0];
         md->current_move = no_move;
