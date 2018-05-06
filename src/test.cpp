@@ -125,21 +125,25 @@ void perft_test(){
 
 }
 
-uint64_t Perft(int depth, Position *p, bool root, bool in_check) {
+uint64_t fastPerft(int depth, Position *p, bool root, bool in_check) {
     uint64_t move_nodes = 0, nodes = 0;
     const bool is_leaf = depth == 2;
 
-    MoveGen movegen = new_movegen(p, PLY(p), depth, 0, NORMAL_SEARCH, in_check);
-    while (Move m = next_move(&movegen)) {
+    Metadata *md = &p->my_thread->metadatas[0];
+    MoveGen movegen = new_movegen(p, md, depth, no_move, NORMAL_SEARCH, in_check);
+    Move move;
+    while ((move = next_move(&movegen)) != no_move) {
+        if (!is_legal(p, move)) {
+            continue;
+        }
         if (root && depth == 1) {
             move_nodes = 1;
             ++nodes;
         } else {
-            //bool checks = gives_check(p, m);
-            Position *new_p = make_move(p, m);
-            bool checks = is_checked(new_p);
+            bool checks = gives_check(p, move);
+            Position *new_p = make_move(p, move);
             if (is_leaf) {
-                MoveGen movegen_leaf = new_movegen(new_p, PLY(new_p), depth, 0, PERFT_SEARCH, false);
+                MoveGen movegen_leaf = new_movegen(new_p, md, depth, no_move, PERFT_SEARCH, false);
                 if (checks) {
                     generate_evasions(&movegen_leaf, new_p);
                 } else {
@@ -153,11 +157,36 @@ uint64_t Perft(int depth, Position *p, bool root, bool in_check) {
             undo_move(new_p);
         }
         if (root) {
-            std::cout << move_to_str(m) << ": " << move_nodes << std::endl;
+            std::cout << move_to_str(move) << ": " << move_nodes << std::endl;
         }
     }
 
     return nodes;
 }
 
+uint64_t Perft(int depth, Position *p, bool root, bool in_check) {
+    // return fastPerft(depth, p, root, in_check);
+    if (depth == 0) {
+        return 1ULL;
+    }
+    uint64_t move_nodes = 0, nodes = 0;
 
+    Metadata *md = &p->my_thread->metadatas[0];
+    MoveGen movegen = new_movegen(p, md, depth, no_move, NORMAL_SEARCH, in_check);
+    Move move;
+    while ((move = next_move(&movegen)) != no_move) {
+        if (!is_legal(p, move)) {
+            continue;
+        }
+        bool checks = gives_check(p, move);
+        Position *new_p = make_move(p, move);
+        move_nodes = Perft(depth - 1, new_p, false, checks);
+        nodes += move_nodes;
+        undo_move(new_p);
+        if (root) {
+            std::cout << move_to_str(move) << ": " << move_nodes << std::endl;
+        }
+    }
+
+    return nodes;
+}

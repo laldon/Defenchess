@@ -225,31 +225,31 @@ Move next_move(MoveGen *movegen) {
             assert(false);
     }
 
-    return 0;
+    return no_move;
 }
 
-MoveGen new_movegen(Position *p, int ply, int depth, Move tte_move, uint8_t type, bool in_check) {
-    Square prev_to = move_to((p-1)->current_move);
+MoveGen new_movegen(Position *p, Metadata *md, int depth, Move tte_move, uint8_t type, bool in_check) {
+    int ply = md->ply;
     int movegen_stage;
     Move tm;
     if (in_check) {
-        // tm = tte_move && is_pseudolegal(p, tte_move) ? tte_move : Move(0);
-        tm = Move(0);
+        // tm = tte_move && is_pseudolegal(p, tte_move) ? tte_move : no_move;
+        tm = no_move;
         movegen_stage = EVASION_TTE_MOVE;
     } else {
         if (type == NORMAL_SEARCH) {
-            tm = tte_move && is_pseudolegal(p, tte_move) ? tte_move : Move(0);
+            tm = tte_move && is_pseudolegal(p, tte_move) ? tte_move : no_move;
             movegen_stage = NORMAL_TTE_MOVE;
         } else if (type == QUIESCENCE_SEARCH) {
             assert(depth == 0 || depth == -1);
-            tm = tte_move && is_pseudolegal(p, tte_move) && is_capture(p, tte_move) ? tte_move : Move(0);
+            tm = tte_move && is_pseudolegal(p, tte_move) && is_capture(p, tte_move) ? tte_move : no_move;
             if (depth >= 0) {
                 movegen_stage = QUIESCENCE_TTE_MOVE_CHECKS;
             } else {
                 movegen_stage = QUIESCENCE_TTE_MOVE;
             }
         } else {  // Perft
-            tm = tte_move && is_pseudolegal(p, tte_move) ? tte_move : Move(0);
+            tm = tte_move && is_pseudolegal(p, tte_move) ? tte_move : no_move;
             movegen_stage = NORMAL_TTE_MOVE;
         }
     }
@@ -258,12 +258,13 @@ MoveGen new_movegen(Position *p, int ply, int depth, Move tte_move, uint8_t type
     if (!tm) {
         ++movegen_stage;
     }
+    Square prev_to = ply > 0 ? move_to((md-1)->current_move) : no_move;
     MoveGen movegen = {
         {}, // Moves
         p, // Position
         tm, // tte_move
-        {my_thread->killers[ply][0], my_thread->killers[ply][1]}, // killer 2
-        (ply > 0) ? my_thread->counter_moves[p->pieces[prev_to]][prev_to] : Move(0), // counter move
+        {md->killers[0], md->killers[1]}, // killer 2
+        (ply > 0) ? my_thread->counter_moves[p->pieces[prev_to]][prev_to] : no_move, // counter move
         movegen_stage, // stage
         0, // head
         0, // tail
