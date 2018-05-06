@@ -647,12 +647,14 @@ void init_threads() {
         search_thread->search_ply = 0;
 
         // Clear the metadata
-        Metadata *md = &search_thread->metadatas[0];
-        md->current_move = no_move;
-        md->static_eval = UNDEFINED;
-        md->ply = 0;
-        md->killers[0] = no_move;
-        md->killers[1] = no_move;
+        for (int j = 0; j < MAX_PLY + 1; ++j) {
+            Metadata *md = &search_thread->metadatas[j];
+            md->current_move = no_move;
+            md->static_eval = UNDEFINED;
+            md->ply = 0;
+            md->killers[0] = no_move;
+            md->killers[1] = no_move;
+        }
     }
 }
 
