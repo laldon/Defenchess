@@ -98,7 +98,8 @@ void debug() {
     cout << bitstring(root_position->board);
     show_position_png(root_position);
     MoveGen movegen = new_movegen(root_position, 0, 0, 0, NORMAL_SEARCH, is_checked(root_position));
-    while (Move move = next_move(&movegen) != no_move) {
+    Move move;
+    while ((move = next_move(&movegen)) != no_move) {
         cout << move_to_str(move) << " ";
     }
     cout << endl;

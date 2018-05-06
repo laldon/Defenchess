@@ -182,7 +182,8 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
 
     Move best_move = no_move;
     int num_moves = 0;
-    while (Move move = next_move(&movegen) != no_move) {
+    Move move;
+    while ((move = next_move(&movegen)) != no_move) {
         assert(!is_move_empty(move));
         assert(is_pseudolegal(p, move));
         assert(in_check || md->static_eval != UNDEFINED);
@@ -407,7 +408,8 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         improving = md->static_eval >= (md-2)->static_eval || (md-2)->static_eval == UNDEFINED;
     }
 
-    while (Move move = next_move(&movegen) != no_move) {
+    Move move;
+    while ((move = next_move(&movegen)) != no_move) {
         assert(is_pseudolegal(p, move));
         assert(!is_move_empty(move));
         assert(0 < depth || in_check);
@@ -561,7 +563,8 @@ void think(Position *p) {
     } else {
         Material *eval_material = get_material(p);
         MoveGen movegen = new_movegen(p, md, 0, no_move, NORMAL_SEARCH, in_check);
-        while (Move move = next_move(&movegen) != no_move) {
+        Move move;
+        while ((move = next_move(&movegen)) != no_move) {
             if (is_legal(p, move)) {
                 root_moves.push_back(move);            
             }
