@@ -282,6 +282,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
     }
 
     md->current_move = 0;
+    (md+2)->killers[0] = (md+2)->killers[1] = no_move;
     (md+1)->ply = ply + 1;
 
     Move tte_move = no_move;
