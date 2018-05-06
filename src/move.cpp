@@ -137,7 +137,6 @@ void make_move(Position *p, Move move) {
 
     new_info->enpassant = 0;
     new_info->hash = info->hash ^ polyglotWhite;
-    p->color = opponent;
 
     if (info->enpassant) {
         // Clear the enpassant hash from the previous position
@@ -187,6 +186,7 @@ void make_move(Position *p, Move move) {
         new_info->hash ^= castlingHash[castling_rights];
     }
 
+    p->color = opponent;
     new_info->captured = captured;
     new_info->pinned[white] = pinned_piece_squares(p, white);
     new_info->pinned[black] = pinned_piece_squares(p, black);
@@ -206,12 +206,12 @@ void make_null_move(Position *p) {
     ++new_info->last_irreversible;
     new_info->enpassant = 0;
     new_info->hash = info->hash ^ polyglotWhite;
-    p->color ^= 1;
 
     if (info->enpassant) {
         new_info->hash ^= polyglotEnpassant[col(info->enpassant)];
     }
 
+    p->color ^= 1;
     new_info->captured = no_piece;
     new_info->pinned[white] = pinned_piece_squares(p, white);
     new_info->pinned[black] = pinned_piece_squares(p, black);

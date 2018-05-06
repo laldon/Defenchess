@@ -347,8 +347,8 @@ typedef struct Info {
 
 typedef struct CopiedInfo {
     // COPIED 
-    uint64_t pawn_hash;
     Score    score;
+    uint64_t pawn_hash;
     uint8_t  castling; // black_queenside | black_kingside | white_queenside | white_kingside
     uint8_t  last_irreversible;
     int      material_index;
