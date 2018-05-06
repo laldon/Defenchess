@@ -112,6 +112,15 @@ void get_ready() {
 
     for (int i = 0; i < MAX_THREADS; ++i) {
         SearchThread *t = &(search_threads[i]);
+        // Clear the metadata
+        for (int j = 0; j < MAX_PLY + 1; ++j) {
+            Metadata *md = &t->metadatas[j];
+            md->current_move = no_move;
+            md->static_eval = UNDEFINED;
+            md->ply = 0;
+            md->killers[0] = no_move;
+            md->killers[1] = no_move;
+        }
         // Clear counter moves
         for (int j = 0; j < 14; ++j) {
             for (int k = 0; k < 64; ++k) {
@@ -129,16 +138,6 @@ void get_ready() {
                 t->countermove_history[j][k] = 0;
             }
         }
-
-        // Clear the metadata
-        Metadata *md = &t->metadatas[0];
-        md->current_move = no_move;
-        md->static_eval = UNDEFINED;
-        md->ply = 0;
-
-        // Clear killers
-        md->killers[0] = no_move;
-        md->killers[1] = no_move;
     }
 }
 
