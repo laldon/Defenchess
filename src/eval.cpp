@@ -732,9 +732,9 @@ int evaluate(Position *p, int *opponent_king_eval) {
     eval.score_white += white_king_score;
     eval.score_black += black_king_score;
     if (p->color == white) {
-        *opponent_king_eval = black_king_score.midgame;
+        *opponent_king_eval = (black_king_score.midgame + black_king_score.endgame) / 2;
     } else {
-        *opponent_king_eval = white_king_score.midgame;
+        *opponent_king_eval = (white_king_score.midgame + white_king_score.endgame) / 2;
     }
 
     evaluate_threats(&eval, p);

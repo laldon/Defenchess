@@ -430,7 +430,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         int extension = 0;
         if (checks && see_capture(p, move)) {
             extension = 1;
-        } else if (opponent_king_eval < -200) {
+        } else if (opponent_king_eval < -50) {
             extension = 1;
         }
         new_depth = depth - 1 + extension;
