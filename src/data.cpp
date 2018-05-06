@@ -112,11 +112,6 @@ void get_ready() {
 
     for (int i = 0; i < MAX_THREADS; ++i) {
         SearchThread *t = &(search_threads[i]);
-        // Clear killers
-        for (int j = 0; j < MAX_PLY + 1; ++j) {
-            t->killers[j][0] = 0;
-            t->killers[j][1] = 0;
-        }
         // Clear counter moves
         for (int j = 0; j < 14; ++j) {
             for (int k = 0; k < 64; ++k) {
@@ -140,6 +135,10 @@ void get_ready() {
         md->current_move = no_move;
         md->static_eval = UNDEFINED;
         md->ply = 0;
+
+        // Clear killers
+        md->killers[0] = no_move;
+        md->killers[1] = no_move;
     }
 }
 

@@ -90,11 +90,11 @@ bool is_draw(Position *p) {
     return false;
 }
 
-void save_killer(Position *p, Metadata *md, Move move, int depth, int ply, Move *quiets, int quiets_count) {
+void save_killer(Position *p, Metadata *md, Move move, int depth, Move *quiets, int quiets_count) {
     SearchThread *my_thread = p->my_thread;
-    if (move != my_thread->killers[ply][0]) {
-        my_thread->killers[ply][1] = my_thread->killers[ply][0];
-        my_thread->killers[ply][0] = move;
+    if (move != md->killers[0]) {
+        md->killers[1] = md->killers[0];
+        md->killers[0] = move;
     }
     Piece piece = p->pieces[move_from(move)];
     int bonus = depth > 17 ? 0 : depth * depth;
@@ -282,6 +282,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
     }
 
     md->current_move = 0;
+    (md+2)->killers[0] = (md+2)->killers[1] = no_move;
     (md+1)->ply = ply + 1;
 
     Move tte_move = no_move;
@@ -297,7 +298,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
                 (tte->flag == FLAG_BETA && tte_score >= beta) ||
                 (tte->flag == FLAG_ALPHA && tte_score <= alpha))) {
                     if (tte_score >= beta && !in_check && tte_move && !is_capture_or_promotion(p, tte_move)) {
-                        save_killer(p, md, tte_move, depth, ply, nullptr, 0);
+                        save_killer(p, md, tte_move, depth, nullptr, 0);
                     }
                     return tte_score;
             }
@@ -519,7 +520,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
                     alpha = score;
                 } else {
                     if (!capture_or_promo) {
-                        save_killer(p, md, move, depth, ply, quiets, quiets_count - 1);
+                        save_killer(p, md, move, depth, quiets, quiets_count - 1);
                     }
                     set_tte(p->hash, move, depth, score_to_tt(score, ply), FLAG_BETA);
                     return score;
@@ -535,7 +536,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
     uint8_t flag = is_principal && best_move ? FLAG_EXACT : FLAG_ALPHA;
     set_tte(p->hash, best_move, depth, score_to_tt(best_score, ply), flag);
     if (!in_check && best_move && !is_capture_or_promotion(p, best_move)) {
-        save_killer(p, md, best_move, depth, ply, quiets, quiets_count - 1);
+        save_killer(p, md, best_move, depth, quiets, quiets_count - 1);
     }
     assert(best_score >= -MATE && best_score <= MATE);
     return best_score;

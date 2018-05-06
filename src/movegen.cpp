@@ -263,7 +263,7 @@ MoveGen new_movegen(Position *p, Metadata *md, int depth, Move tte_move, uint8_t
         {}, // Moves
         p, // Position
         tm, // tte_move
-        {my_thread->killers[ply][0], my_thread->killers[ply][1]}, // killer 2
+        {md->killers[0], md->killers[1]}, // killer 2
         (ply > 0) ? my_thread->counter_moves[p->pieces[prev_to]][prev_to] : no_move, // counter move
         movegen_stage, // stage
         0, // head

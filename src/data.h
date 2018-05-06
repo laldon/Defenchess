@@ -342,6 +342,7 @@ typedef struct Metadata {
     int  ply;
     Move current_move;
     int  static_eval;
+    Move killers[2];
 } Metadata;
 
 struct Position {
@@ -518,7 +519,6 @@ struct SearchThread {
     int         thread_id;
     int         search_ply;
     Metadata    metadatas[MAX_PLY + 1];
-    Move        killers[MAX_PLY + 1][2];
     Move        counter_moves[14][64];
     int         history[14][64];
     int         countermove_history[14][64];
