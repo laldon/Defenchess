@@ -651,6 +651,8 @@ void init_threads() {
         md->current_move = no_move;
         md->static_eval = UNDEFINED;
         md->ply = 0;
+        md->killers[0] = no_move;
+        md->killers[1] = no_move;
     }
 }
 

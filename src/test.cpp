@@ -166,6 +166,9 @@ uint64_t fastPerft(int depth, Position *p, bool root, bool in_check) {
 
 uint64_t Perft(int depth, Position *p, bool root, bool in_check) {
     // return fastPerft(depth, p, root, in_check);
+    if (depth == 0) {
+        return 1ULL;
+    }
     uint64_t move_nodes = 0, nodes = 0;
 
     Metadata *md = &p->my_thread->metadatas[0];
