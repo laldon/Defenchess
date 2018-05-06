@@ -50,29 +50,6 @@ void perft_test(){
         Position *st_pos = import_fen(fen[i].c_str());
         Position *p = st_pos;
 
-        // Generate all moves and test pseudo legal
-        // for (Square a = A1; a <= H8; ++a) {
-        //     for (Square b = A1; b <= H8; ++b) {
-        //         Move gen_move = _movecast(a, b, NORMAL);
-        //         if (is_pseudolegal(p, gen_move)) {
-        //             MoveGen movegen = new_movegen(p, 0, 0, 0, NORMAL_SEARCH, is_checked(p));
-        //             generate_moves<ALL>(&movegen, p);
-        //             bool found = false;
-        //             for (uint8_t move_idx = movegen.head; move_idx < movegen.tail; ++move_idx) {
-        //                 if (movegen.moves[move_idx].move == gen_move) {
-        //                     found = true;
-        //                     break;
-        //                 }
-        //             }
-        //             if (!found) {
-        //                 std::cout << move_to_str(gen_move) << std::endl;
-        //                 show_position_png(p);
-        //             }
-        //             assert(found);
-        //         }
-        //     }
-        // }
-
         int t_depth = depths[i];
 
         std::cout << "perft " << t_depth << std::endl;
@@ -197,8 +174,34 @@ uint64_t fastPerft(int depth, Position *p, bool root, bool in_check) {
     return nodes;
 }
 
+void pseudolegal_test(Position *p) {
+    // Generate all moves and test pseudo legal
+    for (Square a = A1; a <= H8; ++a) {
+        for (Square b = A1; b <= H8; ++b) {
+            Move gen_move = _movecast(a, b, NORMAL);
+            if (is_pseudolegal(p, gen_move)) {
+                MoveGen movegen = new_movegen(p, 0, 0, 0, 0, NORMAL_SEARCH, is_checked(p));
+                generate_moves<ALL>(&movegen, p);
+                bool found = false;
+                for (uint8_t move_idx = movegen.head; move_idx < movegen.tail; ++move_idx) {
+                    if (movegen.moves[move_idx].move == gen_move) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    std::cout << move_to_str(gen_move) << std::endl;
+                    show_position_png(p);
+                }
+                assert(found);
+            }
+        }
+    }
+}
+
 uint64_t Perft(int depth, Position *p, bool root, bool in_check) {
     // return fastPerft(depth, p, root, in_check);
+    // pseudolegal_test(p);
     if (depth == 0) {
         return 1ULL;
     }
@@ -206,8 +209,11 @@ uint64_t Perft(int depth, Position *p, bool root, bool in_check) {
 
     MoveGen movegen = new_movegen(p, 0, 0, depth, 0, NORMAL_SEARCH, in_check);
     while (Move m = next_move(&movegen)) {
-        // std::cout << depth << " " << move_to_str(m) << std::endl;
         // undo_test(p, m);
+        assert(is_pseudolegal(p, m));
+        if (!is_legal(p, m)) {
+            continue;
+        }
         bool checks = gives_check(p, m);
         make_move(p, m);
         move_nodes = Perft(depth - 1, p, false, checks);

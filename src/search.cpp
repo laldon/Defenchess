@@ -372,16 +372,17 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
             int null_eval = -alpha_beta(p, md+1, -beta, -beta + 1, d, false, !cut);
             undo_null_move(p);
             if (null_eval >= beta) {
-                if (null_eval >= MATE_IN_MAX_PLY)
-                    null_eval = beta;
+                return beta;
+                // if (null_eval >= MATE_IN_MAX_PLY)
+                //     null_eval = beta;
 
-                if (depth < 12 && std::abs(beta) < KNOWN_WIN)
-                    return null_eval;
+                // if (depth < 12 && std::abs(beta) < KNOWN_WIN)
+                //     return null_eval;
 
-                int verification = alpha_beta(p, md, beta - 1, beta, d, false, false);
+                // int verification = alpha_beta(p, md, beta - 1, beta, d, false, false);
 
-                if (verification >= beta)
-                    return beta;
+                // if (verification >= beta)
+                //     return beta;
             }
         }
     }
