@@ -129,8 +129,9 @@ uint64_t Perft(int depth, Position *p, bool root, bool in_check) {
     uint64_t move_nodes = 0, nodes = 0;
     const bool is_leaf = depth == 2;
 
-    MoveGen movegen = new_movegen(p, PLY(p), depth, 0, NORMAL_SEARCH, in_check);
-    while (Move m = next_move(&movegen)) {
+    Metadata *md = &p->my_thread->metadatas[0];
+    MoveGen movegen = new_movegen(p, md, depth, no_move, NORMAL_SEARCH, in_check);
+    while (Move m = next_move(&movegen) != no_move) {
         if (root && depth == 1) {
             move_nodes = 1;
             ++nodes;
@@ -139,7 +140,7 @@ uint64_t Perft(int depth, Position *p, bool root, bool in_check) {
             Position *new_p = make_move(p, m);
             bool checks = is_checked(new_p);
             if (is_leaf) {
-                MoveGen movegen_leaf = new_movegen(new_p, PLY(new_p), depth, 0, PERFT_SEARCH, false);
+                MoveGen movegen_leaf = new_movegen(new_p, md, depth, no_move, PERFT_SEARCH, false);
                 if (checks) {
                     generate_evasions(&movegen_leaf, new_p);
                 } else {

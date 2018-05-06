@@ -541,7 +541,7 @@ Score evaluate_passer(Evaluation *eval, Position *p, Color color) {
             if (rank(blocker, color) != RANK_8)
                 endgame -= distance(p->king_index[color], pawn_forward(blocker, color)) * rr;
 
-            if (p->pieces[blocker] == empty) {
+            if (p->pieces[blocker] == no_piece) {
                 Bitboard defended, unsafe, to_queen;
                 defended = unsafe = to_queen = FRONT_MASK[outpost][color];
 

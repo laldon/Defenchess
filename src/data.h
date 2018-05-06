@@ -210,6 +210,9 @@ enum MoveType{
     PROMOTION   = 2
 };
 
+const Move null_move = Move(~0);
+const Move no_move = Move(0);
+
 enum MoveGenType {
     SILENT = 0,
     CAPTURE = 1,
@@ -217,7 +220,6 @@ enum MoveGenType {
 };
 
 enum _Piece {
-    empty = 0,
     white_occupy = 0,
     black_occupy = 1,
     white_pawn = 2,
@@ -231,7 +233,8 @@ enum _Piece {
     white_queen = 10,
     black_queen = 11,
     white_king = 12,
-    black_king = 13
+    black_king = 13,
+    no_piece = 14
 };
 
 enum _Square : Square {
@@ -335,6 +338,12 @@ typedef struct CopyThingSize {
     SearchThread *my_thread;
 } CopyThingSize;
 
+typedef struct Metadata {
+    int  ply;
+    Move current_move;
+    int  static_eval;
+} Metadata;
+
 struct Position {
     //? COPIED 
     uint64_t     pawn_hash;
@@ -350,10 +359,8 @@ struct Position {
     SearchThread *my_thread;
 
     //! NOT TO COPY
-    Square  enpassant; 
+    Square   enpassant; 
     Color    color;
-    int      static_eval;
-    Move     current_move;
     uint64_t hash;
     Bitboard pinned[2];
 };
@@ -510,6 +517,7 @@ struct SearchThread {
     Position    positions[1024];
     int         thread_id;
     int         search_ply;
+    Metadata    metadatas[MAX_PLY + 1];
     Move        killers[MAX_PLY + 1][2];
     Move        counter_moves[14][64];
     int         history[14][64];
@@ -557,8 +565,6 @@ inline uint64_t sum_tb_hits() {
 extern Move pv_at_depth[MAX_PLY * 2];
 
 extern int reductions[2][64][64];
-
-inline int PLY(Position *p) { return p->my_thread->search_ply - root_ply; }
 
 inline Color piece_color(Piece p) {return p & 1;}
 

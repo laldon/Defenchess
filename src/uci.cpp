@@ -98,7 +98,7 @@ void debug() {
     cout << bitstring(root_position->board);
     show_position_png(root_position);
     MoveGen movegen = new_movegen(root_position, 0, 0, 0, NORMAL_SEARCH, is_checked(root_position));
-    while (Move move = next_move(&movegen)) {
+    while (Move move = next_move(&movegen) != no_move) {
         cout << move_to_str(move) << " ";
     }
     cout << endl;
@@ -184,7 +184,7 @@ void startpos() {
 
     if (word_equal(2, "moves")) {
         for (unsigned i = 3 ; i < word_list.size() ; i++) {
-            Move m = 0;
+            Move m = no_move;
             if (word_list[i].length() == 4) {
                 m = uci2move(root_position, word_list[i]);
             } else if (word_list[i].length() == 5) {
@@ -212,7 +212,7 @@ void cmd_fen() {
 
     if (word_equal(8, "moves")) {
         for (unsigned i = 9 ; i < word_list.size() ; i++) {
-            Move m = 0;
+            Move m = no_move;
             if (word_list[i].length() == 4) {
                 m = uci2move(root_position, word_list[i]);
             } else if (word_list[i].length() == 5) {
