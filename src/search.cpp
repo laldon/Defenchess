@@ -568,7 +568,7 @@ void think(Position *p) {
                 root_moves.push_back(move);            
             }
         }
-        if (eval_material->endgame_type == DRAW_ENDGAME || (in_check && root_moves.size() == 1)) {
+        if (eval_material->endgame_type == DRAW_ENDGAME || is_draw(p) || (in_check && root_moves.size() == 1)) {
             std::cout << "bestmove " << move_to_str(movegen.moves[0].move) << std::endl;
             return;
         }
