@@ -220,6 +220,7 @@ enum MoveGenType {
 };
 
 enum _Piece {
+    no_piece = 0,
     white_occupy = 0,
     black_occupy = 1,
     white_pawn = 2,
@@ -233,8 +234,7 @@ enum _Piece {
     white_queen = 10,
     black_queen = 11,
     white_king = 12,
-    black_king = 13,
-    no_piece = 14
+    black_king = 13
 };
 
 enum _Square : Square {
