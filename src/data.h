@@ -343,6 +343,7 @@ typedef struct Metadata {
     Move current_move;
     int  static_eval;
     Move killers[2];
+    Move excluded_move;
 } Metadata;
 
 struct Position {
