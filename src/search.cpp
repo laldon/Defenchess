@@ -140,10 +140,6 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
     assert(depth <= 0);
     assert(in_check == is_checked(p));
 
-    if (check_time(p)) {
-        return TIMEOUT;
-    }
-
     int ply = md->ply;
     if (is_main_thread(p)) {
         pv[ply].size = 0;
@@ -277,10 +273,6 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
     assert(-MATE <= alpha && alpha < beta && beta <= MATE);
     assert(0 <= depth);
     assert(in_check == is_checked(p));
-
-    if (check_time(p)) {
-        return TIMEOUT;
-    }
 
     int ply = md->ply;
     if (is_main_thread(p)) {
@@ -545,7 +537,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         undo_move(position);
         assert(is_timeout || main_thread_finished || (score >= -MATE && score <= MATE));
 
-        if (is_timeout) {
+        if (check_time(p) || is_timeout) {
             return TIMEOUT;
         }
 
