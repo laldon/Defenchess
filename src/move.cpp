@@ -24,7 +24,7 @@
 #include <cstring>
 
 void move_piece(Position *p, Square from, Square to, Piece piece, Color curr_c) {
-    p->pieces[from] = empty;
+    p->pieces[from] = no_piece;
     p->pieces[to] = piece;
     Bitboard from_to = bfi[from] ^ bfi[to];
     p->bbs[piece] ^= from_to;
@@ -58,7 +58,7 @@ void capture(Position *p, Square to, Piece captured, Color opponent) {
 void capture_enpassant(Position *p, Square to, Square enpassant_to, Piece captured, Color opponent) {
     p->bbs[captured] ^= bfi[enpassant_to];
     p->bbs[opponent] ^= bfi[enpassant_to];
-    p->pieces[enpassant_to] = empty;
+    p->pieces[enpassant_to] = no_piece;
     p->board ^= bfi[enpassant_to];
 
     uint64_t h = polyglotCombined[captured][to];
@@ -118,7 +118,7 @@ Position *make_move(Position *p, Move move) {
             assert(to == p->enpassant);
             assert(p->enpassant != 0);
             assert(rank(to, curr_c) == RANK_6);
-            assert(p->pieces[to] == empty);
+            assert(p->pieces[to] == no_piece);
             assert(p->pieces[enpassant_to] == pawn(opponent));
 
             capture_enpassant(new_p, to, enpassant_to, captured, opponent);
@@ -167,12 +167,17 @@ Position *make_null_move(Position *p) {
     Position *new_p = &(my_thread->positions[my_thread->search_ply]);
     ++new_p->last_irreversible;
 
+    new_p->enpassant = 0;
+    new_p->hash = p->hash ^ polyglotWhite;
+    new_p->color = opponent_color(p->color);
+
     if (p->enpassant) {
         new_p->hash ^= polyglotEnpassant[col(p->enpassant)];
-        new_p->enpassant = 0;
     }
-    new_p->hash ^= polyglotWhite;
-    new_p->color ^= 1;
+
+    new_p->pinned[white] = pinned_piece_squares(new_p, white);
+    new_p->pinned[black] = pinned_piece_squares(new_p, black);
+
     return new_p;
 }
 
@@ -205,7 +210,7 @@ bool is_pseudolegal(Position *p, Move move) {
         return false;
     }
 
-    if (piece == empty) {
+    if (piece == no_piece) {
         return false;
     }
     if (piece_color(piece) != p->color) {
