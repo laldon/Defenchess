@@ -321,7 +321,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
             if (flag == FLAG_EXACT ||
                 (flag == FLAG_BETA && tb_score >= beta) ||
                 (flag == FLAG_ALPHA && tb_score <= alpha)) {
-                    set_tte(p->hash, 0, std::min(depth + 6, MAX_PLY - 1), score_to_tt(tb_score, ply), flag);
+                    set_tte(pos_hash, 0, std::min(depth + 6, MAX_PLY - 1), score_to_tt(tb_score, ply), flag);
                     return tb_score;
                 }
         }
