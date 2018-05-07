@@ -420,7 +420,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
             int rbeta = std::min(beta + 120, MATE_IN_MAX_PLY - 1);
             MoveGen movegen = new_movegen(p, ply, depth, tte_move, NORMAL_SEARCH, in_check);
 
-            while ((move = next_move(&movegen)) != 0) {
+            while ((move = next_move(&movegen)) != no_move) {
                 if (is_legal(p, move)) {
                     p->current_move = move;
                     bool checks = gives_check(p, move);
