@@ -32,11 +32,11 @@ bool is_pseudolegal(Position *p, Move m);
 bool gives_check(Position *p, Move m);
 
 inline bool is_capture(Position *p, Move move) {
-    return p->pieces[move_to(move)] != empty;
+    return p->pieces[move_to(move)] != no_piece;
 }
 
 inline bool is_capture_or_promotion(Position *p, Move move) {
-    return p->pieces[move_to(move)] != empty || move_type(move) == PROMOTION;
+    return p->pieces[move_to(move)] != no_piece || move_type(move) == PROMOTION;
 }
 
 inline bool is_checked(Position *p) {
@@ -52,15 +52,15 @@ inline bool is_advanced_pawn_push(Position *p, Move move) {
 bool can_king_castle(Position *p);
 bool can_queen_castle(Position *p);
 
-inline bool is_checked_opposite(Position *p){
-    Color c = p->color ^ 1;
-    return targeted_from(p, p->board, c, p->king_index[c]);
+inline bool is_checked_color(Position *p, Color color) {
+    return targeted_from(p, p->board, color, p->king_index[color]);
 }
 
 inline bool is_legal(Position *p, Move m) {
     if (move_type(m) == ENPASSANT) {
         Position *new_p = make_move(p, m);
-        bool checked = is_checked_opposite(new_p);
+        // Check if the side that made the move is in check
+        bool checked = is_checked_color(new_p, p->color);
         undo_move(new_p);
         return !checked;
     }

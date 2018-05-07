@@ -98,11 +98,11 @@ Position* add_pieces(Position* p){
                     p->pieces[i] = j;
                     break;
                 } else {
-                    p->pieces[i] = 0;
+                    p->pieces[i] = no_piece;
                 }
             }
         } else {
-            p->pieces[i] = 0;
+            p->pieces[i] = no_piece;
         }
     }
     return p;
@@ -162,7 +162,7 @@ Position* import_fen(const char* fen){
     p->board = 0;
 
     for (int i = 0 ; i < 64 ; i++){
-        p->pieces[i] = 0;
+        p->pieces[i] = no_piece;
     }
 
     int sq = A8;
