@@ -562,7 +562,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
                     if (!capture_or_promo) {
                         save_killer(p, md, move, depth, quiets, quiets_count - 1);
                     }
-                    if (!excluded_move) {
+                    if (excluded_move == no_move) {
                         set_tte(pos_hash, move, depth, score_to_tt(score, ply), FLAG_BETA);
                     }
                     return score;
@@ -572,10 +572,10 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
     }
 
     if (num_moves == 0) {
-        best_score = excluded_move ? alpha : in_check ? -MATE + ply : 0;
+        best_score = excluded_move != no_move ? alpha : in_check ? -MATE + ply : 0;
     }
 
-    if (!excluded_move) {
+    if (excluded_move == no_move) {
         uint8_t flag = is_principal && best_move ? FLAG_EXACT : FLAG_ALPHA;
         set_tte(pos_hash, best_move, depth, score_to_tt(best_score, ply), flag);
     }
