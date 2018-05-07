@@ -281,7 +281,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         }
     }
 
-    md->current_move = (md+1)->excluded_move = 0;
+    md->current_move = (md+1)->excluded_move = no_move;
     Move excluded_move = md->excluded_move;
     uint64_t pos_hash = p->hash ^ uint64_t(excluded_move << 16);
     (md+2)->killers[0] = (md+2)->killers[1] = no_move;
@@ -436,15 +436,15 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         if (depth >= 10 &&
             move == tte_move &&
             !root_node &&
-            !excluded_move &&
+            excluded_move == no_move &&
             tte_score != UNDEFINED &&
             (tte->flag == FLAG_EXACT || tte->flag == FLAG_BETA) &&
             tte->depth >= depth - 3 &&
             is_legal(p, move)) {
                 int rbeta = std::max(tte_score - 2 * depth, -MATE);
-                p->excluded_move = move;
-                int singular_value = alpha_beta(p, rbeta - 1, rbeta, depth / 2, in_check, cut);
-                p->excluded_move = 0;
+                md->excluded_move = move;
+                int singular_value = alpha_beta(p, md, rbeta - 1, rbeta, depth / 2, in_check, cut);
+                md->excluded_move = no_move;
 
                 if (singular_value < rbeta) {
                     extension = 1;
