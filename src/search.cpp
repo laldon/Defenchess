@@ -242,8 +242,9 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
         undo_move(position);
         assert(is_timeout || main_thread_finished || (score >= -MATE && score <= MATE));
 
-        if (is_timeout)
+        if (is_timeout) {
             return TIMEOUT;
+        }
 
         if (score > best_score) {
             best_score = score;
@@ -543,6 +544,10 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         }
         undo_move(position);
         assert(is_timeout || main_thread_finished || (score >= -MATE && score <= MATE));
+
+        if (is_timeout) {
+            return TIMEOUT;
+        }
 
         if (score > best_score) {
             best_score = score;
