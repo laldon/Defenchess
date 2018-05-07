@@ -119,7 +119,6 @@ void save_killer(Position *p, Metadata *md, Move move, int depth, Move *quiets, 
     }
 }
 
-<<<<<<< HEAD
 bool check_time(Position *p) {
     if (is_main_thread(p)) {
         if (timer_count == 0) {
@@ -136,23 +135,16 @@ bool check_time(Position *p) {
     return false;
 }
 
-int alpha_beta_quiescence(Position *p, int alpha, int beta, int depth, bool in_check) {
-=======
 int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int depth, bool in_check) {
->>>>>>> fbaa45d99645df2a51cc86c013e2534f98dd46fd
     assert(alpha >= -MATE && alpha < beta && beta <= MATE);
     assert(depth <= 0);
     assert(in_check == is_checked(p));
 
-<<<<<<< HEAD
     if (check_time(p)) {
         return TIMEOUT;
     }
 
-    int ply = PLY(p);
-=======
     int ply = md->ply;
->>>>>>> fbaa45d99645df2a51cc86c013e2534f98dd46fd
     if (is_main_thread(p)) {
         pv[ply].size = 0;
     }
@@ -284,16 +276,12 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
     assert(-MATE <= alpha && alpha < beta && beta <= MATE);
     assert(0 <= depth);
     assert(in_check == is_checked(p));
-<<<<<<< HEAD
 
     if (check_time(p)) {
         return TIMEOUT;
     }
 
-    int ply = PLY(p);
-=======
     int ply = md->ply;
->>>>>>> fbaa45d99645df2a51cc86c013e2534f98dd46fd
     if (is_main_thread(p)) {
         pv[ply].size = 0;
     }
@@ -477,12 +465,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         improving = md->static_eval >= (md-2)->static_eval || (md-2)->static_eval == UNDEFINED;
     }
 
-<<<<<<< HEAD
-    while ((move = next_move(&movegen)) != 0) {
-=======
-    Move move;
     while ((move = next_move(&movegen)) != no_move) {
->>>>>>> fbaa45d99645df2a51cc86c013e2534f98dd46fd
         assert(is_pseudolegal(p, move));
         assert(!is_move_empty(move));
         assert(0 < depth || in_check);
