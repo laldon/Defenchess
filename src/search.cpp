@@ -428,9 +428,9 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         bool important = in_check || capture_or_promo || checks || move == tte_move || is_advanced_pawn_push(p, move);
 
         int extension = 0;
-        if (checks && see_capture(p, move)) {
+        if (opponent_king_eval < -450) {
             extension = 1;
-        } else if (opponent_king_eval < -400) {
+        } else if (checks && see_capture(p, move)) {
             extension = 1;
         }
         new_depth = depth - 1 + extension;
