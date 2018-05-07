@@ -418,22 +418,24 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         // Probcut
         if (depth >= 5 && abs(beta) < MATE_IN_MAX_PLY) {
             int rbeta = std::min(beta + 120, MATE_IN_MAX_PLY - 1);
-            MoveGen movegen = new_movegen(p, ply, depth, tte_move, NORMAL_SEARCH, in_check);
+            MoveGen movegen = new_movegen(p, md, depth, tte_move, NORMAL_SEARCH, in_check);
 
+            int num_probcut_moves = 0;
             while ((move = next_move(&movegen)) != no_move) {
-                if (is_legal(p, move)) {
-                    p->current_move = move;
+                if (num_probcut_moves < 3 && is_legal(p, move)) {
+                    ++num_probcut_moves;
+                    md->current_move = move;
                     bool checks = gives_check(p, move);
 
                     Position *position = make_move(p, move);
-                    int value = -alpha_beta_quiescence(position, -rbeta, -rbeta + 1, -1, checks);
+                    int value = -alpha_beta_quiescence(position, md+1, -rbeta, -rbeta + 1, -1, checks);
                     if (value >= rbeta) {
-                        value = -alpha_beta(position, -rbeta, -rbeta + 1, depth - 4, checks, !cut);
+                        value = -alpha_beta(position, md+1, -rbeta, -rbeta + 1, depth - 4, checks, !cut);
                     }
 
                     undo_move(position);
                     if (value >= rbeta) {
-                        return rbeta;
+                        return value;
                     }
                 }
             }
