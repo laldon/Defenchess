@@ -119,10 +119,30 @@ void save_killer(Position *p, Metadata *md, Move move, int depth, Move *quiets, 
     }
 }
 
+bool check_time(Position *p) {
+    if (is_main_thread(p)) {
+        if (timer_count == 0) {
+            gettimeofday(&curr_time, NULL);
+            if (time_passed() > myremain) {
+                is_timeout = true;
+                return true;
+            }
+        }
+        ++timer_count;
+    } else if (main_thread_finished) {
+        return true;
+    }
+    return false;
+}
+
 int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int depth, bool in_check) {
     assert(alpha >= -MATE && alpha < beta && beta <= MATE);
     assert(depth <= 0);
     assert(in_check == is_checked(p));
+
+    if (check_time(p)) {
+        return TIMEOUT;
+    }
 
     int ply = md->ply;
     if (is_main_thread(p)) {
@@ -220,7 +240,10 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
         md->current_move = move;
         int score = -alpha_beta_quiescence(position, md+1, -beta, -alpha, depth - 1, checks);
         undo_move(position);
-        assert(score >= -MATE && score <= MATE);
+        assert(is_timeout || main_thread_finished || (score >= -MATE && score <= MATE));
+
+        if (is_timeout)
+            return TIMEOUT;
 
         if (score > best_score) {
             best_score = score;
@@ -253,6 +276,11 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
     assert(-MATE <= alpha && alpha < beta && beta <= MATE);
     assert(0 <= depth);
     assert(in_check == is_checked(p));
+
+    if (check_time(p)) {
+        return TIMEOUT;
+    }
+
     int ply = md->ply;
     if (is_main_thread(p)) {
         pv[ply].size = 0;
@@ -515,22 +543,6 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         }
         undo_move(position);
         assert(is_timeout || main_thread_finished || (score >= -MATE && score <= MATE));
-
-        if (is_timeout)
-            return TIMEOUT;
-
-        if (is_main_thread(p)) {
-            if (timer_count == 0) {
-                gettimeofday(&curr_time, NULL);
-                if (time_passed() > myremain) {
-                    is_timeout = true;
-                    return TIMEOUT;
-                }
-            }
-            ++timer_count;
-        } else if (main_thread_finished) {
-            return TIMEOUT;
-        }
 
         if (score > best_score) {
             best_score = score;
