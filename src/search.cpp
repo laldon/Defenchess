@@ -466,11 +466,11 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
             move == tte_move &&
             !root_node &&
             excluded_move == no_move &&
-            tte_score != UNDEFINED &&
+            tte_score != UNDEFINED && std::abs(tte_score) < MATE_IN_MAX_PLY &&
             (tte->flag == FLAG_EXACT || tte->flag == FLAG_BETA) &&
             tte->depth >= depth - 3 &&
             is_legal(p, move)) {
-                int rbeta = std::max(tte_score - 2 * depth, -MATE);
+                int rbeta = std::max(tte_score - 2 * depth, -MATE + 1);
                 md->excluded_move = move;
                 int singular_value = alpha_beta(p, md, rbeta - 1, rbeta, depth / 2, in_check, cut);
                 md->excluded_move = no_move;
