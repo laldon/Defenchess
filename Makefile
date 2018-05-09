@@ -15,7 +15,6 @@
 # along with Defenchess.  If not, see <http://www.gnu.org/licenses/>.
 
 CC      = g++
-CRC     = /usr/local/gcc-4.8.1-for-linux64/bin/x86_64-pc-linux-g++
 CFLAGS  = -Wall -Wcast-qual -Wextra -Wshadow -pedantic -std=c++11 -m64
 NAME    = Defenchess
 OPT     = -O3
@@ -47,12 +46,6 @@ release:
 
 feature:
 	$(CC) $(CFLAGS) $(OPT) -DNDEBUG src/fathom/tbprobe.cpp src/*.cpp -o $(NAME)_$(version)_$(feature)$(ext) $(ext2)
-
-crossrelease:
-	$(CRC) $(CFLAGS) $(OPT) -DNDEBUG src/fathom/tbprobe.cpp src/*.cpp -o $(NAME)_$(version)$(ext) $(ext2)
-
-crossfeature:
-	$(CRC) $(CFLAGS) $(OPT) -DNDEBUG src/fathom/tbprobe.cpp src/*.cpp -o $(NAME)_$(version)_$(feature)$(ext) $(ext2)
 
 perft:
 	$(CC) $(CFLAGS) $(OPT) -D__PERFT__ src/fathom/tbprobe.cpp src/*.cpp -o $(NAME)_perft$(ext) $(ext2)
