@@ -653,12 +653,12 @@ void think(Position *p) {
             }
             main_thread_finished = false;
 
+            if (is_timeout) {
+                break;
+            }
             if (score > alpha) {
                 current_guess = score;
                 update_main_pv();
-            }
-            if (is_timeout) {
-                break;
             }
             if (score <= alpha) {
                 alpha = std::max(score - aspiration, -MATE);
