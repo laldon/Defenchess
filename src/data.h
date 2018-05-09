@@ -25,6 +25,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <thread>
+#include <atomic>
 
 typedef uint8_t Square;
 typedef uint64_t Bitboard;
@@ -523,8 +524,8 @@ struct SearchThread {
     Move        counter_moves[14][64];
     int         history[14][64];
     int         countermove_history[14][64];
-    uint64_t    nodes;
-    uint64_t    tb_hits;
+    std::atomic<uint64_t> nodes;
+    std::atomic<uint64_t> tb_hits;
 };
 
 inline bool is_main_thread(Position *p) {return p->my_thread->thread_id == 0;}
@@ -535,7 +536,7 @@ extern SearchThread search_threads[MAX_THREADS];
 extern int myremain;
 extern int total_remaining;
 extern int moves_to_go;
-extern bool     is_timeout;
+extern volatile bool is_timeout;
 extern int root_ply;
 extern int think_depth_limit;
 extern int num_threads;
@@ -550,7 +551,7 @@ inline void initialize_threads() {
 inline uint64_t sum_nodes() {
     uint64_t s = 0;
     for (int i = 0; i < num_threads; ++i) {
-        s += search_threads[i].nodes;
+        s += search_threads[i].nodes.load(std::memory_order_relaxed);
     }
     return s;
 }
@@ -558,7 +559,7 @@ inline uint64_t sum_nodes() {
 inline uint64_t sum_tb_hits() {
     uint64_t s = 0;
     for (int i = 0; i < num_threads; ++i) {
-        s += search_threads[i].tb_hits;
+        s += search_threads[i].tb_hits.load(std::memory_order_relaxed);
     }
     return s;
 }
