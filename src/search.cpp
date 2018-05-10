@@ -30,7 +30,9 @@
 
 bool main_thread_finished = false;
 std::vector<Move> root_moves = {};
+
 Move pv_at_depth[MAX_PLY * 2];
+int  score_at_depth[MAX_PLY * 2];
 
 void print_pv() {
     int i = 0;
@@ -620,6 +622,7 @@ void think(Position *p) {
     int depth = 1;
 
     std::memset(pv_at_depth, 0, sizeof(pv_at_depth));
+    std::memset(score_at_depth, 0, sizeof(score_at_depth));
 
     initialize_threads();
     while (depth <= think_depth_limit) {
@@ -676,9 +679,6 @@ void think(Position *p) {
         if (is_timeout) {
             break;
         }
-        if (depth >= 8 && failed_low) {
-            myremain = std::min(total_remaining, myremain * 11 / 10); // %5 panic time
-        }
 
         gettimeofday(&curr_time, NULL);
         int time_taken = time_passed();
@@ -700,16 +700,22 @@ void think(Position *p) {
 
         previous_guess = current_guess;
         pv_at_depth[depth - 1] = main_pv.moves[0];
+        score_at_depth[depth - 1] = current_guess;
 
-        if (depth >= 16) {
-            if (pv_at_depth[depth - 1] == pv_at_depth[depth - 2] &&
-                pv_at_depth[depth - 1] == pv_at_depth[depth - 3] &&
-                pv_at_depth[depth - 1] == pv_at_depth[depth - 4] &&
-                pv_at_depth[depth - 1] == pv_at_depth[depth - 5]
-            ) {
-                if (std::abs(current_guess) < KNOWN_WIN && std::abs(current_guess) > 30) {
-                    myremain = std::max(init_remain / 3, myremain * 95 / 100);
-                }
+        if (depth >= 8) {
+            if (failed_low) {
+                myremain = std::min(total_remaining, myremain * 11 / 10); // %10 panic time
+            }
+            int score_diff = score_at_depth[depth - 1] - score_at_depth[depth - 2];
+
+            if (score_diff < -10) {
+                myremain = std::min(total_remaining, myremain * 21 / 20);
+            }
+            if (score_diff > 10) {
+                myremain = std::max(init_remain / 3, myremain * 98 / 100);
+            }
+            if (pv_at_depth[depth - 1] == pv_at_depth[depth - 2]) {
+                myremain = std::max(init_remain / 3, myremain * 95 / 100);
             } else {
                 myremain = std::max(init_remain, myremain);
             }
