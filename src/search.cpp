@@ -657,7 +657,7 @@ void think(Position *p) {
             }
             main_thread_finished = false;
 
-            if (score > alpha) {
+            if (score > alpha) {  // WHAT IF WE DIDN'T HAVE A MAIN PV AND JUST USED THE REGULAR PV
                 current_guess = score;
                 update_main_pv();
             }
@@ -712,10 +712,10 @@ void think(Position *p) {
                 myremain = std::min(total_remaining, myremain * 21 / 20);
             }
             if (score_diff > 10) {
-                myremain = std::max(init_remain / 3, myremain * 98 / 100);
+                myremain = std::max(init_remain / 2, myremain * 98 / 100);
             }
             if (pv_at_depth[depth - 1] == pv_at_depth[depth - 2]) {
-                myremain = std::max(init_remain / 3, myremain * 95 / 100);
+                myremain = std::max(init_remain / 2, myremain * 94 / 100);
             } else {
                 myremain = std::max(init_remain, myremain);
             }
