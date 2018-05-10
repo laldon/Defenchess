@@ -563,8 +563,6 @@ inline uint64_t sum_tb_hits() {
     return s;
 }
 
-extern Move pv_at_depth[MAX_PLY * 2];
-
 extern int reductions[2][64][64];
 
 inline Color piece_color(Piece p) {return p & 1;}

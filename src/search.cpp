@@ -30,6 +30,7 @@
 
 bool main_thread_finished = false;
 std::vector<Move> root_moves = {};
+Move pv_at_depth[MAX_PLY * 2];
 
 void print_pv() {
     int i = 0;
@@ -700,12 +701,14 @@ void think(Position *p) {
         previous_guess = current_guess;
         pv_at_depth[depth - 1] = main_pv.moves[0];
 
-        if (pv_at_depth[depth - 1] == pv_at_depth[depth - 2]) {
-            if (depth >= 8 && std::abs(current_guess) < KNOWN_WIN && std::abs(current_guess) > 30) {
+        if (depth >= 8) {
+            if (pv_at_depth[depth - 1] == pv_at_depth[depth - 2] &&
+                std::abs(current_guess) < KNOWN_WIN && std::abs(current_guess) > 30
+            ) {
                 myremain = std::max(init_remain / 3, myremain * 95 / 100);
+            } else {
+                myremain = std::max(init_remain, myremain);
             }
-        } else {
-            myremain = std::max(init_remain, myremain);
         }
         ++depth;
     }
