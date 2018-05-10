@@ -701,7 +701,7 @@ void think(Position *p) {
         previous_guess = current_guess;
         pv_at_depth[depth - 1] = main_pv.moves[0];
 
-        if (depth >= 12) {
+        if (depth >= 16) {
             if (pv_at_depth[depth - 1] == pv_at_depth[depth - 2] &&
                 pv_at_depth[depth - 1] == pv_at_depth[depth - 3] &&
                 pv_at_depth[depth - 1] == pv_at_depth[depth - 4] &&
