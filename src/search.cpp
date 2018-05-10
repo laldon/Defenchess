@@ -702,7 +702,11 @@ void think(Position *p) {
         pv_at_depth[depth - 1] = main_pv.moves[0];
 
         if (depth >= 12) {
-            if (pv_at_depth[depth - 1] == pv_at_depth[depth - 2]) {
+            if (pv_at_depth[depth - 1] == pv_at_depth[depth - 2] &&
+                pv_at_depth[depth - 1] == pv_at_depth[depth - 3] &&
+                pv_at_depth[depth - 1] == pv_at_depth[depth - 4] &&
+                pv_at_depth[depth - 1] == pv_at_depth[depth - 5]
+            ) {
                 if (std::abs(current_guess) < KNOWN_WIN && std::abs(current_guess) > 30) {
                     myremain = std::max(init_remain / 3, myremain * 95 / 100);
                 }
