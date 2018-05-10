@@ -702,8 +702,8 @@ void think(Position *p) {
         pv_at_depth[depth - 1] = main_pv.moves[0];
         score_at_depth[depth - 1] = current_guess;
 
-        if (depth >= 8) {
-            if (failed_low) {
+        if (depth >= 6) {
+            if (failed_low && depth >= 10) {
                 myremain = std::min(total_remaining, myremain * 11 / 10); // %10 panic time
             }
             int score_diff = score_at_depth[depth - 1] - score_at_depth[depth - 2];
