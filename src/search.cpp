@@ -675,8 +675,8 @@ void think(Position *p) {
         if (is_timeout) {
             break;
         }
-        if (depth >= 5 && failed_low) {
-            myremain = std::min(total_remaining, myremain * 11 / 10); // %5 panic time
+        if (depth >= 8 && failed_low) {
+            myremain = std::min(total_remaining, myremain * 6 / 5); // %5 panic time
         }
 
         gettimeofday(&curr_time, NULL);
