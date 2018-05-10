@@ -653,12 +653,12 @@ void think(Position *p) {
             }
             main_thread_finished = false;
 
+            if (is_timeout) {
+                break;
+            }
             if (score > alpha) {
                 current_guess = score;
                 update_main_pv();
-            }
-            if (is_timeout) {
-                break;
             }
             if (score <= alpha) {
                 alpha = std::max(score - aspiration, -MATE);
@@ -712,9 +712,9 @@ void think(Position *p) {
         ++depth;
     }
     gettimeofday(&curr_time, NULL);
-    std::cout << "bestmove " << move_to_str(main_pv.moves[0]);
-    if (main_pv.size > 1) {
-        std::cout << " ponder " << move_to_str(main_pv.moves[1]);
+    std::cout << "bestmove " << move_to_str(pv[0].moves[0]);
+    if (pv[0].size > 1) {
+        std::cout << " ponder " << move_to_str(pv[0].moves[1]);
     }
     std::cout << std::endl;
     return;
