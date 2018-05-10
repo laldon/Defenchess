@@ -676,7 +676,7 @@ void think(Position *p) {
             break;
         }
         if (depth >= 8 && failed_low) {
-            myremain = std::min(total_remaining, myremain * 6 / 5); // %5 panic time
+            myremain = std::min(total_remaining, myremain * 11 / 10); // %5 panic time
         }
 
         gettimeofday(&curr_time, NULL);
@@ -700,14 +700,12 @@ void think(Position *p) {
         previous_guess = current_guess;
         pv_at_depth[depth - 1] = main_pv.moves[0];
 
-        if (depth >= 18 && depth <= 30 && std::abs(current_guess) < KNOWN_WIN && std::abs(current_guess) > 30 &&
-                pv_at_depth[depth - 1] == pv_at_depth[depth - 2] &&
-                pv_at_depth[depth - 1] == pv_at_depth[depth - 3] &&
-                pv_at_depth[depth - 1] == pv_at_depth[depth - 4] &&
-                pv_at_depth[depth - 1] == pv_at_depth[depth - 5] &&
-                pv_at_depth[depth - 1] == pv_at_depth[depth - 6]
-        ) {
-            myremain = std::max(init_remain / 3, myremain * 95 / 100);
+        if (pv_at_depth[depth - 1] == pv_at_depth[depth - 2]) {
+            if (depth >= 8 && depth <= 30 && std::abs(current_guess) < KNOWN_WIN && std::abs(current_guess) > 30) {
+                myremain = std::max(init_remain / 3, myremain * 95 / 100);
+            }
+        } else {
+            my_remain = std::max(init_remain, myremain);
         }
         ++depth;
     }
