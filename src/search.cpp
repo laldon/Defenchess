@@ -705,7 +705,7 @@ void think(Position *p) {
                 myremain = std::max(init_remain / 3, myremain * 95 / 100);
             }
         } else {
-            my_remain = std::max(init_remain, myremain);
+            myremain = std::max(init_remain, myremain);
         }
         ++depth;
     }
