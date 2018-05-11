@@ -37,7 +37,6 @@ Bitboard ROOK_MASKS_COMBINED[64];
 Bitboard KNIGHT_MASKS[64];
 Bitboard KING_MASKS[64];
 Bitboard KING_EXTENDED_MASKS[2][64];
-Bitboard bfi[64];
 Bitboard bfi_enpassant[64];
 Bitboard bfi_queen_castle[2];
 Bitboard bfi_king_castle[2];
@@ -182,19 +181,19 @@ void init_between() {
             }
             if (i % 8 == j % 8) {
                 if (i > j)
-                    BETWEEN_MASK[i][j] = (bfi[i] - 2*bfi[j]) & (line_vertical << i%8);
+                    BETWEEN_MASK[i][j] = (bfi(i) - 2 * bfi(j)) & (line_vertical << i%8);
                 else
-                    BETWEEN_MASK[i][j] = (bfi[j] - 2*bfi[i]) & (line_vertical << i%8);
+                    BETWEEN_MASK[i][j] = (bfi(j) - 2 * bfi(i)) & (line_vertical << i%8);
             } else if (i / 8 == j / 8) {
                 if (i > j)
-                    BETWEEN_MASK[i][j] = (bfi[i] - 2*bfi[j]);
+                    BETWEEN_MASK[i][j] = (bfi(i) - 2 * bfi(j));
                 else
-                    BETWEEN_MASK[i][j] = (bfi[j] - 2*bfi[i]);
+                    BETWEEN_MASK[i][j] = (bfi(j) - 2 * bfi(i));
             } else if (i / 8 - j / 8 == i % 8 - j % 8 || i / 8 - j / 8 == j % 8 - i % 8) {
                 if (i > j)
-                    BETWEEN_MASK[i][j] = (bfi[i] - 2 * bfi[j]) & (i % 8 - j % 8 < 0 ? BISHOP_MASKS_1[i] : BISHOP_MASKS_2[i]);
+                    BETWEEN_MASK[i][j] = (bfi(i) - 2 * bfi(j)) & (i % 8 - j % 8 < 0 ? BISHOP_MASKS_1[i] : BISHOP_MASKS_2[i]);
                 else
-                    BETWEEN_MASK[i][j] = (bfi[j] - 2* bfi[i]) & (i % 8 - j % 8 > 0 ? BISHOP_MASKS_1[i] : BISHOP_MASKS_2[i]);
+                    BETWEEN_MASK[i][j] = (bfi(j) - 2 * bfi(i)) & (i % 8 - j % 8 > 0 ? BISHOP_MASKS_1[i] : BISHOP_MASKS_2[i]);
             } else {    
                 BETWEEN_MASK[i][j] = 0;
             }
@@ -212,13 +211,13 @@ void init_pawns(){
         PAWN_CAPTURE_MASK[i][black] = 0;
     }
     for (int i = 8; i < 56; i++) {
-        PAWN_ADVANCE_MASK_1[i][white] = bfi[i + 8];
-        PAWN_ADVANCE_MASK_1[i][black] = bfi[i - 8];
+        PAWN_ADVANCE_MASK_1[i][white] = bfi(i + 8);
+        PAWN_ADVANCE_MASK_1[i][black] = bfi(i - 8);
         if (row((Square)i) == 1) {
-            PAWN_ADVANCE_MASK_2[i][white] |= bfi[i + 16];
+            PAWN_ADVANCE_MASK_2[i][white] |= bfi(i + 16);
         }
         if (row((Square)i) == 6) {
-            PAWN_ADVANCE_MASK_2[i][black] |= bfi[i - 16];
+            PAWN_ADVANCE_MASK_2[i][black] |= bfi(i - 16);
         }
     }
     for (int i = 0; i < 64; i++) {
@@ -227,15 +226,15 @@ void init_pawns(){
         int column = col(i);
         if (column != 0) {
             if (i + 7 <= 63)
-                PAWN_CAPTURE_MASK[i][white] |= bfi[i + 7];
+                PAWN_CAPTURE_MASK[i][white] |= bfi(i + 7);
             if (i - 9 >= 0)
-                PAWN_CAPTURE_MASK[i][black] |= bfi[i - 9];
+                PAWN_CAPTURE_MASK[i][black] |= bfi(i - 9);
         }
         if (column != 7) {
             if (i + 9 <= 63)
-                PAWN_CAPTURE_MASK[i][white] |= bfi[i + 9];
+                PAWN_CAPTURE_MASK[i][white] |= bfi(i + 9);
             if (i - 7 >= 0)
-                PAWN_CAPTURE_MASK[i][black] |= bfi[i - 7];
+                PAWN_CAPTURE_MASK[i][black] |= bfi(i - 7);
         }
     }
 }
@@ -266,9 +265,9 @@ void init_king_masks(){
 void init_bishop_masks() {
     for (int i = 0; i < 64; i++) {
         for (int j = 0; j < 15; j++) {
-            if (bfi[i] & cross_lt[j])
+            if (bfi(i) & cross_lt[j])
                 BISHOP_MASKS_1[i] = cross_lt[j];
-            if (bfi[i] & cross_rt[j])
+            if (bfi(i) & cross_rt[j])
                 BISHOP_MASKS_2[i] = cross_rt[j];
             
         }
@@ -288,26 +287,26 @@ void init_rook_masks() {
 
 void init_bfi() {
     for (int i = 0; i < 64; i++) {
-        bfi[i] = 1ULL << i;
+        bfi(i) = 1ULL << i;
         if (i != 0) {
             bfi_enpassant[i] = 1ULL << i;
         }
     }
     
-    CENTER_MASK = bfi[D4] | bfi[E4] | bfi[D5] | bfi[E5];    
+    CENTER_MASK = bfi(D4) | bfi(E4) | bfi(D5) | bfi(E5);    
 }
 
 void init_castles() {
-    KING_CASTLE_MASK[white] = bfi[F1] | bfi[G1];
-    KING_CASTLE_MASK[black] = bfi[F8] | bfi[G8];
+    KING_CASTLE_MASK[white] = bfi(F1) | bfi(G1);
+    KING_CASTLE_MASK[black] = bfi(F8) | bfi(G8);
 
-    QUEEN_CASTLE_MASK[white] = bfi[B1] | bfi[C1] | bfi[D1];
-    QUEEN_CASTLE_MASK[black] = bfi[B8] | bfi[C8] | bfi[D8];
+    QUEEN_CASTLE_MASK[white] = bfi(B1) | bfi(C1) | bfi(D1);
+    QUEEN_CASTLE_MASK[black] = bfi(B8) | bfi(C8) | bfi(D8);
 
-    bfi_queen_castle[white] = bfi[C1];
-    bfi_queen_castle[black] = bfi[C8];
-    bfi_king_castle[white] = bfi[G1];
-    bfi_king_castle[black] = bfi[G8];
+    bfi_queen_castle[white] = bfi(C1);
+    bfi_queen_castle[black] = bfi(C8);
+    bfi_king_castle[white] = bfi(G1);
+    bfi_king_castle[black] = bfi(G8);
 
     // black_queenside | black_kingside | white_queenside | white_kingside
     for (int i = 0; i < 64; i++) {
@@ -416,10 +415,10 @@ void init_pawn_masks() {
         FRONT_MASK[i][black] = 0;
 
         for (int j = i + 8; j < 64; j += 8) {
-            FRONT_MASK[i][white] |= bfi[j];
+            FRONT_MASK[i][white] |= bfi(j);
         }
         for (int j = i - 8; j >= 0; j -= 8) {
-            FRONT_MASK[i][black] |= bfi[j];
+            FRONT_MASK[i][black] |= bfi(j);
         }
     }
 }
@@ -427,18 +426,18 @@ void init_pawn_masks() {
 void init_adj(){
     for (int i = 0; i < 64 ; i++) {
         if (i % 8 == 0)
-            ADJACENT_MASK[i] = bfi[i+1];
+            ADJACENT_MASK[i] = bfi(i+1);
         else if (i % 8 == 7)
-            ADJACENT_MASK[i] = bfi[i-1];
+            ADJACENT_MASK[i] = bfi(i-1);
         else
-            ADJACENT_MASK[i] = bfi[i-1] | bfi[i+1];
+            ADJACENT_MASK[i] = bfi(i-1) | bfi(i+1);
     }
 }
 
 void init_king_extended(){
     for (int i = 0; i < 64; i++) {
-        KING_EXTENDED_MASKS[white][i] = (KING_MASKS[i] | (KING_MASKS[i] << 8)) & ~bfi[i];
-        KING_EXTENDED_MASKS[black][i] = (KING_MASKS[i] | (KING_MASKS[i] >> 8)) & ~bfi[i];
+        KING_EXTENDED_MASKS[white][i] = (KING_MASKS[i] | (KING_MASKS[i] << 8)) & ~bfi(i);
+        KING_EXTENDED_MASKS[black][i] = (KING_MASKS[i] | (KING_MASKS[i] >> 8)) & ~bfi(i);
     }
 }
 
@@ -450,35 +449,35 @@ void init_king_fronts(){
         FRONT_KING_RANK1[black][i] = 0;
 
         if (row(i) < 7) {
-            FRONT_KING_RANK1[white][i] |= bfi[i + 8];
+            FRONT_KING_RANK1[white][i] |= bfi(i + 8);
             if (col(i) != 0)
-                FRONT_KING_RANK1[white][i] |= bfi[i + 7];
+                FRONT_KING_RANK1[white][i] |= bfi(i + 7);
             if (col(i) != 7)
-                FRONT_KING_RANK1[white][i] |= bfi[i + 9];
+                FRONT_KING_RANK1[white][i] |= bfi(i + 9);
         }
 
         if (row(i) < 6) {
-            FRONT_KING_RANK2[white][i] |= bfi[i + 16];
+            FRONT_KING_RANK2[white][i] |= bfi(i + 16);
             if (col(i) != 0)
-                FRONT_KING_RANK2[white][i] |= bfi[i + 15];
+                FRONT_KING_RANK2[white][i] |= bfi(i + 15);
             if (col(i) != 7)
-                FRONT_KING_RANK2[white][i] |= bfi[i + 17];
+                FRONT_KING_RANK2[white][i] |= bfi(i + 17);
         }
 
         if (row(i) > 0) {
-            FRONT_KING_RANK1[black][i] |= bfi[i - 8];
+            FRONT_KING_RANK1[black][i] |= bfi(i - 8);
             if (col(i) != 0)
-                FRONT_KING_RANK1[black][i] |= bfi[i - 9];
+                FRONT_KING_RANK1[black][i] |= bfi(i - 9);
             if (col(i) != 7)
-                FRONT_KING_RANK1[black][i] |= bfi[i - 7];
+                FRONT_KING_RANK1[black][i] |= bfi(i - 7);
         }
 
         if (row(i) > 1) {
-            FRONT_KING_RANK2[black][i] |= bfi[i - 16];
+            FRONT_KING_RANK2[black][i] |= bfi(i - 16);
             if (col(i) != 0)
-                FRONT_KING_RANK2[black][i] |= bfi[i - 17];
+                FRONT_KING_RANK2[black][i] |= bfi(i - 17);
             if (col(i) != 7)
-                FRONT_KING_RANK2[black][i] |= bfi[i - 15];
+                FRONT_KING_RANK2[black][i] |= bfi(i - 15);
         }
         // std::cout << "FRONT KING 2[black][" << i << "]:\n" << bitstring(FRONT_KING_RANK2[black][i]);
     }
@@ -617,7 +616,7 @@ void init_distance() {
                 int col_distance = std::abs(col(s1) - col(s2));
                 int row_distance = std::abs(row(s1) - row(s2));
                 int distance = std::max(col_distance, row_distance);
-                DISTANCE_RING[s1][distance - 1] |= bfi[s2];
+                DISTANCE_RING[s1][distance - 1] |= bfi(s2);
             }
         }
     }

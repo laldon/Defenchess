@@ -49,7 +49,6 @@ extern Bitboard ROOK_MASKS_COMBINED[64];
 extern Bitboard KNIGHT_MASKS[64];
 extern Bitboard KING_MASKS[64];
 extern Bitboard KING_EXTENDED_MASKS[2][64];
-extern Bitboard bfi[64];
 extern Bitboard bfi_enpassant[64];
 extern Bitboard bfi_queen_castle[2];
 extern Bitboard bfi_king_castle[2];
@@ -563,6 +562,8 @@ inline uint64_t sum_tb_hits() {
 }
 
 extern int reductions[2][64][64];
+
+inline Bitboard bfi(Square s) {return 1ULL << s;}
 
 inline Color piece_color(Piece p) {return p & 1;}
 

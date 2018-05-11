@@ -34,7 +34,7 @@ inline Square pop(Bitboard *b) {
 }
 
 inline bool on(Bitboard b, Square index) {
-    return b & bfi[index];
+    return b & bfi(index);
 }
 
 char *bitstring(Bitboard b);

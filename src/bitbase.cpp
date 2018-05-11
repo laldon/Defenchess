@@ -35,7 +35,7 @@ int bitbase_index(Color color, int wpawn, int wking, int bking) {
 }
 
 int find_result(Color c, int wpawn, int wking, int bking) {
-    if (c == white && (wpawn + 8 == wking || wpawn + 8 == bking) && !(KING_MASKS[wking] & ~(bfi[wpawn] | KING_MASKS[bking]))) {
+    if (c == white && (wpawn + 8 == wking || wpawn + 8 == bking) && !(KING_MASKS[wking] & ~(bfi(wpawn) | KING_MASKS[bking]))) {
         return draw;
     }
 
@@ -68,7 +68,7 @@ int find_result(Color c, int wpawn, int wking, int bking) {
 
     if (c == white) {
         int outcome = 0;
-        Bitboard wking_moves = KING_MASKS[wking] & ~(bfi[wpawn] | KING_MASKS[bking]);
+        Bitboard wking_moves = KING_MASKS[wking] & ~(bfi(wpawn) | KING_MASKS[bking]);
         while (wking_moves) {
             Square index = pop(&wking_moves);
             outcome |= kpk_bases[black][wpawn - A2][index][bking];
@@ -134,7 +134,7 @@ void init_kpk() {
                         kpk_bases[c][wpawn - A2][wking][bking] = invalid;
                         continue;
                     }
-                    if (c == white && (PAWN_CAPTURE_MASK[wpawn][white] & bfi[bking])) {
+                    if (c == white && (PAWN_CAPTURE_MASK[wpawn][white] & bfi(bking))) {
                         kpk_bases[c][wpawn - A2][wking][bking] = invalid;
                         continue;
                     }
@@ -168,7 +168,7 @@ void generate_bitbase() {
                         kpk_bases[c][wpawn - A2][wking][bking] = result;
                         if (result == win) {
                             int idx = bitbase_index(c, wpawn, wking, bking);
-                            bitbase[idx / 64] |= bfi[idx & 0x3F];
+                            bitbase[idx / 64] |= bfi(idx & 0x3F);
                         }
                     }
                 }
