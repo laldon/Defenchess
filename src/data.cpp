@@ -132,11 +132,6 @@ void get_ready() {
                 t->history[j][k] = 0;
             }
         }
-        for (int j = 0; j < 14; ++j) {
-            for (int k = 0; k < 64; ++k) {
-                t->countermove_history[j][k] = 0;
-            }
-        }
     }
 }
 
