@@ -133,9 +133,6 @@ uint64_t fastPerft(int depth, Position *p, bool root, bool in_check) {
     MoveGen movegen = new_movegen(p, md, depth, no_move, NORMAL_SEARCH, in_check);
     Move move;
     while ((move = next_move(&movegen)) != no_move) {
-        if (!is_legal(p, move)) {
-            continue;
-        }
         if (root && depth == 1) {
             move_nodes = 1;
             ++nodes;
@@ -165,7 +162,7 @@ uint64_t fastPerft(int depth, Position *p, bool root, bool in_check) {
 }
 
 uint64_t Perft(int depth, Position *p, bool root, bool in_check) {
-    // return fastPerft(depth, p, root, in_check);
+    return fastPerft(depth, p, root, in_check);
     if (depth == 0) {
         return 1ULL;
     }
