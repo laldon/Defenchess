@@ -82,7 +82,6 @@ SearchThread search_threads[MAX_THREADS];
 
 int root_ply = 0;
 int mvvlva_values[12][14];
-Move pv_at_depth[MAX_PLY * 2];
 
 int reductions[2][64][64];
 
