@@ -286,14 +286,7 @@ void init_rook_masks() {
 }
 
 void init_bfi() {
-    for (int i = 0; i < 64; i++) {
-        bfi(i) = 1ULL << i;
-        if (i != 0) {
-            bfi_enpassant[i] = 1ULL << i;
-        }
-    }
-    
-    CENTER_MASK = bfi(D4) | bfi(E4) | bfi(D5) | bfi(E5);    
+    CENTER_MASK = bfi(D4) | bfi(E4) | bfi(D5) | bfi(E5);
 }
 
 void init_castles() {
