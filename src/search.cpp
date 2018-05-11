@@ -93,6 +93,8 @@ bool is_draw(Position *p) {
     return false;
 }
 
+void update_history(Piece piece, Square to, int bonus) {}
+
 void save_killer(Position *p, Metadata *md, Move move, int depth, Move *quiets, int quiets_count) {
     SearchThread *my_thread = p->my_thread;
     if (move != md->killers[0]) {
@@ -114,11 +116,11 @@ void save_killer(Position *p, Metadata *md, Move move, int depth, Move *quiets, 
 
         my_thread->counter_moves[prev_piece][prev_to] = move;
 
-        my_thread->countermove_history[piece][move_to(move)] += bonus;
-        for (int i = 0; i < quiets_count; ++i) {
-            Move q = quiets[i];
-            my_thread->countermove_history[p->pieces[move_from(q)]][move_to(q)] -= bonus;
-        }
+        // my_thread->countermove_history[piece][move_to(move)] += bonus;
+        // for (int i = 0; i < quiets_count; ++i) {
+        //     Move q = quiets[i];
+        //     my_thread->countermove_history[p->pieces[move_from(q)]][move_to(q)] -= bonus;
+        // }
     }
 }
 
@@ -521,8 +523,8 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
                 }
 
                 // Piece piece = p->pieces[move_from(move)];
-                // int quiet_score = p->my_thread->history[piece][move_to(move)] +
-                //                   p->my_thread->countermove_history[piece][move_to(move)];
+                // int quiet_score = p->my_thread->history[piece][move_to(move)];
+                //                   // p->my_thread->countermove_history[piece][move_to(move)];
                 reduction = std::max(reduction, 0);
             }
 
