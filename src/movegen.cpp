@@ -342,9 +342,9 @@ void generate_king_evasions(MoveGen *movegen, Position *p) {
     Square k_index = p->king_index[p->color];
 
     // Remove the king from the board temporarily
-    p->board ^= bfi[k_index];
+    p->board ^= bfi(k_index);
     Bitboard b = generate_king_targets(k_index) & ~p->bbs[p->color] & ~color_targets(p, opponent_color(p->color));
-    p->board ^= bfi[k_index];
+    p->board ^= bfi(k_index);
  
     while (b) {
         Square index = pop(&b);
@@ -449,7 +449,7 @@ void generate_quiet_checks(MoveGen *movegen, Position *p) {
             Square subindex = pop(&pawn_moves);
             Move m = _movecast(index, subindex, PROMOTION);
             // Only consider queen promos
-            if (generate_queen_targets(p->board ^ bfi[index], subindex) & p->bbs[king(opponent_color(p->color))]) {
+            if (generate_queen_targets(p->board ^ bfi(index), subindex) & p->bbs[king(opponent_color(p->color))]) {
                 append_move(_promoteq(m), movegen);
             }
         }

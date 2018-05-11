@@ -216,8 +216,8 @@ Position* import_fen(const char* fen){
         }
         if (piece != 32) {
             p->pieces[sq] = piece;
-            p->bbs[piece] |= bfi[sq];
-            p->bbs[piece_color(piece)] |= bfi[sq++];
+            p->bbs[piece] |= bfi(sq);
+            p->bbs[piece_color(piece)] |= bfi(sq++);
         }
         
     }

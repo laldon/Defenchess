@@ -127,7 +127,7 @@ Score evaluate_pawn_structure(Evaluation *eval, Position *p, Color color) {
         backward = false;
         if (!passing && !supported && !isolated && !threatening && pawn_rank < RANK_4) {
             if ((PASSED_PAWN_MASK[outpost][opp_c] & MASK_ISOLATED[pawn_column] & my_pawns) == 0) {
-                if (bfi[pawn_forward(outpost, color)] & eval->targets[pawn(opp_c)]) {
+                if (bfi(pawn_forward(outpost, color)) & eval->targets[pawn(opp_c)]) {
                     backward = true;
                 }
             }
@@ -144,7 +144,7 @@ Score evaluate_pawn_structure(Evaluation *eval, Position *p, Color color) {
             pawn_structure -= double_pawn_penalty;
         }
         if (passing) {
-            eval->pawn_passers[color] |= bfi[outpost];
+            eval->pawn_passers[color] |= bfi(outpost);
         }
 
         // King threats
@@ -208,11 +208,11 @@ Score evaluate_bishop(Evaluation *eval, Position *p, Color color) {
         eval->bishop_squares[color] = outpost;
         Bitboard bishop_targets = generate_bishop_targets(p->board ^ p->bbs[queen(color)], outpost);
 
-        if (p->pinned[color] & bfi[outpost])
+        if (p->pinned[color] & bfi(outpost))
             bishop_targets &= BETWEEN_MASK[p->king_index[color]][outpost];
 
         // Protected bishop
-        if (bfi[outpost] & eval->targets[pawn(color)]) {
+        if (bfi(outpost) & eval->targets[pawn(color)]) {
             bishop_score += protected_piece_bonus;
         }
 
@@ -252,11 +252,11 @@ Score evaluate_knight(Evaluation *eval, Position *p, Color color) {
         Square outpost = pop(&my_knights);
         Bitboard knight_targets = generate_knight_targets(outpost);
 
-        if (p->pinned[color] & bfi[outpost])
+        if (p->pinned[color] & bfi(outpost))
             knight_targets &= BETWEEN_MASK[p->king_index[color]][outpost];
 
         // Protected knight
-        if (bfi[outpost] & eval->targets[pawn(color)]) {
+        if (bfi(outpost) & eval->targets[pawn(color)]) {
             knight_score += protected_piece_bonus;
         }
 
@@ -294,7 +294,7 @@ Score evaluate_rook(Evaluation *eval, Position *p, Color color) {
         int rook_column = col(outpost);
         Bitboard rook_targets = generate_rook_targets(p->board ^ (p->bbs[queen(color)] | p->bbs[rook(color)]), outpost);
 
-        if (p->pinned[color] & bfi[outpost])
+        if (p->pinned[color] & bfi(outpost))
             rook_targets &= BETWEEN_MASK[p->king_index[color]][outpost];
 
         // Mobility
@@ -347,7 +347,7 @@ Score evaluate_queen(Evaluation *eval, Position *p, Color color) {
         Square outpost = pop(&my_queens);
         Bitboard queen_targets = generate_queen_targets(p->board, outpost);
 
-        if (p->pinned[color] & bfi[outpost])
+        if (p->pinned[color] & bfi(outpost))
             queen_targets &= BETWEEN_MASK[p->king_index[color]][outpost];
 
         // Mobility
@@ -555,16 +555,16 @@ Score evaluate_passer(Evaluation *eval, Position *p, Color color) {
                 if (!(p->bbs[opp_c] & rook_queen_attacks))
                     unsafe &= eval->targets[opp_c] | p->bbs[opp_c];
 
-                int bonus = !unsafe ? 18 : !(unsafe & bfi[blocker]) ? 8 : 0;
+                int bonus = !unsafe ? 18 : !(unsafe & bfi(blocker)) ? 8 : 0;
 
                 if (defended == to_queen)
                     bonus += 6;
-                else if (defended & bfi[blocker])
+                else if (defended & bfi(blocker))
                     bonus += 4;
 
                 midgame += bonus * rr;
                 endgame += bonus * rr;
-            } else if (p->bbs[color] & bfi[blocker]) {
+            } else if (p->bbs[color] & bfi(blocker)) {
                 midgame += rr + r;
                 endgame += rr + r;
             }

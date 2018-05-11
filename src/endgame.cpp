@@ -43,7 +43,7 @@ int evaluate_kpk(Position* p) {
     Square bking      = mirror_square(p->king_index[loser], winner);
     Color side_to_move = winner == white ? p->color : opponent_color(p->color);
     uint64_t secret_index = side_to_move + (wking << 1) + (bking << 7) + ((pawn_index - A2) << 13);
-    if (bitbase[secret_index/64] & bfi[secret_index & 63]) {
+    if (bitbase[secret_index/64] & bfi(secret_index & 63)) {
         int result = KNOWN_WIN + PAWN_END + row(pawn_index);
         return p->color == winner ? result : -result;
     } else {

@@ -57,7 +57,7 @@ bool see_capture(Position *p, Move move) {
         return true;
     }
 
-    board ^= bfi[from];
+    board ^= bfi(from);
     bool opponent_to_move = true;
 
     while (true) {
@@ -76,7 +76,7 @@ bool see_capture(Position *p, Move move) {
 
         balance = - balance - 1;
         color = opponent_color(color);
-        board ^= bfi[smallest_attacker];
+        board ^= bfi(smallest_attacker);
     }
     return opponent_to_move;
 }

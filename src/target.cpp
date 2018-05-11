@@ -48,8 +48,8 @@ Bitboard generate_pawn_targets_to_index(Position *p, Square index) {
     while (bbs) {
         Square outpost = pop(&bbs);
         Bitboard pawn_targets = generate_pawn_targets<SILENT>(p, outpost);
-        if (pawn_targets & bfi[index]) {
-            targets |= bfi[outpost];
+        if (pawn_targets & bfi(index)) {
+            targets |= bfi(outpost);
         }
     }
     return targets;

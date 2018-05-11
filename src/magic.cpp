@@ -33,7 +33,7 @@ Bitboard magicify(uint64_t square, Bitboard b) {
     for (int i = 0; i < total; ++i) {
         Bitboard y = ((x - 1) & x) ^ x;
         x &= x - 1;
-        if (bfi[i] & square) {
+        if (bfi(i) & square) {
             bitmask |= y;
         }
     }
@@ -42,32 +42,32 @@ Bitboard magicify(uint64_t square, Bitboard b) {
 
 Bitboard create_rook_attacks(int sq, Bitboard b) {
     Bitboard m1 = ROOK_MASKS_HORIZONTAL[sq];
-    Bitboard line_attacks = (((b & m1) - 2 * bfi[sq]) ^ 
-        (reverse(reverse(b & m1) - 2 * reverse(bfi[sq])))) & m1;
+    Bitboard line_attacks = (((b & m1) - 2 * bfi(sq)) ^ 
+        (reverse(reverse(b & m1) - 2 * reverse(bfi(sq))))) & m1;
      
     Bitboard m2 = ROOK_MASKS_VERTICAL[sq];
-    Bitboard vertical_attacks = (((b & m2) - 2 * bfi[sq]) ^ 
-        (reverse(reverse(b & m2) - 2 * reverse(bfi[sq])))) & m2;
+    Bitboard vertical_attacks = (((b & m2) - 2 * bfi(sq)) ^ 
+        (reverse(reverse(b & m2) - 2 * reverse(bfi(sq))))) & m2;
 
     return vertical_attacks | line_attacks;
 }
 
 Bitboard create_bishop_attacks(int sq, Bitboard b) {
     Bitboard m1 = BISHOP_MASKS_1[sq];
-    Bitboard line_attacks = (((b & m1) - 2 * bfi[sq]) ^ 
-        (reverse(reverse(b & m1) - 2 * reverse(bfi[sq])))) & m1;
+    Bitboard line_attacks = (((b & m1) - 2 * bfi(sq)) ^ 
+        (reverse(reverse(b & m1) - 2 * reverse(bfi(sq))))) & m1;
      
     Bitboard m2 = BISHOP_MASKS_2[sq];
-    Bitboard vertical_attacks = (((b & m2) - 2 * bfi[sq]) ^ 
-        (reverse(reverse(b & m2) - 2 * reverse(bfi[sq])))) & m2;
+    Bitboard vertical_attacks = (((b & m2) - 2 * bfi(sq)) ^ 
+        (reverse(reverse(b & m2) - 2 * reverse(bfi(sq))))) & m2;
 
     return vertical_attacks | line_attacks;
 }
 
 void generate_magic_rook_moves() {
     for (int sq = A1; sq <= H8; ++sq){
-        Bitboard mask = trim(ROOK_MASKS_COMBINED[sq] ^ bfi[sq], row(sq), col(sq));
-        for (uint64_t i = 0; i < bfi[count(mask)]; ++i) {
+        Bitboard mask = trim(ROOK_MASKS_COMBINED[sq] ^ bfi(sq), row(sq), col(sq));
+        for (uint64_t i = 0; i < bfi(count(mask)); ++i) {
             Bitboard bitmask = magicify(i, mask);
             int index = (bitmask * rookMagic[sq].magic) >> 52;
             rook_magic_moves[sq][index] = create_rook_attacks(sq, bitmask);
@@ -77,8 +77,8 @@ void generate_magic_rook_moves() {
 
 void generate_magic_bishop_moves() {
     for (int sq = A1; sq <= H8; ++sq){
-        Bitboard mask = trim(BISHOP_MASKS_COMBINED[sq] ^ bfi[sq], row(sq), col(sq));;
-        for (uint64_t i = 0; i < bfi[count(mask)]; ++i) {
+        Bitboard mask = trim(BISHOP_MASKS_COMBINED[sq] ^ bfi(sq), row(sq), col(sq));;
+        for (uint64_t i = 0; i < bfi(count(mask)); ++i) {
             Bitboard bitmask = magicify(i, mask);
             int index = (bitmask * bishopMagic[sq].magic) >> 55;
             bishop_magic_moves[sq][index] = create_bishop_attacks(sq, bitmask);

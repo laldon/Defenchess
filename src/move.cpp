@@ -26,7 +26,7 @@
 void move_piece(Position *p, Square from, Square to, Piece piece, Color curr_c) {
     p->pieces[from] = no_piece;
     p->pieces[to] = piece;
-    Bitboard from_to = bfi[from] ^ bfi[to];
+    Bitboard from_to = bfi(from) ^ bfi(to);
     p->bbs[piece] ^= from_to;
     p->bbs[curr_c] ^= from_to;
     p->board ^= from_to;
@@ -40,9 +40,9 @@ void move_piece(Position *p, Square from, Square to, Piece piece, Color curr_c) 
 }
 
 void capture(Position *p, Square to, Piece captured, Color opponent) {
-    p->bbs[captured] ^= bfi[to];
-    p->bbs[opponent] ^= bfi[to];
-    p->board ^= bfi[to];
+    p->bbs[captured] ^= bfi(to);
+    p->bbs[opponent] ^= bfi(to);
+    p->board ^= bfi(to);
 
     uint64_t h = polyglotCombined[captured][to];
     p->hash ^= h;
@@ -56,10 +56,10 @@ void capture(Position *p, Square to, Piece captured, Color opponent) {
 }
 
 void capture_enpassant(Position *p, Square to, Square enpassant_to, Piece captured, Color opponent) {
-    p->bbs[captured] ^= bfi[enpassant_to];
-    p->bbs[opponent] ^= bfi[enpassant_to];
+    p->bbs[captured] ^= bfi(enpassant_to);
+    p->bbs[opponent] ^= bfi(enpassant_to);
     p->pieces[enpassant_to] = no_piece;
-    p->board ^= bfi[enpassant_to];
+    p->board ^= bfi(enpassant_to);
 
     uint64_t h = polyglotCombined[captured][to];
     p->hash ^= h;
@@ -70,8 +70,8 @@ void capture_enpassant(Position *p, Square to, Square enpassant_to, Piece captur
 
 void promote(Position *p, Square to, Piece pawn, Piece promotion_type, Color color) {
     p->pieces[to] = promotion_type;
-    p->bbs[pawn] ^= bfi[to];
-    p->bbs[promotion_type] ^= bfi[to];
+    p->bbs[pawn] ^= bfi(to);
+    p->bbs[promotion_type] ^= bfi(to);
 
     uint64_t h = polyglotCombined[pawn][to];
     p->pawn_hash ^= h;
@@ -218,7 +218,7 @@ bool is_pseudolegal(Position *p, Move move) {
     }
 
     Square to = move_to(move);
-    if (p->bbs[p->color] & bfi[to]) {
+    if (p->bbs[p->color] & bfi(to)) {
         return false;
     }
 
@@ -229,7 +229,7 @@ bool is_pseudolegal(Position *p, Move move) {
         if (rank(to, p->color) == RANK_8) {
             return false;
         }
-        if (col(from) != col(to) && !(p->board & bfi[to])) {  // Enpassant
+        if (col(from) != col(to) && !(p->board & bfi(to))) {  // Enpassant
             return false;
         }
         b = generate_pawn_targets<ALL>(p, from);
@@ -242,12 +242,12 @@ bool is_pseudolegal(Position *p, Move move) {
     } else if (p_type == white_queen) {
         b = generate_queen_targets(p->board, from);
     }
-    return b & bfi[to];
+    return b & bfi(to);
 }
 
 bool gives_check(Position *p, Move m) {
     Square their_king_index = p->king_index[opponent_color(p->color)];
-    Bitboard their_king = bfi[their_king_index];
+    Bitboard their_king = bfi(their_king_index);
 
     Square from = move_from(m);
     Square to = move_to(m);
@@ -265,13 +265,13 @@ bool gives_check(Position *p, Move m) {
         //? Promotion check ?
         if (move_type(m) == PROMOTION) {
             if (is_queen_promotion(m)) {
-                if (generate_queen_targets(p->board ^ bfi[from], to) & their_king)
+                if (generate_queen_targets(p->board ^ bfi(from), to) & their_king)
                     return true;
             } else if (is_rook_promotion(m)) {
-                if (generate_rook_targets(p->board ^ bfi[from], to) & their_king)
+                if (generate_rook_targets(p->board ^ bfi(from), to) & their_king)
                     return true;
             } else if (is_bishop_promotion(m)) {
-                if (generate_bishop_targets(p->board ^ bfi[from], to) & their_king)
+                if (generate_bishop_targets(p->board ^ bfi(from), to) & their_king)
                     return true;
             } else if (is_knight_promotion(m)) {
                 if (generate_knight_targets(to) & their_king)
