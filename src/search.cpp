@@ -31,6 +31,9 @@
 bool main_thread_finished = false;
 std::vector<Move> root_moves = {};
 
+Move pv_at_depth[MAX_PLY * 2];
+int  score_at_depth[MAX_PLY * 2];
+
 void print_pv() {
     int i = 0;
     while (i < main_pv.size) {
@@ -273,6 +276,9 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
     assert(-MATE <= alpha && alpha < beta && beta <= MATE);
     assert(0 <= depth);
     assert(in_check == is_checked(p));
+    if (depth < 1) {
+        return alpha_beta_quiescence(p, md, alpha, beta, 0, in_check);
+    }
 
     int ply = md->ply;
     if (is_main_thread(p)) {
@@ -350,9 +356,6 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
 
     bool is_null = ply > 0 && (md-1)->current_move == null_move;
     if (!in_check) {
-        if (depth < 1) {
-            return alpha_beta_quiescence(p, md, alpha, beta, 0, in_check);
-        }
         if (is_null) {
             md->static_eval = tempo * 2 - (md-1)->static_eval;
         } else {
@@ -619,6 +622,7 @@ void think(Position *p) {
     int depth = 1;
 
     std::memset(pv_at_depth, 0, sizeof(pv_at_depth));
+    std::memset(score_at_depth, 0, sizeof(score_at_depth));
 
     initialize_threads();
     while (depth <= think_depth_limit) {
@@ -675,9 +679,6 @@ void think(Position *p) {
         if (is_timeout) {
             break;
         }
-        if (depth >= 18 && failed_low) {
-            myremain = std::min(total_remaining, std::min(init_remain * 4 / 3, myremain * 21 / 20)); // %5 panic time
-        }
 
         gettimeofday(&curr_time, NULL);
         int time_taken = time_passed();
@@ -699,15 +700,25 @@ void think(Position *p) {
 
         previous_guess = current_guess;
         pv_at_depth[depth - 1] = main_pv.moves[0];
+        score_at_depth[depth - 1] = current_guess;
 
-        if (depth >= 18 && depth <= 30 && std::abs(current_guess) < KNOWN_WIN && std::abs(current_guess) > 30 &&
-                pv_at_depth[depth - 1] == pv_at_depth[depth - 2] &&
-                pv_at_depth[depth - 1] == pv_at_depth[depth - 3] &&
-                pv_at_depth[depth - 1] == pv_at_depth[depth - 4] &&
-                pv_at_depth[depth - 1] == pv_at_depth[depth - 5] &&
-                pv_at_depth[depth - 1] == pv_at_depth[depth - 6]
-        ) {
-            myremain = std::max(init_remain / 3, myremain * 95 / 100);
+        if (depth >= 10) {
+            if (failed_low) {
+                myremain = std::min(total_remaining, myremain * 11 / 10); // %10 panic time
+            }
+            int score_diff = score_at_depth[depth - 1] - score_at_depth[depth - 2];
+
+            if (score_diff < -10) {
+                myremain = std::min(total_remaining, myremain * 21 / 20);
+            }
+            if (score_diff > 10) {
+                myremain = std::max(init_remain / 2, myremain * 98 / 100);
+            }
+            if (pv_at_depth[depth - 1] == pv_at_depth[depth - 2]) {
+                myremain = std::max(init_remain / 2, myremain * 94 / 100);
+            } else {
+                myremain = std::max(init_remain, myremain);
+            }
         }
         ++depth;
     }
