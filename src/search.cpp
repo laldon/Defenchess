@@ -519,9 +519,9 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
                     ++reduction;
                 }
 
-                Piece piece = p->pieces[move_from(move)];
-                int quiet_score = p->my_thread->history[piece][move_to(move)] - 2048;
-                reduction = std::max(reduction - (quiet_score / 8192), 0);
+                // Piece piece = p->pieces[move_from(move)];
+                // int quiet_score = p->my_thread->history[piece][move_to(move)];
+                reduction = std::max(reduction, 0);
             }
 
             score = -alpha_beta(position, md+1, -alpha - 1, -alpha, std::max(0, new_depth - reduction), checks, true);
