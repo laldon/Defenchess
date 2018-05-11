@@ -368,11 +368,11 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         // Razoring
         if (depth < 4 && md->static_eval <= alpha - razoring_margin[depth]) {
             if (depth <= 1) {
-                return alpha_beta_quiescence(p, md, alpha, alpha + 1, 0, false);
+                return alpha_beta_quiescence(p, md, alpha, alpha + 1, -1, false);
             }
 
             int margin = alpha - razoring_margin[depth];
-            int quiescence_value = alpha_beta_quiescence(p, md, margin, margin + 1, 0, false);
+            int quiescence_value = alpha_beta_quiescence(p, md, margin, margin + 1, -1, false);
             if (quiescence_value <= margin) {
                 return quiescence_value;
             }
