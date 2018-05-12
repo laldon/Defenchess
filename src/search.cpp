@@ -240,7 +240,7 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
         undo_move(position);
         assert(is_timeout || main_thread_finished || (score >= -MATE && score <= MATE));
 
-        if (is_timeout) {
+        if (is_timeout && p->my_thread->depth > 1) {
             return TIMEOUT;
         }
 
@@ -540,7 +540,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         undo_move(position);
         assert(is_timeout || main_thread_finished || (score >= -MATE && score <= MATE));
 
-        if (check_time(p) || is_timeout) {
+        if ((check_time(p) || is_timeout) && p->my_thread->depth > 1) {
             return TIMEOUT;
         }
 
@@ -644,9 +644,11 @@ void think(Position *p) {
                 Position *tp = &t->positions[t->search_ply];
                 Metadata *tmd = &t->metadatas[0];
                 int thread_depth = depth + (i % 4);
+                t->depth = thread_depth;
                 t->thread_obj = std::thread(alpha_beta, tp, tmd, alpha, beta, thread_depth, in_check, false);
             }
 
+            main_thread->depth = depth;
             score = alpha_beta(p, md, alpha, beta, depth, in_check, false);
             main_thread_finished = true;
 
