@@ -533,7 +533,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
                 score = -alpha_beta(position, md+1, -alpha - 1, -alpha, new_depth, checks, !cut);
             }
 
-            if (is_principal && score > alpha && (root_node || score < beta)) {
+            if (is_principal && score > alpha && score < beta) {
                 score = -alpha_beta(position, md+1, -beta, -alpha, new_depth, checks, false);
             }
         }
@@ -657,7 +657,7 @@ void think(Position *p) {
             }
             main_thread_finished = false;
 
-            if (score > alpha) {  // WHAT IF WE DIDN'T HAVE A MAIN PV AND JUST USED THE REGULAR PV
+            if (score > alpha) {
                 current_guess = score;
                 update_main_pv();
             }
