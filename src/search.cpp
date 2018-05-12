@@ -361,7 +361,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         }
     }
 
-    if (!in_check && !is_principal) {
+    if (!in_check && !is_principal && excluded_move == no_move) {
         assert(md->static_eval != UNDEFINED);
         // Razoring
         if (depth < 4 && md->static_eval <= alpha - razoring_margin[depth]) {
