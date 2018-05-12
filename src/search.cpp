@@ -606,11 +606,11 @@ void think(Position *p) {
         Move move;
         while ((move = next_move(&movegen)) != no_move) {
             if (is_legal(p, move)) {
-                root_moves.push_back(move);            
+                root_moves.push_back(move);
             }
         }
-        if (eval_material->endgame_type == DRAW_ENDGAME || (in_check && root_moves.size() == 1)) {
-            std::cout << "bestmove " << move_to_str(movegen.moves[0].move) << std::endl;
+        if (eval_material->endgame_type == DRAW_ENDGAME || root_moves.size() == 1) {
+            std::cout << "bestmove " << move_to_str(root_moves[0]) << std::endl;
             return;
         }
     }
