@@ -273,7 +273,6 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
 
 int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool in_check, bool cut) {
     assert(-MATE <= alpha && alpha < beta && beta <= MATE);
-    assert(0 <= depth);
     assert(in_check == is_checked(p));
     if (depth < 1) {
         return alpha_beta_quiescence(p, md, alpha, beta, 0, in_check);
@@ -506,7 +505,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         int score;
 
         if (is_principal && num_moves == 1) {
-            score = -alpha_beta(position, md+1, -beta, -alpha, std::max(0, new_depth), checks, false);
+            score = -alpha_beta(position, md+1, -beta, -alpha, new_depth, checks, false);
         } else {
             // late move reductions
             int reduction = 0;
@@ -527,15 +526,15 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
                 reduction = std::max(reduction, 0);
             }
 
-            score = -alpha_beta(position, md+1, -alpha - 1, -alpha, std::max(0, new_depth - reduction), checks, true);
+            score = -alpha_beta(position, md+1, -alpha - 1, -alpha, new_depth - reduction, checks, true);
 
             // Verify late move reduction and re-run the search if necessary.
             if (reduction > 0 && score > alpha) {
-                score = -alpha_beta(position, md+1, -alpha - 1, -alpha, std::max(0, new_depth), checks, !cut);
+                score = -alpha_beta(position, md+1, -alpha - 1, -alpha, new_depth, checks, !cut);
             }
 
             if (is_principal && score > alpha && score < beta) {
-                score = -alpha_beta(position, md+1, -beta, -alpha, std::max(0, new_depth), checks, false);
+                score = -alpha_beta(position, md+1, -beta, -alpha, new_depth, checks, false);
             }
         }
         undo_move(position);
