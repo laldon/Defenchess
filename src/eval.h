@@ -45,12 +45,12 @@ const Score
 
 const int
     king_only_protected_penalty = 11,
-    queen_check_penalty = 60,
-    knight_check_penalty = 60,
-    rook_check_penalty = 65,
-    bishop_check_penalty = 40,
+    queen_check_penalty = 50,
+    knight_check_penalty = 50,
+    rook_check_penalty = 55,
+    bishop_check_penalty = 30,
     pawn_distance_penalty = 10,
-    king_zone_attack_penalty = 6;
+    king_zone_attack_penalty = 7;
 
 const int pawn_shelter_penalty[8] = {0, 0, 10, 30, 40, 50, 50, 50};
 const int tempo = 12;
