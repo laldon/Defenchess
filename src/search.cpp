@@ -695,6 +695,8 @@ void think(Position *p) {
             std::cout << "cp " << current_guess * 100 / PAWN_END;
         }
 
+        std::cout << " hashfull " << hashfull();
+
         uint64_t nodes = sum_nodes();
         std::cout << " nodes " << nodes <<  " nps " << nodes*1000/(time_taken+1) << " time " << time_taken << " pv ";
         print_pv();
