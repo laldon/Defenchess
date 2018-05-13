@@ -43,6 +43,7 @@ typedef struct PawnTTEntry {
     int      semi_open_files[2];
 } PawnTTEntry;
 
+int hashfull();
 void set_tte(uint64_t hash, Move m, int depth, int score, uint8_t flag);
 TTEntry *get_tte(uint64_t hash);
 

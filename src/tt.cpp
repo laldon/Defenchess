@@ -72,6 +72,17 @@ int tt_to_score(int score, uint16_t ply) {
     }
 }
 
+int hashfull() {
+    int count = 0;
+    for (uint64_t i = 0; i < tt_mask; i += uint64_t(tt_mask / 1000)) {
+        TTEntry *tte = &tt[i];
+        if (tte->depth != 0) {
+            ++count;
+        }
+    }
+    return count;
+}
+
 void set_tte(uint64_t hash, Move move, int depth, int score, uint8_t flag) {
     uint64_t index = hash & tt_mask;
     TTEntry *tte = &tt[index];

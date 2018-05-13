@@ -82,7 +82,6 @@ SearchThread search_threads[MAX_THREADS];
 
 int root_ply = 0;
 int mvvlva_values[12][14];
-Move pv_at_depth[MAX_PLY * 2];
 
 int reductions[2][64][64];
 
@@ -112,10 +111,14 @@ void get_ready() {
 
     for (int i = 0; i < MAX_THREADS; ++i) {
         SearchThread *t = &(search_threads[i]);
-        // Clear killers
+        // Clear the metadata
         for (int j = 0; j < MAX_PLY + 1; ++j) {
-            t->killers[j][0] = 0;
-            t->killers[j][1] = 0;
+            Metadata *md = &t->metadatas[j];
+            md->current_move = no_move;
+            md->static_eval = UNDEFINED;
+            md->ply = 0;
+            md->killers[0] = no_move;
+            md->killers[1] = no_move;
         }
         // Clear counter moves
         for (int j = 0; j < 14; ++j) {
@@ -127,11 +130,6 @@ void get_ready() {
         for (int j = 0; j < 14; ++j) {
             for (int k = 0; k < 64; ++k) {
                 t->history[j][k] = 0;
-            }
-        }
-        for (int j = 0; j < 14; ++j) {
-            for (int k = 0; k < 64; ++k) {
-                t->countermove_history[j][k] = 0;
             }
         }
     }

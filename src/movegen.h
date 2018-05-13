@@ -25,7 +25,7 @@
 #include "target.h"
 #include <cstring>
 
-MoveGen new_movegen(Position *p, int ply, int depth, Move tt_move, Square type, bool in_check);
+MoveGen new_movegen(Position *p, Metadata *md, int depth, Move tt_move, uint8_t type, bool in_check);
 
 void generate_evasions(MoveGen *movegen, Position *p);
 void generate_king_evasions(MoveGen *movegen, Position *p);
@@ -33,8 +33,7 @@ Move next_move(MoveGen *movegen);
 
 inline int score_quiet(Position *p, Move move) {
     Piece piece = p->pieces[move_from(move)];
-    return p->my_thread->history[piece][move_to(move)] +
-           p->my_thread->countermove_history[piece][move_to(move)];
+    return p->my_thread->history[piece][move_to(move)];
 }
 
 inline int score_capture_mvvlva(Position *p, Move move) {

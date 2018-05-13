@@ -28,6 +28,7 @@
 #include <vector>
 #include <map>
 #include <iostream>
+#include "tb.h"
 
 using namespace std;
 
@@ -80,6 +81,7 @@ void uci() {
 #endif
     cout << "option name Hash type spin default 256 min 1 max 16384" << endl;
     cout << "option name Threads type spin default 1 min 1 max " << MAX_THREADS << endl;
+    cout << "option name SyzygyPath type string default <empty>" << endl;
     cout << "uciok" << endl;
 }
 
@@ -93,7 +95,14 @@ void perft() {
 }
 
 void debug() {
+    cout << bitstring(root_position->board);
     show_position_png(root_position);
+    MoveGen movegen = new_movegen(root_position, 0, 0, 0, NORMAL_SEARCH, is_checked(root_position));
+    Move move;
+    while ((move = next_move(&movegen)) != no_move) {
+        cout << move_to_str(move) << " ";
+    }
+    cout << endl;
 }
 
 void quit() {
@@ -176,7 +185,7 @@ void startpos() {
 
     if (word_equal(2, "moves")) {
         for (unsigned i = 3 ; i < word_list.size() ; i++) {
-            Move m = 0;
+            Move m = no_move;
             if (word_list[i].length() == 4) {
                 m = uci2move(root_position, word_list[i]);
             } else if (word_list[i].length() == 5) {
@@ -204,7 +213,7 @@ void cmd_fen() {
 
     if (word_equal(8, "moves")) {
         for (unsigned i = 9 ; i < word_list.size() ; i++) {
-            Move m = 0;
+            Move m = no_move;
             if (word_list[i].length() == 4) {
                 m = uci2move(root_position, word_list[i]);
             } else if (word_list[i].length() == 5) {
@@ -239,18 +248,18 @@ void cmd_position() {
 }
 
 void setoption() {
-    if (word_list[1] == "name") {
-        if (word_list[2] == "Hash") {
-            if (word_list[3] == "value") {
-                int megabytes = stoi(word_list[4]);
-                reset_tt(megabytes);
-            }
-        }
-        if (word_list[2] == "Threads") {
-            if (word_list[3] == "value") {
-                num_threads = std::min(MAX_THREADS, stoi(word_list[4]));
-            }
-        }
+    if (word_list[1] != "name" || word_list[3] != "value") {
+        return;
+    }
+    string name = word_list[2];
+    string value = word_list[4];
+
+    if (name == "Hash") {
+        reset_tt(stoi(value));
+    } else if (name == "Threads") {
+        num_threads = std::min(MAX_THREADS, stoi(value));
+    } else if (name == "SyzygyPath") {
+        init_syzygy(value);
     }
 }
 

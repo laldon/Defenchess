@@ -210,6 +210,9 @@ enum MoveType{
     PROMOTION   = 2
 };
 
+const Move null_move = Move(~0);
+const Move no_move = Move(0);
+
 enum MoveGenType {
     SILENT = 0,
     CAPTURE = 1,
@@ -217,7 +220,7 @@ enum MoveGenType {
 };
 
 enum _Piece {
-    empty = 0,
+    no_piece = 0,
     white_occupy = 0,
     black_occupy = 1,
     white_pawn = 2,
@@ -335,6 +338,14 @@ typedef struct CopyThingSize {
     SearchThread *my_thread;
 } CopyThingSize;
 
+typedef struct Metadata {
+    int  ply;
+    Move current_move;
+    int  static_eval;
+    Move killers[2];
+    Move excluded_move;
+} Metadata;
+
 struct Position {
     //? COPIED 
     uint64_t     pawn_hash;
@@ -350,10 +361,8 @@ struct Position {
     SearchThread *my_thread;
 
     //! NOT TO COPY
-    Square  enpassant; 
+    Square   enpassant; 
     Color    color;
-    int      static_eval;
-    Move     current_move;
     uint64_t hash;
     Bitboard pinned[2];
 };
@@ -510,11 +519,12 @@ struct SearchThread {
     Position    positions[1024];
     int         thread_id;
     int         search_ply;
-    Move        killers[MAX_PLY + 1][2];
+    Metadata    metadatas[MAX_PLY + 1];
     Move        counter_moves[14][64];
     int         history[14][64];
-    int         countermove_history[14][64];
+    int         depth;
     uint64_t    nodes;
+    uint64_t    tb_hits;
 };
 
 inline bool is_main_thread(Position *p) {return p->my_thread->thread_id == 0;}
@@ -530,9 +540,10 @@ extern int root_ply;
 extern int think_depth_limit;
 extern int num_threads;
 
-inline void initialize_nodes() {
+inline void initialize_threads() {
     for (int i = 0; i < num_threads; ++i) {
         search_threads[i].nodes = 0;
+        search_threads[i].tb_hits = 0;
     }
 }
 
@@ -544,11 +555,15 @@ inline uint64_t sum_nodes() {
     return s;
 }
 
-extern Move pv_at_depth[MAX_PLY * 2];
+inline uint64_t sum_tb_hits() {
+    uint64_t s = 0;
+    for (int i = 0; i < num_threads; ++i) {
+        s += search_threads[i].tb_hits;
+    }
+    return s;
+}
 
 extern int reductions[2][64][64];
-
-inline int PLY(Position *p) { return p->my_thread->search_ply - root_ply; }
 
 inline Color piece_color(Piece p) {return p & 1;}
 

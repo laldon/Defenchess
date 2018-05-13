@@ -30,7 +30,7 @@ void show_position_png(Position *p){
     std::cout << system("python3 src/scripts/imggen.py") << std::endl;
 }
 
-string move_to_str_stock(Move m) {
+string move_to_str(Move m) {
     std::string move_str = int_to_notation(move_from(m)) + to_string((move_from(m) >> 3) + 1) +
                            int_to_notation(move_to(m)) + to_string((move_to(m) >> 3) + 1);
     if (move_type(m) == PROMOTION) {
