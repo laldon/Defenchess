@@ -689,14 +689,24 @@ void think(Position *p) {
 
         // Easy move detection
         if (depth == 12 && std::abs(current_guess) < KNOWN_WIN) {
-            Move best_move = main_pv.moves[0];
-            md->excluded_move = best_move;
-            int excluded_score = alpha_beta(p, md, -MATE, MATE, 8, in_check, false);
-            md->excluded_move = no_move;
+            bool check_for_easy_move = true;
+            for (int d = 1; d < 11; ++d) {
+                if (pv_at_depth[d] != pv_at_depth[0]) {
+                    check_for_easy_move = false;
+                    break;
+                }
+            }
 
-            if (current_guess - excluded_score >= 300) {
-                std::cout << "bestmove " << move_to_str(main_pv.moves[0]) << std::endl;
-                return;
+            if (check_for_easy_move) {
+                Move best_move = main_pv.moves[0];
+                md->excluded_move = best_move;
+                int excluded_score = alpha_beta(p, md, -MATE, MATE, 12, in_check, false);
+                md->excluded_move = no_move;
+
+                if (current_guess - excluded_score >= 300) {
+                    std::cout << "bestmove " << move_to_str(main_pv.moves[0]) << std::endl;
+                    return;
+                }
             }
         }
 
