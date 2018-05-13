@@ -731,7 +731,11 @@ int evaluate(Position *p, int *king_eval) {
     Score black_king_score = evaluate_king(&eval, p, black);
     eval.score_white += white_king_score;
     eval.score_black += black_king_score;
-    *king_eval = std::abs(white_king_score.midgame - black_king_score.midgame);
+    if (p->color == white) {
+        *king_eval = white_king_score.midgame - black_king_score.midgame;
+    } else {
+        *king_eval = black_king_score.midgame - white_king_score.midgame;
+    }
 
     evaluate_threats(&eval, p);
     evaluate_mobility(&eval);

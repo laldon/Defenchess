@@ -148,7 +148,7 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
         pv[ply].size = 0;
     }
     if (ply >= MAX_PLY) {
-        return evaluate(p, &king_eval);
+        return in_check ? 0 : evaluate(p, &king_eval);
     }
 
     if (is_draw(p)) {
@@ -286,7 +286,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
     }
 
     if (ply >= MAX_PLY) {
-        return evaluate(p, &king_eval);
+        return in_check ? 0 : evaluate(p, &king_eval);
     }
 
     if (is_draw(p)) {
