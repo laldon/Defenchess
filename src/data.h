@@ -343,6 +343,7 @@ typedef struct Metadata {
     Move current_move;
     int  static_eval;
     Move killers[2];
+    Move excluded_move;
 } Metadata;
 
 struct Position {
@@ -521,7 +522,7 @@ struct SearchThread {
     Metadata    metadatas[MAX_PLY + 1];
     Move        counter_moves[14][64];
     int         history[14][64];
-    int         countermove_history[14][64];
+    int         depth;
     uint64_t    nodes;
     uint64_t    tb_hits;
 };
@@ -561,8 +562,6 @@ inline uint64_t sum_tb_hits() {
     }
     return s;
 }
-
-extern Move pv_at_depth[MAX_PLY * 2];
 
 extern int reductions[2][64][64];
 

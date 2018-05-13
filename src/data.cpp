@@ -82,7 +82,6 @@ SearchThread search_threads[MAX_THREADS];
 
 int root_ply = 0;
 int mvvlva_values[12][14];
-Move pv_at_depth[MAX_PLY * 2];
 
 int reductions[2][64][64];
 
@@ -131,11 +130,6 @@ void get_ready() {
         for (int j = 0; j < 14; ++j) {
             for (int k = 0; k < 64; ++k) {
                 t->history[j][k] = 0;
-            }
-        }
-        for (int j = 0; j < 14; ++j) {
-            for (int k = 0; k < 64; ++k) {
-                t->countermove_history[j][k] = 0;
             }
         }
     }

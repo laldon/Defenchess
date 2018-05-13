@@ -38,7 +38,7 @@ TTime no_movestogo(int increment, int remaining) {
 
     int min_to_go = increment == 0 ? 10 : 3;
     int move_num = (root_ply + 1) / 2;
-    int movestogo = std::max(20 + 3 * (50 - move_num) / 5 , min_to_go);
+    int movestogo = std::max(10 + 4 * (50 - move_num) / 5 , min_to_go);
     int average_time = remaining / movestogo;
     int extra = average_time * std::max(30 - move_num, 0) / 200;
     int spend = std::min(remaining - 100, average_time + extra + increment);
