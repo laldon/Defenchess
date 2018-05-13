@@ -638,7 +638,8 @@ void think(Position *p) {
     // Easy move detection
     Move easy_move = detect_easy_move(p, md, in_check);
     if (easy_move != no_move) {
-        std::cout << "easy move: " << move_to_str(easy_move) << std::endl;
+        std::cout << "bestmove " << move_to_str(easy_move) << std::endl;
+        return;
     }
 
     int previous_guess = -MATE;
