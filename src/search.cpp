@@ -124,7 +124,7 @@ void save_killer(Position *p, Metadata *md, Move move, int depth, Move *quiets, 
 bool check_time(Position *p) {
     if (is_main_thread(p)) {
         if (timer_count == 0) {
-            gettimeofday(&curr_time, NULL);
+            gettimeofday(&curr_time, nullptr);
             if (time_passed() > myremain) {
                 is_timeout = true;
                 return true;
@@ -361,7 +361,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         }
     }
 
-    if (!in_check && !is_principal && excluded_move == no_move) {
+    if (!in_check && !is_principal) {
         assert(md->static_eval != UNDEFINED);
         // Razoring
         if (depth < 4 && md->static_eval <= alpha - razoring_margin[depth]) {
@@ -548,6 +548,9 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
             best_score = score;
             if (score > alpha) {
                 if (is_principal && is_main_thread(p)) {
+                    // if (root_node) {
+                    //     std::cout << "setting pv to " << move_to_str(move) << std::endl;
+                    // }
                     set_pv(move, ply);
                 }
                 best_move = move;
@@ -581,7 +584,24 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
     return best_score;
 }
 
+Move detect_easy_move(Position *p, Metadata *md, bool in_check) {
+    int score = alpha_beta(p, md, -MATE, MATE, 10, in_check, false);
+    Move best_move = pv[0].moves[0];
+    p->my_thread->depth = 10;
+    md->excluded_move = best_move;
+    int excluded_score = alpha_beta(p, md, -MATE, MATE, 10, in_check, false);
+    md->excluded_move = no_move;
+
+    if (score - excluded_score >= 300) {
+        return best_move;
+    }
+    return no_move;
+}
+
 void think(Position *p) {
+    // Start the timer
+    gettimeofday(&start_ts, nullptr);
+
     // First check TB
     Move tb_move;
     bool in_check = is_checked(p);
@@ -614,11 +634,16 @@ void think(Position *p) {
             return;
         }
     }
+
+    // Easy move detection
+    Move easy_move = detect_easy_move(p, md, in_check);
+    if (easy_move != no_move) {
+        std::cout << "easy move: " << move_to_str(easy_move) << std::endl;
+    }
+
     int previous_guess = -MATE;
     int current_guess = -MATE;
     int init_remain = myremain;
-
-    gettimeofday(&start_ts, NULL);
     int depth = 1;
 
     std::memset(pv_at_depth, 0, sizeof(pv_at_depth));
@@ -682,7 +707,7 @@ void think(Position *p) {
             break;
         }
 
-        gettimeofday(&curr_time, NULL);
+        gettimeofday(&curr_time, nullptr);
         int time_taken = time_passed();
         uint64_t tb_hits = sum_tb_hits();
         std::cout << "info depth " << depth << " seldepth " << main_pv.size << " multipv 1 ";
@@ -726,7 +751,6 @@ void think(Position *p) {
         }
         ++depth;
     }
-    gettimeofday(&curr_time, NULL);
     std::cout << "bestmove " << move_to_str(main_pv.moves[0]);
     if (main_pv.size > 1) {
         std::cout << " ponder " << move_to_str(main_pv.moves[1]);

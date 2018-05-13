@@ -44,7 +44,7 @@ void perft_test(){
     int nodes_total = 0;
 
     struct timeval tv1, tv2, tv3, tv4;
-    gettimeofday(&tv3, NULL);
+    gettimeofday(&tv3, nullptr);
 
     for (int i = 0; i < 7; i++){
         Position *st_pos = import_fen(fen[i].c_str());
@@ -77,12 +77,12 @@ void perft_test(){
 
         std::cout << "perft " << t_depth << std::endl;
         
-        gettimeofday(&tv1, NULL);
+        gettimeofday(&tv1, nullptr);
         
         results_perft[i] = Perft(t_depth, p, true, is_checked(p));
         nodes_total += results_perft[i];
         
-        gettimeofday(&tv2, NULL);
+        gettimeofday(&tv2, nullptr);
         std::cout << "===============\n";
         uint64_t nodesps = results_perft[i] / ((double) (tv2.tv_usec - tv1.tv_usec) / 1000000 +
         (double) (tv2.tv_sec - tv1.tv_sec));
@@ -93,7 +93,7 @@ void perft_test(){
         (double) (tv2.tv_sec - tv1.tv_sec));
     }
 
-    gettimeofday(&tv4, NULL);
+    gettimeofday(&tv4, nullptr);
     std::cout << "\n\n\n=@==================@=\n";
     for (int i = 0; i < 7; i++){
         if (results_perft[i] > results[i]){
