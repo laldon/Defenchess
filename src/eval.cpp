@@ -696,7 +696,7 @@ int scaling_factor(Evaluation *eval, Position *p, Material *eval_material) {
     return SCALE_NORMAL;
 }
 
-int evaluate(Position *p, int *opponent_king_eval) {
+int evaluate(Position *p, int *king_eval) {
     assert(!is_checked(p));
 
     Evaluation eval = init_evaluation;
@@ -731,11 +731,7 @@ int evaluate(Position *p, int *opponent_king_eval) {
     Score black_king_score = evaluate_king(&eval, p, black);
     eval.score_white += white_king_score;
     eval.score_black += black_king_score;
-    if (p->color == white) {
-        *opponent_king_eval = black_king_score.midgame;
-    } else {
-        *opponent_king_eval = white_king_score.midgame;
-    }
+    *king_eval = std::abs(white_king_score.midgame - black_king_score.midgame);
 
     evaluate_threats(&eval, p);
     evaluate_mobility(&eval);
@@ -752,7 +748,7 @@ void print_eval(Position *p){
     Evaluation eval = init_evaluation;
     pre_eval(&eval, p);
 
-    int opponent_king_eval;
+    int king_eval;
 
     evaluate_pawns(&eval, p);
     Score Pawn_score = eval.score_pawn;
@@ -816,7 +812,7 @@ void print_eval(Position *p){
     std::cout << "  Queen       Score : " << score_str(Queen_score[white]) << "|" << score_str(Queen_score[black]) << "|" << score_str(Queen_score[white] - Queen_score[black]) << std::endl;
 
     std::cout << std::endl << "  Total       Score : " << score_str(whitey) << "|" << score_str(blacky) << "|" << score_str(eval.score_pawn + p->score + whitey - blacky + eval_material->score) << std::endl;
-    int CP = 100 * p->color == white ? evaluate(p, &opponent_king_eval) : -evaluate(p, &opponent_king_eval);
+    int CP = 100 * p->color == white ? evaluate(p, &king_eval) : -evaluate(p, &king_eval);
     double percentage = (double)(256 - eval_material->phase) / 256.0 * 100.0;
     std::cout << std::endl;
     std::cout << "                                                   Phase: " << percentage << "%" << std::endl;

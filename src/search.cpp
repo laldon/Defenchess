@@ -143,12 +143,12 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
     assert(in_check == is_checked(p));
 
     int ply = md->ply;
-    int opponent_king_eval = 0;
+    int king_eval = 0;
     if (is_main_thread(p)) {
         pv[ply].size = 0;
     }
     if (ply >= MAX_PLY) {
-        return evaluate(p, &opponent_king_eval);
+        return evaluate(p, &king_eval);
     }
 
     if (is_draw(p)) {
@@ -182,7 +182,7 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
         if (is_null) {
             md->static_eval = best_score = tempo * 2 - (md-1)->static_eval;
         } else {
-            md->static_eval = best_score = evaluate(p, &opponent_king_eval);
+            md->static_eval = best_score = evaluate(p, &king_eval);
         }
         if (best_score >= beta) {
             if (!tte) {
@@ -280,13 +280,13 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
     }
 
     int ply = md->ply;
-    int opponent_king_eval = 0;
+    int king_eval = 0;
     if (is_main_thread(p)) {
         pv[ply].size = 0;
     }
 
     if (ply >= MAX_PLY) {
-        return evaluate(p, &opponent_king_eval);
+        return evaluate(p, &king_eval);
     }
 
     if (is_draw(p)) {
@@ -359,7 +359,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         if (is_null) {
             md->static_eval = tempo * 2 - (md-1)->static_eval;
         } else {
-            md->static_eval = evaluate(p, &opponent_king_eval);
+            md->static_eval = evaluate(p, &king_eval);
         }
     }
 
@@ -473,7 +473,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
                 if (singular_value < rbeta) {
                     extension = 1;
                 }
-        } else if (opponent_king_eval < -450) {
+        } else if (king_eval > 200) {
             extension = 1;
         } else if (checks && see_capture(p, move)) {
             extension = 1;
