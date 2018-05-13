@@ -361,7 +361,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         }
     }
 
-    if (!in_check && !is_principal) {
+    if (!in_check && !is_principal && excluded_move == no_move) {
         assert(md->static_eval != UNDEFINED);
         // Razoring
         if (depth < 4 && md->static_eval <= alpha - razoring_margin[depth]) {
@@ -411,7 +411,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
 
     // Internal iterative deepening
     int new_depth = depth;
-    if (is_principal && tte_move == no_move && depth >= 6) {
+    if (!tte_move && depth >= 6 && (is_principal || md->static_eval + 150 >= beta)) {
         new_depth = 3 * depth / 4 - 2;
         alpha_beta(p, md, alpha, beta, new_depth, in_check, cut);
         tte = get_tte(pos_hash);
