@@ -522,6 +522,7 @@ struct SearchThread {
     Metadata    metadatas[MAX_PLY + 1];
     Move        counter_moves[14][64];
     int         history[14][64];
+    int         depth;
     uint64_t    nodes;
     uint64_t    tb_hits;
 };
