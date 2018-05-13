@@ -392,7 +392,7 @@ int evaluate_pawn_shelter(Position *p, Color color, Square index) {
     return pawn_shelter_value;
 }
 
-Score evaluate_king(Evaluation *eval, Position *p, Color color) {
+Score evaluate_king(Evaluation *eval, Position *p, Color color, int *king_eval) {
     Score king_score = {0, 0};
     Color opp_c = opponent_color(color);
     Square outpost = p->king_index[color];
@@ -440,18 +440,22 @@ Score evaluate_king(Evaluation *eval, Position *p, Color color) {
         // Queen checks
         if ((rook_attacks | bishop_attacks) & eval->targets[queen(opp_c)] & safe) {
             king_danger += queen_check_penalty;
+            ++*king_eval;
         }
 
         safe |= eval->double_targets[opp_c] & ~(eval->double_targets[color] | p->bbs[opp_c]) & eval->targets[queen(color)];
 
         if (rook_attacks & eval->targets[rook(opp_c)] & safe) {
             king_danger += rook_check_penalty;
+            ++*king_eval;
         }
         if (bishop_attacks & eval->targets[bishop(opp_c)] & safe) {
             king_danger += bishop_check_penalty;
+            ++*king_eval;
         }
         if (knight_targets & eval->targets[knight(opp_c)] & safe) {
             king_danger += knight_check_penalty;
+            ++*king_eval;
         }
 
         if (king_danger > 0) {
@@ -610,8 +614,8 @@ void evaluate_pieces(Evaluation *eval, Position *p) {
 }
 
 void evaluate_kings(Evaluation *eval, Position *p) {
-    eval->score_white += evaluate_king(eval, p, white);
-    eval->score_black += evaluate_king(eval, p, black);
+    eval->score_white += evaluate_king(eval, p, white, nullptr);
+    eval->score_black += evaluate_king(eval, p, black, nullptr);
 }
 
 void evaluate_threats(Evaluation *eval, Position *p) {
@@ -727,15 +731,11 @@ int evaluate(Position *p, int *king_eval) {
     evaluate_pieces(&eval, p);
 
     // evaluate_kings(&eval, p);
-    Score white_king_score = evaluate_king(&eval, p, white);
-    Score black_king_score = evaluate_king(&eval, p, black);
+    int king_eval_2 = 0;
+    Score white_king_score = evaluate_king(&eval, p, white, p->color == white ? king_eval : &king_eval_2);
+    Score black_king_score = evaluate_king(&eval, p, black, p->color == black ? king_eval : &king_eval_2);
     eval.score_white += white_king_score;
     eval.score_black += black_king_score;
-    if (p->color == white) {
-        *king_eval = white_king_score.midgame - black_king_score.midgame;
-    } else {
-        *king_eval = black_king_score.midgame - white_king_score.midgame;
-    }
 
     evaluate_threats(&eval, p);
     evaluate_mobility(&eval);
