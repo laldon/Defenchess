@@ -695,7 +695,7 @@ void think(Position *p) {
             md->excluded_move = no_move;
 
             if (current_guess - excluded_score >= 300) {
-                std::cout << "bestmove " << main_pv.moves[0] << std::endl;
+                std::cout << "bestmove " << move_to_str(main_pv.moves[0]) << std::endl;
                 return;
             }
         }
