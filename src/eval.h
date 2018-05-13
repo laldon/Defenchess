@@ -56,7 +56,7 @@ const int pawn_shelter_penalty[8] = {0, 0, 10, 30, 40, 50, 50, 50};
 const int tempo = 12;
 const int ATTACK_VALUES[12] = {0,0,0,0,80,80,55,55,45,45,10,10};
 
-int evaluate(Position *p, int *opponent_king_eval);
+int evaluate(Position *p, int *king_eval);
 void init_eval();
 
 inline Color winning_side(Position *p) {
