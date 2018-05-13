@@ -584,20 +584,6 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
     return best_score;
 }
 
-Move detect_easy_move(Position *p, Metadata *md, bool in_check) {
-    int score = alpha_beta(p, md, -MATE, MATE, 10, in_check, false);
-    Move best_move = pv[0].moves[0];
-    p->my_thread->depth = 10;
-    md->excluded_move = best_move;
-    int excluded_score = alpha_beta(p, md, -MATE, MATE, 10, in_check, false);
-    md->excluded_move = no_move;
-
-    if (score - excluded_score >= 300) {
-        return best_move;
-    }
-    return no_move;
-}
-
 void think(Position *p) {
     // Start the timer
     gettimeofday(&start_ts, nullptr);
@@ -633,13 +619,6 @@ void think(Position *p) {
             std::cout << "bestmove " << move_to_str(root_moves[0]) << std::endl;
             return;
         }
-    }
-
-    // Easy move detection
-    Move easy_move = detect_easy_move(p, md, in_check);
-    if (easy_move != no_move) {
-        std::cout << "bestmove " << move_to_str(easy_move) << std::endl;
-        return;
     }
 
     int previous_guess = -MATE;
@@ -706,6 +685,19 @@ void think(Position *p) {
         }
         if (is_timeout) {
             break;
+        }
+
+        // Easy move detection
+        if (depth == 10) {
+            Move best_move = main_pv.moves[0];
+            md->excluded_move = best_move;
+            int excluded_score = alpha_beta(p, md, -MATE, MATE, 10, in_check, false);
+            md->excluded_move = no_move;
+
+            if (current_guess - excluded_score >= 300) {
+                std::cout << "bestmove " << main_pv.moves[0] << std::endl;
+                return;
+            }
         }
 
         gettimeofday(&curr_time, nullptr);
