@@ -473,7 +473,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
                 if (singular_value < rbeta) {
                     extension = 1;
                 }
-        } else if (depth <= 4 && king_eval > 1) {
+        } else if (depth <= 4 && king_eval > 0) {
             extension = 1;
         } else if (checks && see_capture(p, move)) {
             extension = 1;
