@@ -358,13 +358,10 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
     if (!in_check) {
         if (tte && tte->static_eval != UNDEFINED) {
             md->static_eval = tte->static_eval;
+        } else if (is_null) {
+            md->static_eval = tempo * 2 - (md-1)->static_eval;
         } else {
-            if (is_null) {
-                md->static_eval = tempo * 2 - (md-1)->static_eval;
-            } else {
-                md->static_eval = evaluate(p);
-            }
-            set_tte(p->hash, no_move, -MAX_PLY, UNDEFINED, md->static_eval, NO_FLAG);
+            md->static_eval = evaluate(p);
         }
     }
 

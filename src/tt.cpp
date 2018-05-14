@@ -38,7 +38,7 @@ void init_tt() {
     std::memset(tt, 0, tt_size);
     pawntt = (PawnTTEntry*) malloc(pawntt_size);
     std::memset(pawntt, 0, pawntt_size);
-    // std::cout << sizeof(PawnTTEntry) << std::endl;
+    // std::cout << sizeof(TTEntry) << std::endl;
 }
 
 void reset_tt(int megabytes) {
@@ -87,7 +87,7 @@ void set_tte(uint64_t hash, Move move, int depth, int score, int static_eval, ui
     uint64_t index = hash & tt_mask;
     TTEntry *tte = &tt[index];
 
-    uint32_t h = (uint32_t)(hash >> 32);
+    uint16_t h = (uint16_t)(hash >> 48);
 
     if (move || h != tte->hash) {
         tte->move = move;
@@ -106,7 +106,7 @@ void set_tte(uint64_t hash, Move move, int depth, int score, int static_eval, ui
 TTEntry *get_tte(uint64_t hash) {
     uint64_t index = hash & tt_mask;
     TTEntry *tte = &tt[index];
-    if (tte->hash == (uint32_t)(hash >> 32)) {
+    if (tte->hash == (uint16_t)(hash >> 48)) {
         return tte;
     }
     return 0;

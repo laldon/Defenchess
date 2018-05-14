@@ -29,12 +29,12 @@ extern uint64_t tt_size;
 extern uint64_t tt_mask;
 
 typedef struct TTEntry {
-    uint32_t hash;
+    uint16_t hash;
     Move     move;
-    int8_t   depth;
     int16_t  score;
     int16_t  static_eval;
     uint8_t  flag;
+    int8_t   depth;
 } TTEntry;
 
 typedef struct PawnTTEntry {
