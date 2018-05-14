@@ -31,8 +31,9 @@ extern uint64_t tt_mask;
 typedef struct TTEntry {
     uint32_t hash;
     Move     move;
-    int8_t  depth;
-    int      score;
+    int8_t   depth;
+    int16_t  score;
+    int16_t  static_eval;
     uint8_t  flag;
 } TTEntry;
 
@@ -44,7 +45,7 @@ typedef struct PawnTTEntry {
 } PawnTTEntry;
 
 int hashfull();
-void set_tte(uint64_t hash, Move m, int depth, int score, uint8_t flag);
+void set_tte(uint64_t hash, Move m, int depth, int score, int static_eval, uint8_t flag);
 TTEntry *get_tte(uint64_t hash);
 
 void set_pawntte(uint64_t pawn_hash, Evaluation* eval);

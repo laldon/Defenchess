@@ -83,7 +83,7 @@ int hashfull() {
     return count;
 }
 
-void set_tte(uint64_t hash, Move move, int depth, int score, uint8_t flag) {
+void set_tte(uint64_t hash, Move move, int depth, int score, int static_eval, uint8_t flag) {
     uint64_t index = hash & tt_mask;
     TTEntry *tte = &tt[index];
 
@@ -97,7 +97,8 @@ void set_tte(uint64_t hash, Move move, int depth, int score, uint8_t flag) {
         assert(depth < 256 && depth > -256);
         tte->hash = h;
         tte->depth = (int8_t)depth;
-        tte->score = score;
+        tte->score = (int16_t)score;
+        tte->static_eval = (int16_t)static_eval;
         tte->flag = flag;
     }
 }

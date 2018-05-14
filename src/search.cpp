@@ -178,14 +178,16 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
     int best_score;
     if (!in_check) {
         bool is_null = ply > 0 && (md-1)->current_move == null_move;
-        if (is_null) {
+        if (tte && tte->static_eval != UNDEFINED) {
+            md->static_eval = best_score = tte->static_eval;
+        } else if (is_null) {
             md->static_eval = best_score = tempo * 2 - (md-1)->static_eval;
         } else {
             md->static_eval = best_score = evaluate(p);
         }
         if (best_score >= beta) {
             if (!tte) {
-                set_tte(p->hash, 0, new_depth, score_to_tt(best_score, ply), FLAG_BETA);
+                set_tte(p->hash, 0, new_depth, score_to_tt(best_score, ply), md->static_eval, FLAG_BETA);
             }
             return best_score;
         }
@@ -254,7 +256,7 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
                 if (is_principal && score < beta) {
                     alpha = score;
                 } else {
-                    set_tte(p->hash, move, new_depth, score_to_tt(score, ply), FLAG_BETA);
+                    set_tte(p->hash, move, new_depth, score_to_tt(score, ply), md->static_eval, FLAG_BETA);
                     return score;
                 }
             }
@@ -266,7 +268,7 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
     }
 
     uint8_t flag = is_principal && best_move ? FLAG_EXACT : FLAG_ALPHA;
-    set_tte(p->hash, best_move, new_depth, score_to_tt(best_score, ply), flag);
+    set_tte(p->hash, best_move, new_depth, score_to_tt(best_score, ply), md->static_eval, flag);
     assert(best_score >= -MATE && best_score <= MATE);
     return best_score;
 }
@@ -346,7 +348,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
             if (flag == FLAG_EXACT ||
                 (flag == FLAG_BETA && tb_score >= beta) ||
                 (flag == FLAG_ALPHA && tb_score <= alpha)) {
-                    set_tte(pos_hash, 0, std::min(depth + 6, MAX_PLY - 1), score_to_tt(tb_score, ply), flag);
+                    set_tte(pos_hash, 0, std::min(depth + 6, MAX_PLY - 1), score_to_tt(tb_score, ply), UNDEFINED, flag);
                     return tb_score;
                 }
         }
@@ -354,7 +356,9 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
 
     bool is_null = ply > 0 && (md-1)->current_move == null_move;
     if (!in_check) {
-        if (is_null) {
+        if (tte && tte->static_eval != UNDEFINED) {
+            md->static_eval = tte->static_eval;
+        } else if (is_null) {
             md->static_eval = tempo * 2 - (md-1)->static_eval;
         } else {
             md->static_eval = evaluate(p);
@@ -558,7 +562,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
                         save_killer(p, md, move, depth, quiets, quiets_count - 1);
                     }
                     if (excluded_move == no_move) {
-                        set_tte(pos_hash, move, depth, score_to_tt(score, ply), FLAG_BETA);
+                        set_tte(pos_hash, move, depth, score_to_tt(score, ply), md->static_eval, FLAG_BETA);
                     }
                     return score;
                 }
@@ -572,7 +576,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
 
     if (excluded_move == no_move) {
         uint8_t flag = is_principal && best_move ? FLAG_EXACT : FLAG_ALPHA;
-        set_tte(pos_hash, best_move, depth, score_to_tt(best_score, ply), flag);
+        set_tte(pos_hash, best_move, depth, score_to_tt(best_score, ply), md->static_eval, flag);
     }
     if (!in_check && best_move && !is_capture_or_promotion(p, best_move)) {
         save_killer(p, md, best_move, depth, quiets, quiets_count - 1);
