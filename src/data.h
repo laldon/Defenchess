@@ -114,10 +114,9 @@ extern uint8_t ROOK_MOVES_CASTLE_PIECE[64];
 
 void init();
 
-const uint8_t NO_FLAG = 0;
-const uint8_t FLAG_EXACT = 1;
-const uint8_t FLAG_BETA = 2;
-const uint8_t FLAG_ALPHA = 3;
+const uint8_t FLAG_EXACT = 0;
+const uint8_t FLAG_BETA = 1;
+const uint8_t FLAG_ALPHA = 2;
 
 const Bitboard RANK_1BB     = 0x00000000000000FF;
 const Bitboard RANK_2BB     = 0x000000000000FF00;
