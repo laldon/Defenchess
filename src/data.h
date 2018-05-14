@@ -535,10 +535,11 @@ extern SearchThread search_threads[MAX_THREADS];
 extern int myremain;
 extern int total_remaining;
 extern int moves_to_go;
-extern bool     is_timeout;
+extern volatile bool is_timeout;
 extern int root_ply;
 extern int think_depth_limit;
 extern int num_threads;
+extern int move_overhead;
 
 inline void initialize_threads() {
     for (int i = 0; i < num_threads; ++i) {
