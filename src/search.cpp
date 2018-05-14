@@ -728,6 +728,7 @@ void think(Position *p) {
         ++depth;
     }
     gettimeofday(&curr_time, NULL);
+    std::cout << "info time " << time_passed() << std::endl;
     std::cout << "bestmove " << move_to_str(main_pv.moves[0]);
     if (main_pv.size > 1) {
         std::cout << " ponder " << move_to_str(main_pv.moves[1]);
