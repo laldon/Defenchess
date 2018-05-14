@@ -617,7 +617,7 @@ void think(Position *p) {
     int previous_guess = -MATE;
     int current_guess = -MATE;
     int init_remain = myremain;
-    int max_time_usage = std::min(total_remaining, init_remain * 2);
+    int max_time_usage = std::min(total_remaining, init_remain * 3);
 
     gettimeofday(&start_ts, NULL);
     int depth = 1;
