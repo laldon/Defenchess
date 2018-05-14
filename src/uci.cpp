@@ -82,6 +82,7 @@ void uci() {
     cout << "option name Hash type spin default 256 min 1 max 16384" << endl;
     cout << "option name Threads type spin default 1 min 1 max " << MAX_THREADS << endl;
     cout << "option name SyzygyPath type string default <empty>" << endl;
+    cout << "option name MoveOverhead type spin default 100 min 0 max 5000" << endl;
     cout << "uciok" << endl;
 }
 
@@ -260,6 +261,8 @@ void setoption() {
         num_threads = std::min(MAX_THREADS, stoi(value));
     } else if (name == "SyzygyPath") {
         init_syzygy(value);
+    } else if (name == "MoveOverhead") {
+        move_overhead = stoi(value);
     }
 }
 

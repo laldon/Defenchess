@@ -617,6 +617,7 @@ void think(Position *p) {
     int previous_guess = -MATE;
     int current_guess = -MATE;
     int init_remain = myremain;
+    int max_time_usage = std::min(total_remaining, init_remain * 3);
 
     gettimeofday(&start_ts, NULL);
     int depth = 1;
@@ -708,12 +709,12 @@ void think(Position *p) {
 
         if (depth >= 10) {
             if (failed_low) {
-                myremain = std::min(total_remaining, myremain * 11 / 10); // %10 panic time
+                myremain = std::min(max_time_usage, myremain * 11 / 10); // %10 panic time
             }
             int score_diff = score_at_depth[depth - 1] - score_at_depth[depth - 2];
 
             if (score_diff < -10) {
-                myremain = std::min(total_remaining, myremain * 21 / 20);
+                myremain = std::min(max_time_usage, myremain * 21 / 20);
             }
             if (score_diff > 10) {
                 myremain = std::max(init_remain / 2, myremain * 98 / 100);
@@ -727,6 +728,7 @@ void think(Position *p) {
         ++depth;
     }
     gettimeofday(&curr_time, NULL);
+    std::cout << "info time " << time_passed() << std::endl;
     std::cout << "bestmove " << move_to_str(main_pv.moves[0]);
     if (main_pv.size > 1) {
         std::cout << " ponder " << move_to_str(main_pv.moves[1]);
