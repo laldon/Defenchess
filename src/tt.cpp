@@ -38,7 +38,7 @@ void init_tt() {
     std::memset(tt, 0, tt_size);
     pawntt = (PawnTTEntry*) malloc(pawntt_size);
     std::memset(pawntt, 0, pawntt_size);
-    std::cout << sizeof(Bucket) << std::endl;
+    // std::cout << sizeof(Bucket) << std::endl;
 }
 
 void reset_tt(int megabytes) {
@@ -74,13 +74,15 @@ int tt_to_score(int score, uint16_t ply) {
 
 int hashfull() {
     int count = 0;
-    // for (uint64_t i = 0; i < tt_mask; i += uint64_t(tt_mask / 1000)) {
-    //     TTEntry *tte = &tt[i];
-    //     if (tte->depth != 0) {
-    //         ++count;
-    //     }
-    // }
-    return count;
+    for (uint64_t i = 0; i < bucket_mask; i += uint64_t(bucket_mask / 1000)) {
+        Bucket *bucket = &tt[i];
+        for (int j = 0; j < bucket_size; ++j) {
+            if (bucket->ttes[j].hash) {
+                ++count;
+            }
+        }
+    }
+    return count / bucket_size;
 }
 
 void set_tte(uint64_t hash, TTEntry *tte, Move move, int depth, int score, int static_eval, uint8_t flag) {
