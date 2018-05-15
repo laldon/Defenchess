@@ -23,28 +23,28 @@
 #include <iostream>
 #include "move_utils.h"
 
-TTEntry *tt;
+Bucket *tt;
 PawnTTEntry *pawntt;
 
 const uint64_t one_mb = 1024ULL * 1024ULL;
 uint64_t tt_size = one_mb * 256ULL; // 256 MB
-uint64_t tt_mask = (uint64_t)(tt_size / sizeof(TTEntry) - 1);
+uint64_t bucket_mask = (uint64_t)(tt_size / sizeof(Bucket) - 1);
 
 const uint64_t pawntt_size = one_mb * 1ULL; // 1 MB
 const uint64_t pawntt_mod = (uint64_t)(pawntt_size / sizeof(PawnTTEntry));
 
 void init_tt() {
-    tt = (TTEntry*) malloc(tt_size);
+    tt = (Bucket*) malloc(tt_size);
     std::memset(tt, 0, tt_size);
     pawntt = (PawnTTEntry*) malloc(pawntt_size);
     std::memset(pawntt, 0, pawntt_size);
-    // std::cout << sizeof(PawnTTEntry) << std::endl;
+    std::cout << sizeof(Bucket) << std::endl;
 }
 
 void reset_tt(int megabytes) {
     tt_size = one_mb * (uint64_t) (megabytes);
-    tt = (TTEntry*) realloc(tt, tt_size);
-    tt_mask = (uint64_t)(tt_size / sizeof(TTEntry) - 1);
+    tt = (Bucket*) realloc(tt, tt_size);
+    bucket_mask = (uint64_t)(tt_size / sizeof(Bucket) - 1);
 }
 
 void clear_tt() {
@@ -74,19 +74,16 @@ int tt_to_score(int score, uint16_t ply) {
 
 int hashfull() {
     int count = 0;
-    for (uint64_t i = 0; i < tt_mask; i += uint64_t(tt_mask / 1000)) {
-        TTEntry *tte = &tt[i];
-        if (tte->depth != 0) {
-            ++count;
-        }
-    }
+    // for (uint64_t i = 0; i < tt_mask; i += uint64_t(tt_mask / 1000)) {
+    //     TTEntry *tte = &tt[i];
+    //     if (tte->depth != 0) {
+    //         ++count;
+    //     }
+    // }
     return count;
 }
 
-void set_tte(uint64_t hash, Move move, int depth, int score, int static_eval, uint8_t flag) {
-    uint64_t index = hash & tt_mask;
-    TTEntry *tte = &tt[index];
-
+void set_tte(uint64_t hash, TTEntry *tte, Move move, int depth, int score, int static_eval, uint8_t flag) {
     uint16_t h = (uint16_t)(hash >> 48);
 
     if (move || h != tte->hash) {
@@ -103,13 +100,24 @@ void set_tte(uint64_t hash, Move move, int depth, int score, int static_eval, ui
     }
 }
 
-TTEntry *get_tte(uint64_t hash) {
-    uint64_t index = hash & tt_mask;
-    TTEntry *tte = &tt[index];
-    if (tte->hash == (uint16_t)(hash >> 48)) {
-        return tte;
+TTEntry *get_tte(uint64_t hash, bool *tt_hit) {
+    uint64_t index = hash & bucket_mask;
+    Bucket *bucket = &tt[index];
+
+    uint16_t h = (uint16_t)(hash >> 48);
+    for (int i = 0; i < bucket_size; ++i) {
+        if (!bucket->ttes[i].hash) {
+            *tt_hit = false;
+            return &bucket->ttes[i];
+        }
+        if (bucket->ttes[i].hash == h) {
+            *tt_hit = true;
+            return &bucket->ttes[i];
+        }
     }
-    return 0;
+
+    *tt_hit = false;
+    return &bucket->ttes[0];
 }
 
 void set_pawntte(uint64_t pawn_hash, Evaluation* eval) {

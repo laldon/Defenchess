@@ -25,8 +25,7 @@ void init_tt();
 void clear_tt();
 void reset_tt(int megabytes);
 
-extern uint64_t tt_size;
-extern uint64_t tt_mask;
+const int bucket_size = 3;
 
 typedef struct TTEntry {
     uint16_t hash;
@@ -37,6 +36,11 @@ typedef struct TTEntry {
     int8_t   depth;
 } TTEntry;
 
+typedef struct Bucket {
+    TTEntry ttes[bucket_size];
+    char padding[2]; // Totaling 32 bytes
+} Bucket;
+
 typedef struct PawnTTEntry {
     uint32_t pawn_hash;
     Score    score;
@@ -45,8 +49,8 @@ typedef struct PawnTTEntry {
 } PawnTTEntry;
 
 int hashfull();
-void set_tte(uint64_t hash, Move m, int depth, int score, int static_eval, uint8_t flag);
-TTEntry *get_tte(uint64_t hash);
+void set_tte(uint64_t hash, TTEntry *tte, Move m, int depth, int score, int static_eval, uint8_t flag);
+TTEntry *get_tte(uint64_t hash, bool *tt_hit);
 
 void set_pawntte(uint64_t pawn_hash, Evaluation* eval);
 PawnTTEntry *get_pawntte(uint64_t pawn_hash);
@@ -54,7 +58,7 @@ PawnTTEntry *get_pawntte(uint64_t pawn_hash);
 int score_to_tt(int score, uint16_t ply);
 int tt_to_score(int score, uint16_t ply);
 
-extern TTEntry *tt;
+extern Bucket *tt;
 extern PawnTTEntry *pawntt;
 
 #endif
