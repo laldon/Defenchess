@@ -55,9 +55,16 @@ typedef struct PawnTTEntry {
     int      semi_open_files[2];
 } PawnTTEntry;
 
+inline uint8_t tte_flag(TTEntry *tte) {
+    return (uint8_t) (tte->ageflag & 0x3);
+}
+
+inline uint8_t tte_age(TTEntry *tte) {
+    return (uint8_t) (tte->ageflag >> 2);
+}
+
 int hashfull();
 void start_search();
-uint8_t tte_flag(TTEntry *tte);
 void set_tte(uint64_t hash, TTEntry *tte, Move m, int depth, int score, int static_eval, uint8_t flag);
 TTEntry *get_tte(uint64_t hash, bool &tt_hit);
 
