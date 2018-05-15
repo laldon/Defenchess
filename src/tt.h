@@ -41,6 +41,13 @@ typedef struct Bucket {
     char padding[2]; // Totaling 32 bytes
 } Bucket;
 
+typedef struct Table {
+    Bucket *tt;
+    uint8_t generation;
+    uint64_t tt_size;
+    uint64_t bucket_mask;
+} Table;
+
 typedef struct PawnTTEntry {
     uint32_t pawn_hash;
     Score    score;
@@ -59,7 +66,7 @@ PawnTTEntry *get_pawntte(uint64_t pawn_hash);
 int score_to_tt(int score, uint16_t ply);
 int tt_to_score(int score, uint16_t ply);
 
-extern Bucket *tt;
+extern Table table;
 extern PawnTTEntry *pawntt;
 
 #endif
