@@ -588,6 +588,9 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
 }
 
 void think(Position *p) {
+    // Set the table generation
+    start_search();
+
     // First check TB
     Move tb_move;
     bool in_check = is_checked(p);

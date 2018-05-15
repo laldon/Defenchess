@@ -32,9 +32,10 @@ const uint64_t pawntt_size = one_mb * 1ULL; // 1 MB
 const uint64_t pawntt_mod = (uint64_t)(pawntt_size / sizeof(PawnTTEntry));
 
 void init_tt() {
-    table.tt = (Bucket*) malloc(table.tt_size);
     table.tt_size = one_mb * 256ULL; // 256 MB
+    table.tt = (Bucket*) malloc(table.tt_size);
     table.bucket_mask = (uint64_t)(table.tt_size / sizeof(Bucket) - 1);
+    table.generation = 0;
     std::memset(table.tt, 0, table.tt_size);
 
     pawntt = (PawnTTEntry*) malloc(pawntt_size);
@@ -51,6 +52,11 @@ void reset_tt(int megabytes) {
 void clear_tt() {
     std::memset(table.tt, 0, table.tt_size);
     std::memset(pawntt, 0, pawntt_size);
+    table.generation = 0;
+}
+
+void start_search() {
+    table.generation += 4;
 }
 
 int score_to_tt(int score, uint16_t ply) {
@@ -103,7 +109,7 @@ void set_tte(uint64_t hash, TTEntry *tte, Move move, int depth, int score, int s
         tte->depth = (int8_t)depth;
         tte->score = (int16_t)score;
         tte->static_eval = (int16_t)static_eval;
-        tte->ageflag = flag;
+        tte->ageflag = table.generation | flag;
     }
 }
 
@@ -123,8 +129,15 @@ TTEntry *get_tte(uint64_t hash, bool &tt_hit) {
         }
     }
 
+    TTEntry *replacement = &bucket->ttes[0];
+    for (int i = 1; i < bucket_size; ++i) {
+        if (bucket->ttes[i].depth * 4 + (bucket->ttes[i].ageflag & 0xFC) < replacement->depth * 4 + (replacement->ageflag & 0xFC)) {
+            replacement = &bucket->ttes[i];
+        }
+    }
+
     tt_hit = false;
-    return &bucket->ttes[0];
+    return replacement;
 }
 
 void set_pawntte(uint64_t pawn_hash, Evaluation* eval) {
