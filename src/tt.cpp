@@ -102,23 +102,23 @@ void set_tte(uint64_t hash, TTEntry *tte, Move move, int depth, int score, int s
     }
 }
 
-TTEntry *get_tte(uint64_t hash, bool *tt_hit) {
+TTEntry *get_tte(uint64_t hash, bool &tt_hit) {
     uint64_t index = hash & bucket_mask;
     Bucket *bucket = &tt[index];
 
     uint16_t h = (uint16_t)(hash >> 48);
     for (int i = 0; i < bucket_size; ++i) {
         if (!bucket->ttes[i].hash) {
-            *tt_hit = false;
+            tt_hit = false;
             return &bucket->ttes[i];
         }
         if (bucket->ttes[i].hash == h) {
-            *tt_hit = true;
+            tt_hit = true;
             return &bucket->ttes[i];
         }
     }
 
-    *tt_hit = false;
+    tt_hit = false;
     return &bucket->ttes[0];
 }
 

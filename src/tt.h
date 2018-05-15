@@ -50,7 +50,7 @@ typedef struct PawnTTEntry {
 
 int hashfull();
 void set_tte(uint64_t hash, TTEntry *tte, Move m, int depth, int score, int static_eval, uint8_t flag);
-TTEntry *get_tte(uint64_t hash, bool *tt_hit);
+TTEntry *get_tte(uint64_t hash, bool &tt_hit);
 
 void set_pawntte(uint64_t pawn_hash, Evaluation* eval);
 PawnTTEntry *get_pawntte(uint64_t pawn_hash);

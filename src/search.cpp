@@ -161,7 +161,7 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
 
     Move tte_move = no_move;
     bool tt_hit;
-    TTEntry *tte = get_tte(p->hash, &tt_hit);
+    TTEntry *tte = get_tte(p->hash, tt_hit);
     int tte_score = md->static_eval = UNDEFINED;
     if (tt_hit) {
         tte_move = tte->move;
@@ -319,7 +319,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
     int tte_score;
     tte_score = md->static_eval = UNDEFINED;
     bool tt_hit;
-    TTEntry *tte = get_tte(pos_hash, &tt_hit);
+    TTEntry *tte = get_tte(pos_hash, tt_hit);
     if (tt_hit) {
         tte_move = tte->move;
         if (tte->depth >= depth) {
@@ -420,7 +420,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
     if (!tte_move && depth >= 6 && (is_principal || md->static_eval + 150 >= beta)) {
         new_depth = 3 * depth / 4 - 2;
         alpha_beta(p, md, alpha, beta, new_depth, in_check, cut);
-        tte = get_tte(pos_hash, &tt_hit);
+        tte = get_tte(pos_hash, tt_hit);
         if (tt_hit) {
             tte_move = tte->move;
             tte_score = tt_to_score(tte->score, ply);
