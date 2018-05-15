@@ -135,8 +135,8 @@ TTEntry *get_tte(uint64_t hash, bool &tt_hit) {
 
     TTEntry *replacement = &bucket->ttes[0];
     for (int i = 1; i < bucket_size; ++i) {
-        if (bucket->ttes[i].depth - (64 + table.generation - tte_age(&bucket->ttes[i])) * 2
-            < replacement->depth - (64 + table.generation - tte_age(replacement)) * 2
+        if (bucket->ttes[i].depth - ((64 + table.generation - tte_age(&bucket->ttes[i])) & 0x3F) * 2
+            < replacement->depth - ((64 + table.generation - tte_age(replacement)) & 0x3F) * 2
         ) {
             replacement = &bucket->ttes[i];
         }
