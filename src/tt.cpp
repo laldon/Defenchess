@@ -85,6 +85,10 @@ int hashfull() {
     return count / bucket_size;
 }
 
+uint8_t tte_flag(TTEntry *tte) {
+    return (uint8_t) (tte->ageflag & 0x3);
+}
+
 void set_tte(uint64_t hash, TTEntry *tte, Move move, int depth, int score, int static_eval, uint8_t flag) {
     uint16_t h = (uint16_t)(hash >> 48);
 
@@ -98,7 +102,7 @@ void set_tte(uint64_t hash, TTEntry *tte, Move move, int depth, int score, int s
         tte->depth = (int8_t)depth;
         tte->score = (int16_t)score;
         tte->static_eval = (int16_t)static_eval;
-        tte->flag = flag;
+        tte->ageflag = flag;
     }
 }
 

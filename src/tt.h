@@ -32,7 +32,7 @@ typedef struct TTEntry {
     Move     move;
     int16_t  score;
     int16_t  static_eval;
-    uint8_t  flag;
+    uint8_t  ageflag;
     int8_t   depth;
 } TTEntry;
 
@@ -49,6 +49,7 @@ typedef struct PawnTTEntry {
 } PawnTTEntry;
 
 int hashfull();
+uint8_t tte_flag(TTEntry *tte);
 void set_tte(uint64_t hash, TTEntry *tte, Move m, int depth, int score, int static_eval, uint8_t flag);
 TTEntry *get_tte(uint64_t hash, bool &tt_hit);
 

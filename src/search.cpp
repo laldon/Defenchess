@@ -168,9 +168,9 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
         if (tte->depth >= new_depth) {
             tte_score = tt_to_score(tte->score, ply);
             if (!is_principal &&
-                (tte->flag == FLAG_EXACT ||
-                (tte->flag == FLAG_BETA && tte_score >= beta) ||
-                (tte->flag == FLAG_ALPHA && tte_score <= alpha))) {
+                (tte_flag(tte) == FLAG_EXACT ||
+                (tte_flag(tte) == FLAG_BETA && tte_score >= beta) ||
+                (tte_flag(tte) == FLAG_ALPHA && tte_score <= alpha))) {
                     return tte_score;
             }
         }
@@ -325,9 +325,9 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         if (tte->depth >= depth) {
             tte_score = tt_to_score(tte->score, ply);
             if (!is_principal &&
-                (tte->flag == FLAG_EXACT ||
-                (tte->flag == FLAG_BETA && tte_score >= beta) ||
-                (tte->flag == FLAG_ALPHA && tte_score <= alpha))) {
+                (tte_flag(tte) == FLAG_EXACT ||
+                (tte_flag(tte) == FLAG_BETA && tte_score >= beta) ||
+                (tte_flag(tte) == FLAG_ALPHA && tte_score <= alpha))) {
                     if (tte_score >= beta && !in_check && tte_move && !is_capture_or_promotion(p, tte_move)) {
                         save_killer(p, md, tte_move, depth, nullptr, 0);
                     }
@@ -466,7 +466,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
             !root_node &&
             excluded_move == no_move &&
             tte_score != UNDEFINED && std::abs(tte_score) < MATE_IN_MAX_PLY &&
-            (tte->flag == FLAG_EXACT || tte->flag == FLAG_BETA) &&
+            (tte_flag(tte) == FLAG_EXACT || tte_flag(tte) == FLAG_BETA) &&
             tte->depth >= depth - 3 &&
             is_legal(p, move)) {
                 int rbeta = std::max(tte_score - 2 * depth, -MATE + 1);
