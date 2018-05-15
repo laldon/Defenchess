@@ -56,7 +56,7 @@ void clear_tt() {
 }
 
 void start_search() {
-    table.generation += 4;
+    table.generation = (table.generation + 1) % 64;
 }
 
 int score_to_tt(int score, uint16_t ply) {
@@ -96,6 +96,10 @@ uint8_t tte_flag(TTEntry *tte) {
     return (uint8_t) (tte->ageflag & 0x3);
 }
 
+uint8_t tte_age(TTEntry *tte) {
+    return (uint8_t) (tte->ageflag >> 2);
+}
+
 void set_tte(uint64_t hash, TTEntry *tte, Move move, int depth, int score, int static_eval, uint8_t flag) {
     uint16_t h = (uint16_t)(hash >> 48);
 
@@ -109,7 +113,7 @@ void set_tte(uint64_t hash, TTEntry *tte, Move move, int depth, int score, int s
         tte->depth = (int8_t)depth;
         tte->score = (int16_t)score;
         tte->static_eval = (int16_t)static_eval;
-        tte->ageflag = table.generation | flag;
+        tte->ageflag = (table.generation << 2) | flag;
     }
 }
 
@@ -131,8 +135,8 @@ TTEntry *get_tte(uint64_t hash, bool &tt_hit) {
 
     TTEntry *replacement = &bucket->ttes[0];
     for (int i = 1; i < bucket_size; ++i) {
-        if (bucket->ttes[i].depth - ((259 + table.generation - bucket->ttes[i].ageflag) & 0xFC) * 2
-            < replacement->depth - ((259 + table.generation - replacement->ageflag) & 0xFC) * 2
+        if (bucket->ttes[i].depth - (64 + table.generation - tte_age(&bucket->ttes[i])) * 2
+            < replacement->depth - (64 + table.generation - tte_age(replacement)) * 2
         ) {
             replacement = &bucket->ttes[i];
         }
