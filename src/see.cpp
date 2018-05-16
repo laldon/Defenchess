@@ -28,8 +28,9 @@ int get_smallest_attacker(Position *p, Bitboard targeters, Color color) {
     Piece target = color == white ? white_queen : black_queen;
 
     for (; piece <= target; piece += 2) {
-        if (p->bbs[piece] & targeters) {
-            return (int) lsb(p->bbs[piece]);
+        Bitboard intersection = p->bbs[piece] & targeters;
+        if (intersection) {
+            return (int) lsb(intersection);
         }
     }
 

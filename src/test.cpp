@@ -53,11 +53,12 @@ SeeResult see_results[] = {
     { "5k2/4n3/8/3b4/8/2N5/8/5K2 w - - 0 1",     _movecast(C3, D5, NORMAL), true },
     { "5k2/8/8/8/3qp1R1/8/8/5K2 w - - 0 1",      _movecast(G4, E4, NORMAL), false },
     { "5k2/8/8/8/3qp1RR/8/8/5K2 w - - 0 1",      _movecast(G4, E4, NORMAL), true },
-    { "5k2/8/8/8/1q1rp1RR/8/8/5K2 w - - 0 1",    _movecast(G4, E4, NORMAL), false }
+    { "5k2/8/8/8/1q1rp1RR/8/8/5K2 w - - 0 1",    _movecast(G4, E4, NORMAL), false },
+    { "r1bqkbnr/pppp1ppp/n7/4p3/PP6/B7/2PPPPPP/RN1QKBNR b KQkq - 0 1", _movecast(A6, B4, NORMAL), true }
 };
 
 void see_test() {
-    for (int i = 0; i < 19; ++i) {
+    for (int i = 0; i < 20; ++i) {
         SeeResult see_result = see_results[i];
         Position *p = import_fen(see_result.fen.c_str());
         std::cout << "Testing position " << i << std::endl;
@@ -170,9 +171,6 @@ uint64_t fastPerft(int depth, Position *p, bool root, bool in_check) {
     MoveGen movegen = new_movegen(p, md, depth, no_move, NORMAL_SEARCH, in_check);
     Move move;
     while ((move = next_move(&movegen)) != no_move) {
-        if (!is_legal(p, move)) {
-            continue;
-        }
         if (root && depth == 1) {
             move_nodes = 1;
             ++nodes;
@@ -202,7 +200,7 @@ uint64_t fastPerft(int depth, Position *p, bool root, bool in_check) {
 }
 
 uint64_t Perft(int depth, Position *p, bool root, bool in_check) {
-    // return fastPerft(depth, p, root, in_check);
+    return fastPerft(depth, p, root, in_check);
     if (depth == 0) {
         return 1ULL;
     }

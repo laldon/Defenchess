@@ -225,7 +225,7 @@ bool is_pseudolegal(Position *p, Move move) {
     Bitboard b = 0;
     if (p_type == KING) {
         b = generate_king_targets(from);
-    } else if (p_type == white_pawn) {
+    } else if (p_type == PAWN) {
         if (rank(to, p->color) == RANK_8) {
             return false;
         }

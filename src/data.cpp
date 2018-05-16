@@ -674,4 +674,16 @@ void init() {
     init_imbalance();
     generate_bitbase();
     init_threads();
+    assert(piece_type(white_pawn) == PAWN);
+    assert(piece_type(black_pawn) == PAWN);
+    assert(piece_type(white_knight) == KNIGHT);
+    assert(piece_type(black_knight) == KNIGHT);
+    assert(piece_type(white_bishop) == BISHOP);
+    assert(piece_type(black_bishop) == BISHOP);
+    assert(piece_type(white_rook) == ROOK);
+    assert(piece_type(black_rook) == ROOK);
+    assert(piece_type(white_queen) == QUEEN);
+    assert(piece_type(black_queen) == QUEEN);
+    assert(piece_type(white_king) == KING);
+    assert(piece_type(black_king) == KING);
 }
