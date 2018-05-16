@@ -39,24 +39,24 @@ const Score rook_file_bonus[2] = {{12, 4}, {26, 12}};
 const Score isolated_pawn_penalty[2] = {{16, 18}, {8, 11}},
             backward_pawn_penalty[2] = {{23, 15}, {14, 7}};
 
-const Score minor_threat_bonus[12] = {
-    { 0,  0}, { 0,  0}, // Empty
-    { 0, 10}, { 0, 10}, // Pawn
-    {20, 20}, {20, 20}, // Knight
-    {20, 20}, {20, 20}, // Bishop
-    {30, 40}, {30, 40}, // Rook
-    {30, 40}, {30, 40} // Queen
-    // { 0,  0}, { 0,  0}  // King should never be called
+const Score minor_threat_bonus[6] = {
+    { 0,  0}, // Empty
+    { 0, 10}, // Pawn
+    {20, 20}, // Knight
+    {20, 20}, // Bishop
+    {30, 40}, // Rook
+    {30, 40}  // Queen
+    // { 0, 0},  // King should never be called
 };
 
-const Score rook_threat_bonus[12] = {
-    { 0,  0}, { 0,  0}, // Empty
-    { 0, 10}, { 0, 10}, // Pawn
-    {20, 35}, {20, 35}, // Knight
-    {20, 35}, {20, 35}, // Bishop
-    { 0,  0}, { 0,  0}, // Rook
-    {20, 30}, {20, 30} // Queen
-    // { 0,  0}, { 0,  0}  // King should never be called
+const Score rook_threat_bonus[6] = {
+    { 0,  0}, // Empty
+    { 0, 10}, // Pawn
+    {20, 35}, // Knight
+    {20, 35}, // Bishop
+    { 0,  0}, // Rook
+    {20, 30}  // Queen
+    // { 0, 0}  // King should never be called
 };
 
 Score connected[2][2][3][8];
@@ -488,7 +488,7 @@ Score evaluate_threat(Evaluation *eval, Position *p, Color color) {
         Bitboard attacked_by_minor = (supported_non_pawns | not_supported) & (eval->targets[knight(color)] | eval->targets[bishop(color)]);
         while (attacked_by_minor) {
             Square outpost = pop(&attacked_by_minor);
-            threat_score += minor_threat_bonus[p->pieces[outpost]];
+            threat_score += minor_threat_bonus[piece_type(p->pieces[outpost])];
             if (!is_pawn(p->pieces[outpost]))
                 threat_score += rank_threat_bonus * rank(outpost, opp_c);
         }
@@ -496,7 +496,7 @@ Score evaluate_threat(Evaluation *eval, Position *p, Color color) {
         Bitboard attacked_by_rook = (p->bbs[queen(opp_c)] | not_supported) & eval->targets[rook(color)];
         while (attacked_by_rook) {
             Square outpost = pop(&attacked_by_rook);
-            threat_score += rook_threat_bonus[p->pieces[outpost]];
+            threat_score += rook_threat_bonus[piece_type(p->pieces[outpost])];
             if (!is_pawn(p->pieces[outpost]))
                 threat_score += rank_threat_bonus * rank(outpost, opp_c);
         }
