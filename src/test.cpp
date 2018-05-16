@@ -18,7 +18,7 @@
 
 #include "test.h"
 
-std::string fen[7] = {
+std::string perft_fen[7] = {
     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",
     "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1",
@@ -27,6 +27,44 @@ std::string fen[7] = {
     "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10",
     "2K2r2/4P3/8/8/8/8/8/3k4 w - - 0 1"
 };
+
+typedef struct SeeResult {
+    std::string fen;
+    Move move;
+    bool result;
+} SeeResult;
+
+SeeResult see_results[] = {
+    { "5k2/8/8/8/4p3/5P2/8/5K2 w - - 0 1",       _movecast(F3, E4, NORMAL), true },
+    { "5k2/8/8/3p4/4p3/5P2/8/5K2 w - - 0 1",     _movecast(F3, E4, NORMAL), true },
+    { "5k2/8/8/3b4/4p3/5P2/8/5K2 w - - 0 1",     _movecast(F3, E4, NORMAL), true },
+    { "5k2/8/8/8/4p3/5B2/8/5K2 w - - 0 1",       _movecast(F3, E4, NORMAL), true },
+    { "5k2/8/8/5p2/4p3/5B2/8/5K2 w - - 0 1",     _movecast(F3, E4, NORMAL), false },
+    { "5k2/8/8/3b4/4p3/5B2/8/5K2 w - - 0 1",     _movecast(F3, E4, NORMAL), false },
+    { "5k2/8/8/3b4/4p3/3P1B2/8/5K2 w - - 0 1",   _movecast(F3, E4, NORMAL), true },
+    { "5k2/8/8/3b1b2/4p3/3B1B2/8/5K2 w - - 0 1", _movecast(F3, E4, NORMAL), false },
+    { "5k2/8/8/3q4/4p3/5B2/8/5K2 w - - 0 1",     _movecast(F3, E4, NORMAL), false },
+    { "5k2/8/8/3q4/4p3/5B2/5N2/5K2 w - - 0 1",   _movecast(F3, E4, NORMAL), true },
+    { "5k2/8/8/3q4/4p3/5B2/8/4RK2 w - - 0 1",    _movecast(F3, E4, NORMAL), true },
+    { "5k2/8/8/3q4/4p3/5B2/8/5K1Q w - - 0 1",    _movecast(F3, E4, NORMAL), true },
+    { "5k2/1b6/8/3q4/4p3/5B2/8/5K1Q w - - 0 1",  _movecast(F3, E4, NORMAL), false },
+    { "5k2/8/8/8/4q3/5P2/8/5K2 w - - 0 1",       _movecast(F3, E4, NORMAL), true },
+    { "5k2/4n3/8/3n4/2B5/8/8/5K2 w - - 0 1",     _movecast(C4, D5, NORMAL), false },
+    { "5k2/4n3/8/3b4/8/2N5/8/5K2 w - - 0 1",     _movecast(C3, D5, NORMAL), true },
+    { "5k2/8/8/8/3qp1R1/8/8/5K2 w - - 0 1",      _movecast(G4, E4, NORMAL), false },
+    { "5k2/8/8/8/3qp1RR/8/8/5K2 w - - 0 1",      _movecast(G4, E4, NORMAL), true },
+    { "5k2/8/8/8/1q1rp1RR/8/8/5K2 w - - 0 1",    _movecast(G4, E4, NORMAL), false }
+};
+
+void see_test() {
+    for (int i = 0; i < 19; ++i) {
+        SeeResult see_result = see_results[i];
+        Position *p = import_fen(see_result.fen.c_str());
+        std::cout << "Testing position " << i << std::endl;
+        assert(see_capture(p, see_result.move) == see_result.result);
+    }
+    std::cout << "Success!" << std::endl;
+}
 
 void perft_test(){
     //? DONT FORGET : https://chessprogramming.wikispaces.com/Perft+Results
@@ -47,8 +85,7 @@ void perft_test(){
     gettimeofday(&tv3, NULL);
 
     for (int i = 0; i < 7; i++){
-        Position *st_pos = import_fen(fen[i].c_str());
-        Position *p = st_pos;
+        Position *p = import_fen(perft_fen[i].c_str());
 
         // Generate all moves and test pseudo legal
         // for (Square a = A1; a <= H8; ++a) {

@@ -37,6 +37,7 @@
 
 uint64_t Perft(int index, Position* p, bool root, bool in_check);
 
+void see_test();
 void perft_test();
 
 #endif

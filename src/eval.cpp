@@ -488,7 +488,7 @@ Score evaluate_threat(Evaluation *eval, Position *p, Color color) {
         Bitboard attacked_by_minor = (supported_non_pawns | not_supported) & (eval->targets[knight(color)] | eval->targets[bishop(color)]);
         while (attacked_by_minor) {
             Square outpost = pop(&attacked_by_minor);
-            threat_score += minor_threat_bonus[piece_type(p->pieces[outpost])];
+            threat_score += minor_threat_bonus[p->pieces[outpost]];
             if (!is_pawn(p->pieces[outpost]))
                 threat_score += rank_threat_bonus * rank(outpost, opp_c);
         }
@@ -496,7 +496,7 @@ Score evaluate_threat(Evaluation *eval, Position *p, Color color) {
         Bitboard attacked_by_rook = (p->bbs[queen(opp_c)] | not_supported) & eval->targets[rook(color)];
         while (attacked_by_rook) {
             Square outpost = pop(&attacked_by_rook);
-            threat_score += rook_threat_bonus[piece_type(p->pieces[outpost])];
+            threat_score += rook_threat_bonus[p->pieces[outpost]];
             if (!is_pawn(p->pieces[outpost]))
                 threat_score += rank_threat_bonus * rank(outpost, opp_c);
         }
