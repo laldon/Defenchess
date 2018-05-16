@@ -23,18 +23,18 @@
 #include <iostream>
 #include "move_utils.h"
 
-int get_smallest_attacker(Position *p, Bitboard targeters, Color color) {
+Square get_smallest_attacker(Position *p, Bitboard targeters, Color color) {
     Piece piece = color == white ? white_pawn : black_pawn;
-    Piece target = color == white ? white_queen : black_queen;
+    Piece target = color == white ? white_king : black_king;
 
     for (; piece <= target; piece += 2) {
         Bitboard intersection = p->bbs[piece] & targeters;
         if (intersection) {
-            return (int) lsb(intersection);
+            return lsb(intersection);
         }
     }
-
-    return -1;
+    assert(false);
+    return 0;
 }
 
 bool see_capture(Position *p, Move move) {
@@ -58,20 +58,21 @@ bool see_capture(Position *p, Move move) {
     bool opponent_to_move = true;
 
     Bitboard board = p->board ^ bfi[from];
-    Bitboard targeters = all_targets(p, board, to);
+    Bitboard targeters = all_targets(p, board, to) & board;
 
     Bitboard rooks = p->bbs[white_rook] | p->bbs[black_rook];
     Bitboard bishops = p->bbs[white_bishop] | p->bbs[black_bishop];
     Bitboard queens = p->bbs[white_queen] | p->bbs[black_queen];
 
     while (true) {
-        int smallest_attacker = get_smallest_attacker(p, targeters & board & p->bbs[opponent_color(color)], opponent_color(color));
-        if (smallest_attacker == -1) {
+        Bitboard my_targeters = targeters & p->bbs[opponent_color(color)];
+        if (!my_targeters) {
             break;
         }
 
-        board ^= bfi[smallest_attacker];
-        int p_type = piece_type(p->pieces[smallest_attacker]);
+        Square attacker_sq = get_smallest_attacker(p, my_targeters, opponent_color(color));
+        board ^= bfi[attacker_sq];
+        int p_type = piece_type(p->pieces[attacker_sq]);
         if (p_type == PAWN || p_type == BISHOP || p_type == QUEEN) {
             targeters |= generate_bishop_targets(board, to) & (bishops | queens);
         }
@@ -79,8 +80,9 @@ bool see_capture(Position *p, Move move) {
         if (p_type == ROOK || p_type == QUEEN) {
             targeters |= generate_rook_targets(board, to) & (rooks | queens);
         }
+        targeters &= board;
 
-        balance += piece_values[p->pieces[smallest_attacker]];;
+        balance += piece_values[p->pieces[attacker_sq]];;
 
         opponent_to_move = !opponent_to_move;
 
