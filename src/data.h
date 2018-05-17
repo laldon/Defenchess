@@ -237,6 +237,16 @@ enum _Piece {
     black_king = 13
 };
 
+enum _PieceType {
+    NO_PIECE = 0,
+    PAWN = 1,
+    KNIGHT = 2,
+    BISHOP = 3,
+    ROOK = 4,
+    QUEEN = 5,
+    KING = 6
+};
+
 enum _Square : Square {
     A1 = 0,
         B1, C1, D1, E1, F1, G1, H1,
@@ -572,7 +582,7 @@ inline bool is_white(Piece p) {return piece_color(p) == white;}
 
 inline bool is_black(Piece p) {return piece_color(p) == black;}
 
-inline Piece piece_type(Piece p) {return p & 0xE;}
+inline int piece_type(Piece p) {return int(p / 2);}
 
 inline Piece king(Color color) {return white_king | color;}
 
@@ -588,17 +598,17 @@ inline Piece pawn(Color color) {return white_pawn | color;}
 
 inline Piece occupy(Color color) {return white_occupy | color;}
 
-inline bool is_king(Piece p) {return piece_type(p) == white_king;}
+inline bool is_king(Piece p) {return piece_type(p) == KING;}
 
-inline bool is_queen(Piece p) {return piece_type(p) == white_queen;}
+inline bool is_queen(Piece p) {return piece_type(p) == QUEEN;}
 
-inline bool is_rook(Piece p) {return piece_type(p) == white_rook;}
+inline bool is_rook(Piece p) {return piece_type(p) == ROOK;}
 
-inline bool is_bishop(Piece p) {return piece_type(p) == white_bishop;}
+inline bool is_bishop(Piece p) {return piece_type(p) == BISHOP;}
 
-inline bool is_knight(Piece p) {return piece_type(p) == white_knight;}
+inline bool is_knight(Piece p) {return piece_type(p) == KNIGHT;}
 
-inline bool is_pawn(Piece p) {return piece_type(p) == white_pawn;}
+inline bool is_pawn(Piece p) {return piece_type(p) == PAWN;}
 
 inline int move_from(Move m) {return m >> 10;}
 
