@@ -32,6 +32,7 @@ const int futility_move_counts[2][8] = {
 };
 
 inline int lmr(bool is_pv, int depth, int num_moves) {
+    assert(depth >= 1 && num_moves >= 1);
     return reductions[is_pv][std::min(depth, 63)][std::min(num_moves, 63)];
 }
 

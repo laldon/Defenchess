@@ -625,8 +625,8 @@ void init_distance() {
 }
 
 void init_lmr() {
-    for (int depth = 0; depth < 64; ++depth) {
-        for (int num_moves = 0; num_moves < 64; ++num_moves) {
+    for (int depth = 1; depth < 64; ++depth) {
+        for (int num_moves = 1; num_moves < 64; ++num_moves) {
             reductions[0][depth][num_moves] = int(log(depth) * log(num_moves) / 1.95);
             reductions[1][depth][num_moves] = std::max(reductions[0][depth][num_moves] - 1, 0);
         }
