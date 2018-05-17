@@ -27,7 +27,6 @@
 #include "tt.h"
 #include <vector>
 #include <map>
-#include <iostream>
 #include "tb.h"
 
 using namespace std;
@@ -270,6 +269,38 @@ void setoption() {
     }
 }
 
+int bench_time(struct timeval s, struct timeval e) {
+    return (((e.tv_sec - s.tv_sec) * 1000000) + (e.tv_usec - s.tv_usec)) / 1000;
+}
+
+void bench() {
+    uint64_t nodes = 0;
+
+    struct timeval bench_start, bench_end;
+    gettimeofday(&bench_start, nullptr);
+    int tmp = think_depth_limit;
+    think_depth_limit = 13;
+
+    for (int i = 0; i < 36; i++){
+        cout << "\nPosition [" << (i + 1) << "|36]\n" << endl;
+        Position *p = import_fen(benchmarks[i].c_str());
+
+        think(p);
+        nodes += search_threads[0].nodes;
+
+        clear_tt();
+    }
+
+    gettimeofday(&bench_end, nullptr);
+    int time_taken = bench_time(bench_start, bench_end);
+    think_depth_limit = tmp;
+
+    cout << "\n------------------------\n";
+    cout << "Time  : " << time_taken << endl;
+    cout << "Nodes : " << nodes << endl;
+    cout << "NPS   : " << nodes * 1000 / (time_taken + 1) << endl;
+}
+
 void ucinewgame() {
     clear_tt();
 }
@@ -301,6 +332,8 @@ void run_command(string s) {
         stop();
     if (s == "see")
         see();
+    if (s == "bench")
+        bench();
 }
 
 void loop() {
