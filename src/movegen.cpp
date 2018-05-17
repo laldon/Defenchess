@@ -81,11 +81,13 @@ Move next_move(MoveGen *movegen) {
             if (movegen->tte_move) {
                 return movegen->tte_move;
             }
+            /* fallthrough */
 
         case GOOD_CAPTURES_SORT:
             generate_moves<CAPTURE>(movegen, movegen->position);
             score_moves(movegen, SCORE_CAPTURE);
             ++movegen->stage;
+            /* fallthrough */
 
         case GOOD_CAPTURES:
             while (movegen->head < movegen->tail) {
@@ -103,6 +105,7 @@ Move next_move(MoveGen *movegen) {
                 !is_capture(movegen->position, move)) {
                 return move;
             }
+            /* fallthrough */
 
         case KILLER_MOVES:
             ++movegen->stage;
@@ -113,6 +116,7 @@ Move next_move(MoveGen *movegen) {
                 !is_capture(movegen->position, move)) {
                 return move;
             }
+            /* fallthrough */
 
         case COUNTER_MOVES:
             ++movegen->stage;
@@ -125,6 +129,7 @@ Move next_move(MoveGen *movegen) {
                 !is_capture(movegen->position, move)) {
                 return move;
             }
+            /* fallthrough */
 
         case QUIETS_SORT:
             movegen->head = movegen->end_bad_captures;
@@ -133,6 +138,7 @@ Move next_move(MoveGen *movegen) {
             score_moves(movegen, SCORE_QUIET);
             insertion_sort(movegen->moves, movegen->head, movegen->tail, -1024 * movegen->depth);
             ++movegen->stage;
+            /* fallthrough */
 
         case QUIETS:
             while (movegen->head < movegen->tail) {
@@ -146,6 +152,7 @@ Move next_move(MoveGen *movegen) {
             }
             ++movegen->stage;
             movegen->head = 0;
+            /* fallthrough */
 
         case BAD_CAPTURES:
             if (movegen->head < movegen->end_bad_captures) {
@@ -158,11 +165,13 @@ Move next_move(MoveGen *movegen) {
             if (movegen->tte_move) {
                 return movegen->tte_move;
             }
+            /* fallthrough */
 
         case EVASIONS_SORT:
             generate_evasions(movegen, movegen->position);
             score_moves(movegen, SCORE_EVASION);
             ++movegen->stage;
+            /* fallthrough */
 
         case EVASIONS:
             while (movegen->head < movegen->tail) {
@@ -178,11 +187,13 @@ Move next_move(MoveGen *movegen) {
             if (movegen->tte_move) {
                 return movegen->tte_move;
             }
+            /* fallthrough */
 
         case QUIESCENCE_CAPTURES_SORT:
             generate_moves<CAPTURE>(movegen, movegen->position);
             score_moves(movegen, SCORE_CAPTURE);
             ++movegen->stage;
+            /* fallthrough */
 
         case QUIESCENCE_CAPTURES:
             while (movegen->head < movegen->tail) {
@@ -198,11 +209,13 @@ Move next_move(MoveGen *movegen) {
             if (movegen->tte_move) {
                 return movegen->tte_move;
             }
+            /* fallthrough */
 
         case QUIESCENCE_CAPTURES_SORT_CHECKS:
             generate_moves<CAPTURE>(movegen, movegen->position);
             score_moves(movegen, SCORE_QUIET);
             ++movegen->stage;
+            /* fallthrough */
 
         case QUIESCENCE_CAPTURES_CHECKS:
             if (movegen->head < movegen->tail) {
@@ -211,6 +224,7 @@ Move next_move(MoveGen *movegen) {
             ++movegen->stage;
             movegen->head = 0;
             generate_quiet_checks(movegen, movegen->position);
+            /* fallthrough */
 
         case QUIESCENCE_QUIETS_CHECKS:
             while (movegen->head < movegen->tail) {
