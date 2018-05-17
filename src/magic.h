@@ -22,8 +22,6 @@
 #include "data.h"
 #include "bitboard.h"
 
-#include <iostream>
-
 typedef struct Magic{
     Bitboard mask;
     Bitboard magic;

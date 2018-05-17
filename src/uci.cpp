@@ -235,8 +235,12 @@ void cmd_fen() {
 }
 
 void see() {
-    Move move = uci2move(root_position, word_list[1]);
-    cout << see_capture(root_position, move) << endl;
+    if (word_list[1] == "test") {
+        see_test();
+    } else {
+        Move move = uci2move(root_position, word_list[1]);
+        cout << see_capture(root_position, move) << endl;
+    }
 }
 
 void cmd_position() {

@@ -55,6 +55,7 @@ Bitboard targeted_from(Position *p, Bitboard board, Color c, Square index);
 Bitboard targeted_from_enpassant(Position *p, Color c, Square index);
 
 Bitboard targeted_from_with_king(Position *p, Bitboard board, Color c, Square index);
+Bitboard all_targets(Position *p, Bitboard board, Square index);
 
 Bitboard can_go_to(Position *p, Color c, Square index);
 
