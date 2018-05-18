@@ -334,19 +334,21 @@ typedef struct Score {
 extern Score pst[14][64];
 
 typedef struct CopyThingSize {
-    //? COPIED 
-    uint64_t     pawn_hash;
-    Piece        pieces[64];
+    // COPIED
     Bitboard     bbs[14];
-    Score        score;
-    uint8_t      castling; // black_queenside | black_kingside | white_queenside | white_kingside
-    Square       king_index[2];
-    Bitboard     board;
-    uint8_t      last_irreversible;
-    int          material_index;
-    int          non_pawn_material[2];
+    Piece        pieces[64];
     SearchThread *my_thread;
+    uint64_t     pawn_hash;
+    Bitboard     board;
+    Score        score;
+    int          non_pawn_material[2];
+    int          material_index;
+    Square       king_index[2];
+    uint8_t      castling; // black_queenside | black_kingside | white_queenside | white_kingside
+    uint8_t      last_irreversible;
 } CopyThingSize;
+
+const int position_size = sizeof(CopyThingSize);
 
 typedef struct Metadata {
     int  ply;
@@ -357,27 +359,25 @@ typedef struct Metadata {
 } Metadata;
 
 struct Position {
-    //? COPIED 
+    // COPIED
+    SearchThread *my_thread;
     uint64_t     pawn_hash;
-    Piece        pieces[64];
     Bitboard     bbs[14];
-    Score        score;
-    uint8_t      castling; // black_queenside | black_kingside | white_queenside | white_kingside
-    Square       king_index[2];
     Bitboard     board;
-    uint8_t      last_irreversible;
     int          material_index;
     int          non_pawn_material[2];
-    SearchThread *my_thread;
+    Score        score;
+    Piece        pieces[64];
+    Square       king_index[2];
+    uint8_t      castling; // black_queenside | black_kingside | white_queenside | white_kingside
+    uint8_t      last_irreversible;
 
-    //! NOT TO COPY
+    // NOT TO COPY
+    Bitboard pinned[2];
+    uint64_t hash;
     Square   enpassant; 
     Color    color;
-    uint64_t hash;
-    Bitboard pinned[2];
 };
-
-const int position_size = sizeof(CopyThingSize);
 
 typedef struct Evaluation {
     // Position *position;
