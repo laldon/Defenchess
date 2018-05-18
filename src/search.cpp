@@ -365,7 +365,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         }
     }
 
-    if (!in_check && !is_principal) {
+    if (!in_check && !is_principal && excluded_move == no_move) {
         assert(md->static_eval != UNDEFINED);
         // Razoring
         if (depth < 4 && md->static_eval <= alpha - razoring_margin[depth]) {
@@ -389,7 +389,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         }
 
         // Null move pruning
-        if (!is_null && depth > 3 && md->static_eval >= beta && excluded_move == no_move && p->non_pawn_material[p->color]) {
+        if (!is_null && depth > 3 && md->static_eval >= beta && p->non_pawn_material[p->color]) {
             int R = 3 + depth / 4 + std::min((md->static_eval - beta) / PAWN_MID, 3);
             int d = std::max(0, depth - R);
 
