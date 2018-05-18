@@ -278,8 +278,10 @@ void bench() {
 
     struct timeval bench_start, bench_end;
     gettimeofday(&bench_start, nullptr);
-    int tmp = think_depth_limit;
+    int tmp_depth = think_depth_limit;
+    int tmp_myremain = myremain;
     think_depth_limit = 13;
+    myremain = 3600000;
 
     for (int i = 0; i < 36; i++){
         cout << "\nPosition [" << (i + 1) << "|36]\n" << endl;
@@ -293,7 +295,8 @@ void bench() {
 
     gettimeofday(&bench_end, nullptr);
     int time_taken = bench_time(bench_start, bench_end);
-    think_depth_limit = tmp;
+    think_depth_limit = tmp_depth;
+    myremain = tmp_myremain;
 
     cout << "\n------------------------\n";
     cout << "Time  : " << time_taken << endl;
