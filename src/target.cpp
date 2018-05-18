@@ -116,6 +116,34 @@ Bitboard targeted_from_with_king(Position *p, Bitboard board, Color c, Square in
     return return_board;
 }
 
+Bitboard all_targets(Position *p, Bitboard board, Square index) {
+    Bitboard return_board = 0;
+
+    Bitboard rook_targets = generate_rook_targets(board, index);
+    Bitboard bishop_targets = generate_bishop_targets(board, index);
+    Bitboard knight_targets = generate_knight_targets(index);
+    Bitboard white_pawn_captures = PAWN_CAPTURE_MASK[index][black];  // Not a typo
+    Bitboard black_pawn_captures = PAWN_CAPTURE_MASK[index][white];  // Not a typo
+    Bitboard king_targets = generate_king_targets(index);
+
+    Bitboard rooks = p->bbs[white_rook] | p->bbs[black_rook];
+    Bitboard bishops = p->bbs[white_bishop] | p->bbs[black_bishop];
+    Bitboard knights = p->bbs[white_knight] | p->bbs[black_knight];
+    Bitboard queens = p->bbs[white_queen] | p->bbs[black_queen];
+    Bitboard white_pawns = p->bbs[white_pawn];
+    Bitboard black_pawns = p->bbs[black_pawn];
+    Bitboard kings = p->bbs[white_king] | p->bbs[black_king];
+
+    return_board |= rook_targets & (rooks | queens);
+    return_board |= bishop_targets & (bishops | queens);
+    return_board |= knight_targets & knights;
+    return_board |= white_pawn_captures & white_pawns;
+    return_board |= black_pawn_captures & black_pawns;
+    return_board |= king_targets & kings;
+
+    return return_board;
+}
+
 Bitboard targeted_from_enpassant(Position *p, Color c, Square index) {
     return PAWN_CAPTURE_MASK[index][c] & p->bbs[pawn(opponent_color(c))];
 }
