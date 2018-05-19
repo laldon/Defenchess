@@ -136,10 +136,9 @@ void find_error(double k, int thread_id) {
             assert(false);
             result = -1.0;
         }
-        // double qi = alpha_beta_quiescence(p, md, -MATE, MATE, -1, is_checked(p));
-        // qi = p->color == white ? qi : -qi;
-        // sum += single_error(result, qi, k);
-        sum += 0.05;
+        double qi = alpha_beta_quiescence(p, md, -MATE, MATE, -1, is_checked(p));
+        qi = p->color == white ? qi : -qi;
+        sum += single_error(result, qi, k);
     }
     cout << "errors[" << int(k * 100) << "]: " << sum / double(n) << endl;
     value_errors[int(k * 100)] = sum / double(n);
@@ -166,7 +165,6 @@ void tune() {
                 t->thread_obj.join();
             }
         }
-        k += 0.01;
     }
     cout << "Done" << endl;
     for (k = 0.8; k < 1.2; k += 0.01) {

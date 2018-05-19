@@ -76,7 +76,7 @@ int moves_to_go = 0;
 struct timeval curr_time, start_ts;
 volatile bool is_timeout = false;
 int think_depth_limit = MAX_PLY;
-int num_threads = 2;
+int num_threads = 1;
 int move_overhead = 100;
 
 SearchThread search_threads[MAX_THREADS];
