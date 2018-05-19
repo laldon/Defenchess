@@ -73,10 +73,11 @@ uint64_t polyglotCombined[14][64];
 int myremain = 10000;
 int total_remaining = 10000;
 int moves_to_go = 0;
-struct   timeval curr_time, start_ts;
-bool     is_timeout = false;
+struct timeval curr_time, start_ts;
+volatile bool is_timeout = false;
 int think_depth_limit = MAX_PLY;
 int num_threads = 1;
+int move_overhead = 100;
 
 SearchThread search_threads[MAX_THREADS];
 

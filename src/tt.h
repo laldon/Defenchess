@@ -25,16 +25,28 @@ void init_tt();
 void clear_tt();
 void reset_tt(int megabytes);
 
-extern uint64_t tt_size;
-extern uint64_t tt_mask;
+const int bucket_size = 3;
 
 typedef struct TTEntry {
-    uint32_t hash;
+    uint16_t hash;
     Move     move;
-    int8_t  depth;
-    int      score;
-    uint8_t  flag;
+    int16_t  score;
+    int16_t  static_eval;
+    uint8_t  ageflag;
+    int8_t   depth;
 } TTEntry;
+
+typedef struct Bucket {
+    TTEntry ttes[bucket_size];
+    char padding[2]; // Totaling 32 bytes
+} Bucket;
+
+typedef struct Table {
+    Bucket *tt;
+    uint8_t generation;
+    uint64_t tt_size;
+    uint64_t bucket_mask;
+} Table;
 
 typedef struct PawnTTEntry {
     uint32_t pawn_hash;
@@ -43,9 +55,18 @@ typedef struct PawnTTEntry {
     int      semi_open_files[2];
 } PawnTTEntry;
 
+inline uint8_t tte_flag(TTEntry *tte) {
+    return (uint8_t) (tte->ageflag & 0x3);
+}
+
+inline uint8_t tte_age(TTEntry *tte) {
+    return (uint8_t) (tte->ageflag >> 2);
+}
+
 int hashfull();
-void set_tte(uint64_t hash, Move m, int depth, int score, uint8_t flag);
-TTEntry *get_tte(uint64_t hash);
+void start_search();
+void set_tte(uint64_t hash, TTEntry *tte, Move m, int depth, int score, int static_eval, uint8_t flag);
+TTEntry *get_tte(uint64_t hash, bool &tt_hit);
 
 void set_pawntte(uint64_t pawn_hash, Evaluation* eval);
 PawnTTEntry *get_pawntte(uint64_t pawn_hash);
@@ -53,7 +74,6 @@ PawnTTEntry *get_pawntte(uint64_t pawn_hash);
 int score_to_tt(int score, uint16_t ply);
 int tt_to_score(int score, uint16_t ply);
 
-extern TTEntry *tt;
 extern PawnTTEntry *pawntt;
 
 #endif

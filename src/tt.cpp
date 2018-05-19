@@ -23,33 +23,40 @@
 #include <iostream>
 #include "move_utils.h"
 
-TTEntry *tt;
+Table table;
 PawnTTEntry *pawntt;
 
 const uint64_t one_mb = 1024ULL * 1024ULL;
-uint64_t tt_size = one_mb * 256ULL; // 256 MB
-uint64_t tt_mask = (uint64_t)(tt_size / sizeof(TTEntry) - 1);
 
 const uint64_t pawntt_size = one_mb * 1ULL; // 1 MB
 const uint64_t pawntt_mod = (uint64_t)(pawntt_size / sizeof(PawnTTEntry));
 
 void init_tt() {
-    tt = (TTEntry*) malloc(tt_size);
-    std::memset(tt, 0, tt_size);
+    table.tt_size = one_mb * 256ULL; // 256 MB
+    table.tt = (Bucket*) malloc(table.tt_size);
+    table.bucket_mask = (uint64_t)(table.tt_size / sizeof(Bucket) - 1);
+    table.generation = 0;
+    std::memset(table.tt, 0, table.tt_size);
+
     pawntt = (PawnTTEntry*) malloc(pawntt_size);
     std::memset(pawntt, 0, pawntt_size);
-    // std::cout << sizeof(PawnTTEntry) << std::endl;
+    // std::cout << sizeof(Bucket) << std::endl;
 }
 
 void reset_tt(int megabytes) {
-    tt_size = one_mb * (uint64_t) (megabytes);
-    tt = (TTEntry*) realloc(tt, tt_size);
-    tt_mask = (uint64_t)(tt_size / sizeof(TTEntry) - 1);
+    table.tt_size = one_mb * (uint64_t) (megabytes);
+    table.tt = (Bucket*) realloc(table.tt, table.tt_size);
+    table.bucket_mask = (uint64_t)(table.tt_size / sizeof(Bucket) - 1);
 }
 
 void clear_tt() {
-    std::memset(tt, 0, tt_size);
+    std::memset(table.tt, 0, table.tt_size);
     std::memset(pawntt, 0, pawntt_size);
+    table.generation = 0;
+}
+
+void start_search() {
+    table.generation = (table.generation + 1) % 64;
 }
 
 int score_to_tt(int score, uint16_t ply) {
@@ -74,20 +81,23 @@ int tt_to_score(int score, uint16_t ply) {
 
 int hashfull() {
     int count = 0;
-    for (uint64_t i = 0; i < tt_mask; i += uint64_t(tt_mask / 1000)) {
-        TTEntry *tte = &tt[i];
-        if (tte->depth != 0) {
-            ++count;
+    for (uint64_t i = 0; i < table.bucket_mask; i += uint64_t(table.bucket_mask / 1000)) {
+        Bucket *bucket = &table.tt[i];
+        for (int j = 0; j < bucket_size; ++j) {
+            if (bucket->ttes[j].hash) {
+                ++count;
+            }
         }
     }
-    return count;
+    return count / bucket_size;
 }
 
-void set_tte(uint64_t hash, Move move, int depth, int score, uint8_t flag) {
-    uint64_t index = hash & tt_mask;
-    TTEntry *tte = &tt[index];
+int age_diff(TTEntry *tte) {
+    return (table.generation - tte_age(tte)) & 0x3F;
+}
 
-    uint32_t h = (uint32_t)(hash >> 32);
+void set_tte(uint64_t hash, TTEntry *tte, Move move, int depth, int score, int static_eval, uint8_t flag) {
+    uint16_t h = (uint16_t)(hash >> 48);
 
     if (move || h != tte->hash) {
         tte->move = move;
@@ -97,18 +107,37 @@ void set_tte(uint64_t hash, Move move, int depth, int score, uint8_t flag) {
         assert(depth < 256 && depth > -256);
         tte->hash = h;
         tte->depth = (int8_t)depth;
-        tte->score = score;
-        tte->flag = flag;
+        tte->score = (int16_t)score;
+        tte->static_eval = (int16_t)static_eval;
+        tte->ageflag = (table.generation << 2) | flag;
     }
 }
 
-TTEntry *get_tte(uint64_t hash) {
-    uint64_t index = hash & tt_mask;
-    TTEntry *tte = &tt[index];
-    if (tte->hash == (uint32_t)(hash >> 32)) {
-        return tte;
+TTEntry *get_tte(uint64_t hash, bool &tt_hit) {
+    uint64_t index = hash & table.bucket_mask;
+    Bucket *bucket = &table.tt[index];
+
+    uint16_t h = (uint16_t)(hash >> 48);
+    for (int i = 0; i < bucket_size; ++i) {
+        if (!bucket->ttes[i].hash) {
+            tt_hit = false;
+            return &bucket->ttes[i];
+        }
+        if (bucket->ttes[i].hash == h) {
+            tt_hit = true;
+            return &bucket->ttes[i];
+        }
     }
-    return 0;
+
+    TTEntry *replacement = &bucket->ttes[0];
+    for (int i = 1; i < bucket_size; ++i) {
+        if (bucket->ttes[i].depth - age_diff(&bucket->ttes[i]) * 16 < replacement->depth - age_diff(replacement) * 16) {
+            replacement = &bucket->ttes[i];
+        }
+    }
+
+    tt_hit = false;
+    return replacement;
 }
 
 void set_pawntte(uint64_t pawn_hash, Evaluation* eval) {
