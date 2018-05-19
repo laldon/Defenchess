@@ -26,6 +26,8 @@
 
 using namespace std;
 
+double value_errors[1024] = {};
+
 vector<string> fen_split(string s) {
     vector <string> tmp;
     unsigned l_index = 0;
@@ -103,8 +105,6 @@ Score rook_threat_bonus[6] = {
     // { 0, 0}  // King should never be called
 };
 
-vector<string> fen_info;
-
 double sigmoid(double s, double k) {
     return 1.0 / (1.0 + pow(10.0, -k * s / 400.0));
 }
@@ -113,16 +113,16 @@ double single_error(double result, double qi, double k) {
     return pow(result - sigmoid(qi, k), 2);
 }
 
-double error(double k) {
+void find_error(double k, int thread_id) {
     string line;
-    ifstream fens("allfens.txt");
+    ifstream fens("fewfens.txt");
 
     int n = 0;
     double sum = 0.0;
     while (getline(fens, line)) {
         ++n;
-        fen_info = fen_split(line);
-        Position *p = import_fen(fen_info[0].c_str());
+        vector<string> fen_info = fen_split(line);
+        Position *p = import_fen(fen_info[0], thread_id);
         Metadata *md = &p->my_thread->metadatas[0];
         string result_str = fen_info[1];
         double result;
@@ -136,24 +136,47 @@ double error(double k) {
             assert(false);
             result = -1.0;
         }
-        double qi = alpha_beta_quiescence(p, md, -MATE, MATE, -1, is_checked(p));
-        qi = p->color == white ? qi : -qi;
-        sum += single_error(result, qi, k);
+        // double qi = alpha_beta_quiescence(p, md, -MATE, MATE, -1, is_checked(p));
+        // qi = p->color == white ? qi : -qi;
+        // sum += single_error(result, qi, k);
+        sum += 0.05;
     }
-    return sum / double(n);
+    cout << "errors[" << int(k * 100) << "]: " << sum / double(n) << endl;
+    value_errors[int(k * 100)] = sum / double(n);
 }
 
 void tune() {
     double min_error = 1.0;
-    double k, best;
-    for (k = 0.8; k <= 1.2; k += 0.01) {
-        // protected_piece_bonus.midgame = i;
-        double err = error(k);
-        cout << "error[" << k << "] = " << err << endl;
+    double k = 0.8, best = 0.8;
+    while (true) {
+        if (k > 1.2) {
+            break;
+        }
+        for (int i = 0; i < num_threads; ++i) {
+            SearchThread *t = &search_threads[i];
+            t->thread_obj = std::thread(find_error, k, i);
+            k += 0.01;
+            if (k > 1.2) {
+                break;
+            }
+        }
+        for (int i = 0; i < num_threads; ++i) {
+            SearchThread *t = &search_threads[i];
+            if (t->thread_obj.joinable()) {
+                t->thread_obj.join();
+            }
+        }
+        k += 0.01;
+    }
+    cout << "Done" << endl;
+    for (k = 0.8; k < 1.2; k += 0.01) {
+        double err = value_errors[int(k * 100)];
+        cout << "errors[" << k << "] = " << err << endl;
         if (err < min_error) {
             min_error = err;
             best = k;
         }
+
     }
     cout << "best k: " << k << endl;
 }

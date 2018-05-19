@@ -60,7 +60,7 @@ SeeResult see_results[] = {
 void see_test() {
     for (int i = 0; i < 20; ++i) {
         SeeResult see_result = see_results[i];
-        Position *p = import_fen(see_result.fen.c_str());
+        Position *p = import_fen(see_result.fen, 0);
         std::cout << "Testing position " << i << std::endl;
         assert(see_capture(p, see_result.move) == see_result.result);
     }
@@ -86,7 +86,7 @@ void perft_test(){
     gettimeofday(&tv3, NULL);
 
     for (int i = 0; i < 7; i++){
-        Position *p = import_fen(perft_fen[i].c_str());
+        Position *p = import_fen(perft_fen[i], 0);
 
         // Generate all moves and test pseudo legal
         // for (Square a = A1; a <= H8; ++a) {
