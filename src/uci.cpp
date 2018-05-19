@@ -28,6 +28,7 @@
 #include <vector>
 #include <map>
 #include "tb.h"
+#include "texel.h"
 
 using namespace std;
 
@@ -337,6 +338,8 @@ void run_command(string s) {
         see();
     if (s == "bench")
         bench();
+    if (s == "tune")
+        tune();
 }
 
 void loop() {
