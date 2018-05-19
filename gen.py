@@ -10,9 +10,9 @@ fens = open('fens.txt', 'a')
 while True:
     print('Extracting game {}({})'.format(num_games, time.time() - start))
     game = chess.pgn.read_game(pgn)
-    result = game.headers['Result']
     if not game:
         break
+    result = game.headers['Result']
     node = game
     while not node.is_end():
         if not node.comment:
