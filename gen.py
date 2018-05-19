@@ -1,23 +1,31 @@
 #!/usr/bin/python3
 
 import chess.pgn
+import time
 
 pgn = open('games.pgn')
 num_games = 1
+start = time.time()
+fens = open('fens.txt', 'a')
 while True:
+    print('Extracting game {}({})'.format(num_games, time.time() - start))
     game = chess.pgn.read_game(pgn)
+    result = game.headers['Result']
     if not game:
         break
-    print('Extracting game {}'.format(num_games))
     node = game
     while not node.is_end():
-        next_node = node.variations[0]
-        if not node.comment or 'M' in node.comment:
-            node = next_node
+        if not node.comment:
+            node = node.variations[0]
             continue
-        fens = open('fens.txt', 'a')
-        fens.write('{}|{}\n'.format(node.board().fen(), game.headers['Result']))
-        node = next_node
+        if 'M' in node.comment:
+            break
+        eval = float(node.comment.split('/')[0])
+        if abs(eval) >= 6.0:
+            break
+        fens.write('{}|{}\n'.format(node.board().fen(), result))
+        node = node.variations[0]
     num_games += 1
     if num_games == 5000:
         break
+fens.close()
