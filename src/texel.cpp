@@ -115,7 +115,7 @@ double single_error(double result, double qi, double k) {
 
 double error(double k) {
     string line;
-    ifstream fens("fens.txt");
+    ifstream fens("allfens.txt");
 
     int n = 0;
     double sum = 0.0;
@@ -145,16 +145,16 @@ double error(double k) {
 
 void tune() {
     double min_error = 1.0;
-    int best = 0;
-    for (int i = 0; i < 30; ++i) {
-        protected_piece_bonus.midgame = i;
-        clear_tt();
-        double err = error(1);
-        cout << "error[" << i << "] = " << err << endl;
+    double k, best;
+    for (k = 0.8; k <= 1.2; k += 0.01) {
+        // protected_piece_bonus.midgame = i;
+        double err = error(k);
+        cout << "error[" << k << "] = " << err << endl;
         if (err < min_error) {
             min_error = err;
-            best = i;
+            best = k;
         }
     }
-    cout << "best protected_piece_bonus.midgame: " << best << endl;
+    cout << "best k: " << k << endl;
 }
+
