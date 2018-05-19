@@ -176,6 +176,6 @@ void tune() {
         }
 
     }
-    cout << "best k: " << k << endl;
+    cout << "best k: " << best << endl;
 }
 
