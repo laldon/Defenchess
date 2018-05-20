@@ -113,7 +113,7 @@ double sigmoid(double s, double k) {
 mutex mtx;
 double sum;
 
-double single_error(int thread_id, double k, string line) {
+void single_error(int thread_id, double k, string line) {
     vector<string> fen_info = fen_split(line);
     Position *p = import_fen(fen_info[0], thread_id);
     Metadata *md = &p->my_thread->metadatas[0];
@@ -139,7 +139,7 @@ double single_error(int thread_id, double k, string line) {
 
 void find_error(double k) {
     string line;
-    ifstream fens("laserfens.txt");
+    ifstream fens("fewfens.txt");
 
     int n = 0;
     sum = 0.0;
@@ -173,7 +173,7 @@ void tune() {
         find_error(k);
     }
     cout << "Done" << endl;
-    for (x = 0; x <= 120; ++x) {
+    for (int x = 0; x <= 120; ++x) {
         double err = value_errors[x];
         cout << "errors[" << x << "] = " << err << endl;
         if (err < min_error) {
