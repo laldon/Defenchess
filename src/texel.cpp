@@ -242,48 +242,51 @@ void set_parameter(Parameter *param, int value) {
 
 void tune() {
     init_parameters();
-    for (unsigned i = 0; i < parameters.size(); ++i) {
-        Parameter *param = &parameters[i];
-        int min = param->min, max = param->max;
-        int mid = 1 + (min + max) / 2;
-        double k = 0.93;
+    int iterations = 2;
+    for (int iteration = 0; iteration < iterations; ++iteration) {
+        for (unsigned i = 0; i < parameters.size(); ++i) {
+            Parameter *param = &parameters[i];
+            int min = param->min, max = param->max;
+            int mid = 1 + (min + max) / 2;
+            double k = 0.93;
 
-        set_parameter(param, min);
-        double min_err = find_error(k);
-        cout << "errors[" << min << "]: " << min_err << endl;
+            set_parameter(param, min);
+            double min_err = find_error(k);
+            cout << "errors[" << min << "]: " << min_err << endl;
 
-        set_parameter(param, max);
-        double max_err = find_error(k);
-        cout << "errors[" << max << "]: " << max_err << endl;
+            set_parameter(param, max);
+            double max_err = find_error(k);
+            cout << "errors[" << max << "]: " << max_err << endl;
 
-        set_parameter(param, mid);
-        double mid_err = find_error(k);
-        cout << "errors[" << mid << "]: " << mid_err << endl;
-
-        while (true) {
-            if (mid == min || mid == max) {
-                break;
-            }
-            if (min_err < max_err) {
-                max = mid;
-                max_err = mid_err;
-                mid = 1 + (min + max) / 2;
-            } else if (max_err < min_err) {
-                min = mid;
-                min_err = mid_err;
-                mid = 1 + (min + max) / 2;
-            }
             set_parameter(param, mid);
-            mid_err = find_error(k);
+            double mid_err = find_error(k);
             cout << "errors[" << mid << "]: " << mid_err << endl;
-        }
-        param->best = mid;
-        cout << "best " << param->name << ": " << mid << endl;
-    }
 
-    for (unsigned i = 0; i < parameters.size(); ++i) {
-        Parameter *param = &parameters[i];
-        cout << "best " << param->name << ": " << param->best << endl;
+            while (true) {
+                if (mid == min || mid == max) {
+                    break;
+                }
+                if (min_err < max_err) {
+                    max = mid;
+                    max_err = mid_err;
+                    mid = 1 + (min + max) / 2;
+                } else if (max_err < min_err) {
+                    min = mid;
+                    min_err = mid_err;
+                    mid = 1 + (min + max) / 2;
+                }
+                set_parameter(param, mid);
+                mid_err = find_error(k);
+                cout << "errors[" << mid << "]: " << mid_err << endl;
+            }
+            param->best = mid;
+            cout << "best " << param->name << ": " << mid << endl;
+        }
+
+        for (unsigned i = 0; i < parameters.size(); ++i) {
+            Parameter *param = &parameters[i];
+            cout << "best " << param->name << "(" << iteration << "): " << param->best << endl;
+        }
     }
 }
 
