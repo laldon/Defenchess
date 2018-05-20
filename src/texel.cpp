@@ -27,6 +27,15 @@
 
 using namespace std;
 
+typedef struct Parameter {
+    int min;
+    int max;
+    int *variable;
+    string name;
+} Parameter;
+
+vector<Parameter> parameters;
+
 void fen_split(string s, vector<string> &f) {
     unsigned l_index = 0;
     for (unsigned i = 0 ; i < s.length() ; i++) {
@@ -162,32 +171,30 @@ double find_error(double k) {
     return sum / double(n);
 }
 
-typedef struct Variable {
-    int min;
-    int max;
-    int *variable;
-    string name;
-} Variable;
-
-vector<Variable> variables;
+void init_parameters() {
+    parameters.push_back({0, 100, &queen_check_penalty, "queen_check_penalty"});
+    parameters.push_back({0, 100, &rook_check_penalty, "rook_check_penalty"});
+    parameters.push_back({0, 100, &knight_check_penalty, "knight_check_penalty"});
+    parameters.push_back({0, 100, &bishop_check_penalty, "bishop_check_penalty"});
+}
 
 void tune() {
-    variables.push_back({0, 100, &queen_check_penalty, "queen_check_penalty"});
-    for (unsigned i = 0; i < variables.size(); ++i) {
-        Variable var = variables[i];
-        int min = var.min, max = var.max;
+    init_parameters();
+    for (unsigned i = 0; i < parameters.size(); ++i) {
+        Parameter param = parameters[i];
+        int min = param.min, max = param.max;
         int mid = 1 + (min + max) / 2;
         double k = 0.93;
 
-        *var.variable = min;
+        *param.variable = min;
         double min_err = find_error(k);
         cout << "errors[" << min << "]: " << min_err << endl;
 
-        *var.variable = max;
+        *param.variable = max;
         double max_err = find_error(k);
         cout << "errors[" << max << "]: " << max_err << endl;
 
-        *var.variable = mid;
+        *param.variable = mid;
         double mid_err = find_error(k);
         cout << "errors[" << mid << "]: " << mid_err << endl;
 
@@ -204,11 +211,11 @@ void tune() {
                 min_err = mid_err;
                 mid = 1 + (min + max) / 2;
             }
-            *var.variable = mid;
+            *param.variable = mid;
             mid_err = find_error(k);
             cout << "errors[" << mid << "]: " << mid_err << endl;
         }
-        cout << "best " << var.name << ": " << mid << endl;
+        cout << "best " << param.name << ": " << mid << endl;
     }
 }
 

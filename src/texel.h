@@ -70,3 +70,4 @@ extern Score rook_threat_bonus[6];
 void tune();
 
 #endif
+
