@@ -22,7 +22,6 @@
 #include "data.h"
 #include "target.h"
 #include "eval.h"
-#include "texel.h"
 #include <algorithm>
 #include <vector>
 
