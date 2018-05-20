@@ -24,6 +24,7 @@
 #include "position.h"
 #include "tt.h"
 #include <mutex>
+#include "pst.h"
 
 using namespace std;
 
@@ -179,6 +180,21 @@ double find_error(double k) {
 }
 
 void init_parameters() {
+    parameters.push_back({50, 200, &PAWN_MID, "PAWN_MID"});
+    parameters.push_back({105, 200, &PAWN_END, "PAWN_END"});
+
+    parameters.push_back({200, 800, &KNIGHT_MID, "KNIGHT_MID"});
+    parameters.push_back({200, 800, &KNIGHT_END, "KNIGHT_END"});
+
+    parameters.push_back({200, 800, &BISHOP_MID, "BISHOP_MID"});
+    parameters.push_back({200, 800, &BISHOP_END, "BISHOP_END"});
+
+    parameters.push_back({400, 1000, &ROOK_MID, "ROOK_MID"});
+    parameters.push_back({400, 1000, &ROOK_END, "ROOK_END"});
+
+    parameters.push_back({800, 2000, &QUEEN_MID, "QUEEN_MID"});
+    parameters.push_back({800, 2000, &QUEEN_END, "QUEEN_END"});
+
     parameters.push_back({0, 100, &queen_check_penalty, "queen_check_penalty"});
     parameters.push_back({0, 100, &rook_check_penalty, "rook_check_penalty"});
     parameters.push_back({0, 100, &knight_check_penalty, "knight_check_penalty"});
@@ -276,40 +292,39 @@ void init_parameters() {
     parameters.push_back({0, 20, &rook_threat_bonus[4].endgame, "rook_threat_bonus[4].endgame"});
     parameters.push_back({0, 60, &rook_threat_bonus[5].midgame, "rook_threat_bonus[5].midgame"});
     parameters.push_back({0, 70, &rook_threat_bonus[5].endgame, "rook_threat_bonus[5].endgame"});
+}
 
-    parameters.push_back({0, 200, &PAWN_MID, "PAWN_MID"});
-    parameters.push_back({0, 200, &PAWN_END, "PAWN_END"});
-
-    parameters.push_back({0, 800, &KNIGHT_MID, "KNIGHT_MID"});
-    parameters.push_back({0, 800, &KNIGHT_END, "KNIGHT_END"});
-
-    parameters.push_back({0, 800, &BISHOP_MID, "BISHOP_MID"});
-    parameters.push_back({0, 800, &BISHOP_END, "BISHOP_END"});
-
-    parameters.push_back({0, 1000, &ROOK_MID, "ROOK_MID"});
-    parameters.push_back({0, 1000, &ROOK_END, "ROOK_END"});
-
-    parameters.push_back({0, 2000, &QUEEN_MID, "QUEEN_MID"});
-    parameters.push_back({0, 2000, &QUEEN_END, "QUEEN_END"});
+void set_parameter(Parameter param, int value) {
+    *param.variable = value;
+    if (param.name == "PAWN_MID" || param.name == "PAWN_END" ||
+        param.name == "KNIGHT_MID" || param.name == "KNIGHT_END" ||
+        param.name == "BISHOP_MID" || param.name == "BISHOP_END" ||
+        param.name == "ROOK_MID" || param.name == "ROOK_END" ||
+        param.name == "QUEEN_MID" || param.name == "QUEEN_END"
+    ) {
+        init_pst();
+    }
 }
 
 void tune() {
     init_parameters();
     for (unsigned i = 0; i < parameters.size(); ++i) {
         Parameter param = parameters[i];
+        int initial_value = *param.variable;
+
         int min = param.min, max = param.max;
         int mid = 1 + (min + max) / 2;
         double k = 0.93;
 
-        *param.variable = min;
+        set_parameter(param, min);
         double min_err = find_error(k);
         cout << "errors[" << min << "]: " << min_err << endl;
 
-        *param.variable = max;
+        set_parameter(param, max);
         double max_err = find_error(k);
         cout << "errors[" << max << "]: " << max_err << endl;
 
-        *param.variable = mid;
+        set_parameter(param, mid);
         double mid_err = find_error(k);
         cout << "errors[" << mid << "]: " << mid_err << endl;
 
@@ -326,11 +341,14 @@ void tune() {
                 min_err = mid_err;
                 mid = 1 + (min + max) / 2;
             }
-            *param.variable = mid;
+            set_parameter(param, mid);
             mid_err = find_error(k);
             cout << "errors[" << mid << "]: " << mid_err << endl;
         }
         cout << "best " << param.name << ": " << mid << endl;
+
+        // Reset to initial value
+        set_parameter(param, initial_value);
     }
 }
 
