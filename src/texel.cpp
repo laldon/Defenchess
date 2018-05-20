@@ -27,8 +27,6 @@
 
 using namespace std;
 
-double value_errors[1024] = {};
-
 void fen_split(string s, vector<string> &f) {
     unsigned l_index = 0;
     for (unsigned i = 0 ; i < s.length() ; i++) {
@@ -151,7 +149,7 @@ void single_error(int thread_id, double k) {
 double find_error(double k) {
     n = 0;
     sum = 0.0;
-    fens.open("fewfens.txt");
+    fens.open("halffens.txt");
     for (int i = 0; i < num_threads; ++i) {
         SearchThread *t = &search_threads[i];
         t->thread_obj = std::thread(single_error, i, k);
@@ -165,17 +163,39 @@ double find_error(double k) {
 }
 
 void tune() {
-    double min_error = 1000000.0;
-    int x = 0, best = 0;
-    for(; x <= 60; ++x) {
-        queen_check_penalty = x;
-        double err = find_error(0.96);
-        cout << "errors[" << x << "]: " << err << endl;
-        if (err < min_error) {
-            min_error = err;
-            best = x;
+    int min = 0, max = 60;
+    int mid = 1 + (min + max) / 2;
+    double k = 0.93;
+
+    queen_check_penalty = min;
+    double min_err = find_error(k);
+    cout << "errors[" << min << "]: " << min_err << endl;
+
+    queen_check_penalty = max;
+    double max_err = find_error(k);
+    cout << "errors[" << max << "]: " << max_err << endl;
+
+    queen_check_penalty = mid;
+    double mid_err = find_error(k);
+    cout << "errors[" << mid << "]: " << mid_err << endl;
+
+    while (true) {
+        if (mid == min || mid == max) {
+            break;
         }
+        if (min_err < max_err) {
+            max = mid;
+            max_err = mid_err;
+            mid = 1 + (min + max) / 2;
+        } else if (max_err < min_err) {
+            min = mid;
+            min_err = mid_err;
+            mid = 1 + (min + max) / 2;
+        }
+        queen_check_penalty = mid;
+        mid_err = find_error(k);
+        cout << "errors[" << mid << "]: " << mid_err << endl;
     }
-    cout << "best queen_check_penalty: " << best << endl;
+    cout << "best: " << mid << endl;
 }
 
