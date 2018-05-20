@@ -23,6 +23,7 @@
 #include "search.h"
 #include "position.h"
 #include "tt.h"
+#include <mutex>
 
 using namespace std;
 
@@ -109,53 +110,48 @@ double sigmoid(double s, double k) {
     return 1.0 / (1.0 + pow(10.0, -k * s / 400.0));
 }
 
-double single_error(double result, double qi, double k) {
-    return pow(result - sigmoid(qi, k), 2);
+mutex mtx;
+double sum;
+
+double single_error(int thread_id, double k, string line) {
+    vector<string> fen_info = fen_split(line);
+    Position *p = import_fen(fen_info[0], thread_id);
+    Metadata *md = &p->my_thread->metadatas[0];
+    string result_str = fen_info[1];
+    double result;
+    if (result_str == "1-0") {
+        result = 1.0;
+    } else if (result_str == "0-1") {
+        result = 0.0;
+    } else if (result_str == "1/2-1/2") {
+        result = 0.5;
+    } else {
+        assert(false);
+        result = -1.0;
+    }
+    double qi = alpha_beta_quiescence(p, md, -MATE, MATE, -1, is_checked(p));
+    qi = p->color == white ? qi : -qi;
+
+    mtx.lock();
+    sum += pow(result - sigmoid(qi, k), 2);
+    mtx.unlock();
 }
 
-void find_error(double k, int thread_id) {
+void find_error(double k) {
     string line;
     ifstream fens("fewfens.txt");
 
     int n = 0;
-    double sum = 0.0;
-    while (getline(fens, line)) {
-        ++n;
-        vector<string> fen_info = fen_split(line);
-        Position *p = import_fen(fen_info[0], thread_id);
-        Metadata *md = &p->my_thread->metadatas[0];
-        string result_str = fen_info[1];
-        double result;
-        if (result_str == "1-0") {
-            result = 1.0;
-        } else if (result_str == "0-1") {
-            result = 0.0;
-        } else if (result_str == "1/2-1/2") {
-            result = 0.5;
-        } else {
-            assert(false);
-            result = -1.0;
-        }
-        double qi = alpha_beta_quiescence(p, md, -MATE, MATE, -1, is_checked(p));
-        qi = p->color == white ? qi : -qi;
-        sum += single_error(result, qi, k);
-    }
-    cout << "errors[" << int(k * 100) << "]: " << sum / double(n) << endl;
-    value_errors[int(k * 100)] = sum / double(n);
-}
-
-void tune() {
-    double min_error = 1.0;
-    double k = 0.8, best = 0.8;
-    while (true) {
-        if (k > 1.2) {
-            break;
-        }
+    sum = 0.0;
+    bool eof = false;
+    while (!eof) {
         for (int i = 0; i < num_threads; ++i) {
-            SearchThread *t = &search_threads[i];
-            t->thread_obj = std::thread(find_error, k, i);
-            k += 0.01;
-            if (k > 1.2) {
+            if (getline(fens, line)) {
+                SearchThread *t = &search_threads[i];
+                t->thread_obj = std::thread(single_error, i, k, line);
+                ++n;
+            } else {
+                eof = true;
                 break;
             }
         }
@@ -165,6 +161,16 @@ void tune() {
                 t->thread_obj.join();
             }
         }
+    }
+    cout << "errors[" << int(k * 100) << "]: " << sum / double(n) << endl;
+    value_errors[int(k * 100)] = sum / double(n);
+}
+
+void tune() {
+    double min_error = 1.0;
+    double k = 0.8, best = 0.8;
+    for(; k <= 1.2; k += 0.01) {
+        find_error(k);
     }
     cout << "Done" << endl;
     for (k = 0.8; k < 1.2; k += 0.01) {
