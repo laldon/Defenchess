@@ -45,7 +45,7 @@ release:
 	$(CC) $(CFLAGS) $(OPT) -DNDEBUG src/fathom/tbprobe.cpp src/*.cpp -o $(NAME)_$(version)$(ext) $(ext2)
 
 tune:
-	$(CC) $(CFLAGS) $(OPT) -D__TUNE__ -DNDEBUG src/fathom/tbprobe.cpp src/*.cpp -o $(NAME)_tune$(ext) $(ext2)
+	$(CC) $(CFLAGS) $(OPT) -D__TUNE__ -DNDEBUG src/fathom/tbprobe.cpp src/*.cpp -o $(NAME)_tune$(ext) $(ext2) -lmpfr -lgmpxx -lgmp
 
 feature:
 	$(CC) $(CFLAGS) $(OPT) -DNDEBUG src/fathom/tbprobe.cpp src/*.cpp -o $(feature)$(ext) $(ext2)
