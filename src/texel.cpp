@@ -49,6 +49,13 @@ void fen_split(string s, vector<string> &f) {
     }
 }
 
+int
+    PAWN_MID = 100, PAWN_END = 140,
+    KNIGHT_MID = 400, KNIGHT_END = 440,
+    BISHOP_MID = 430, BISHOP_END = 470,
+    ROOK_MID = 650, ROOK_END = 710,
+    QUEEN_MID = 1300, QUEEN_END = 1350;
+
 Score
     protected_piece_bonus = {10, 0},
     rook_pawn_bonus = {5, 15},
@@ -158,7 +165,7 @@ void single_error(int thread_id, double k) {
 double find_error(double k) {
     n = 0;
     sum = 0.0;
-    fens.open("allfens.txt");
+    fens.open("fewfens.txt");
     for (int i = 0; i < num_threads; ++i) {
         SearchThread *t = &search_threads[i];
         t->thread_obj = std::thread(single_error, i, k);
@@ -176,6 +183,114 @@ void init_parameters() {
     parameters.push_back({0, 100, &rook_check_penalty, "rook_check_penalty"});
     parameters.push_back({0, 100, &knight_check_penalty, "knight_check_penalty"});
     parameters.push_back({0, 100, &bishop_check_penalty, "bishop_check_penalty"});
+
+    parameters.push_back({0, 30, &protected_piece_bonus.midgame, "protected_piece_bonus.midgame"});
+
+    parameters.push_back({0, 20, &rook_pawn_bonus.midgame, "rook_pawn_bonus.midgame"});
+    parameters.push_back({0, 40, &rook_pawn_bonus.endgame, "rook_pawn_bonus.endgame"});
+
+    parameters.push_back({0, 40, &minor_piece_behind_pawn.midgame, "minor_piece_behind_pawn.midgame"});
+
+    parameters.push_back({0, 200, &strong_pawn_threat.midgame, "strong_pawn_threat.midgame"});
+    parameters.push_back({0, 200, &strong_pawn_threat.endgame, "strong_pawn_threat.endgame"});
+
+    parameters.push_back({0, 100, &weak_pawn_threat.midgame, "weak_pawn_threat.midgame"});
+    parameters.push_back({0, 100, &weak_pawn_threat.endgame, "weak_pawn_threat.endgame"});
+
+    parameters.push_back({0, 30, &rank_threat_bonus.midgame, "rank_threat_bonus.midgame"});
+    parameters.push_back({0, 10, &rank_threat_bonus.endgame, "rank_threat_bonus.endgame"});
+
+    parameters.push_back({0, 60, &hanging_threat_bonus.midgame, "hanging_threat_bonus.midgame"});
+    parameters.push_back({0, 30, &hanging_threat_bonus.endgame, "hanging_threat_bonus.endgame"});
+
+    parameters.push_back({0, 40, &pawn_push_threat_bonus.midgame, "pawn_push_threat_bonus.midgame"});
+    parameters.push_back({0, 30, &pawn_push_threat_bonus.endgame, "pawn_push_threat_bonus.endgame"});
+
+    parameters.push_back({0, 20, &double_pawn_penalty.midgame, "double_pawn_penalty.midgame"});
+    parameters.push_back({0, 40, &double_pawn_penalty.endgame, "double_pawn_penalty.endgame"});
+
+    parameters.push_back({0, 150, &blocked_rook_penalty.midgame, "blocked_rook_penalty.midgame"});
+
+    parameters.push_back({0, 20, &bishop_pawn_penalty.midgame, "bishop_pawn_penalty.midgame"});
+    parameters.push_back({0, 20, &bishop_pawn_penalty.endgame, "bishop_pawn_penalty.endgame"});
+
+    parameters.push_back({0, 20, &hindered_passer_penalty.midgame, "hindered_passer_penalty.midgame"});
+
+    parameters.push_back({0, 20, &bishop_pawn_penalty.midgame, "bishop_pawn_penalty.midgame"});
+    parameters.push_back({0, 20, &bishop_pawn_penalty.endgame, "bishop_pawn_penalty.endgame"});
+
+    parameters.push_back({0, 40, &king_only_protected_penalty, "king_only_protected_penalty"});
+    parameters.push_back({0, 120, &queen_check_penalty, "queen_check_penalty"});
+    parameters.push_back({0, 120, &knight_check_penalty, "knight_check_penalty"});
+    parameters.push_back({0, 120, &rook_check_penalty, "rook_check_penalty"});
+    parameters.push_back({0, 120, &bishop_check_penalty, "bishop_check_penalty"});
+    parameters.push_back({0, 20, &pawn_distance_penalty, "pawn_distance_penalty"});
+    parameters.push_back({0, 20, &king_zone_attack_penalty, "king_zone_attack_penalty"});
+
+    parameters.push_back({0, 20, &passed_pawn_bonus[0].midgame, "passed_pawn_bonus[0].midgame"});
+    parameters.push_back({0, 20, &passed_pawn_bonus[0].endgame, "passed_pawn_bonus[0].endgame"});
+    parameters.push_back({0, 30, &passed_pawn_bonus[1].midgame, "passed_pawn_bonus[1].midgame"});
+    parameters.push_back({0, 30, &passed_pawn_bonus[1].endgame, "passed_pawn_bonus[1].endgame"});
+    parameters.push_back({0, 40, &passed_pawn_bonus[2].midgame, "passed_pawn_bonus[2].midgame"});
+    parameters.push_back({0, 40, &passed_pawn_bonus[2].endgame, "passed_pawn_bonus[2].endgame"});
+    parameters.push_back({0, 100, &passed_pawn_bonus[3].midgame, "passed_pawn_bonus[3].midgame"});
+    parameters.push_back({0, 100, &passed_pawn_bonus[3].endgame, "passed_pawn_bonus[3].endgame"});
+    parameters.push_back({0, 200, &passed_pawn_bonus[4].midgame, "passed_pawn_bonus[4].midgame"});
+    parameters.push_back({0, 200, &passed_pawn_bonus[4].endgame, "passed_pawn_bonus[4].endgame"});
+    parameters.push_back({0, 300, &passed_pawn_bonus[5].midgame, "passed_pawn_bonus[5].midgame"});
+    parameters.push_back({0, 300, &passed_pawn_bonus[5].endgame, "passed_pawn_bonus[5].endgame"});
+
+    parameters.push_back({0, 30, &rook_file_bonus[0].midgame, "rook_file_bonus[0].midgame"});
+    parameters.push_back({0, 10, &rook_file_bonus[0].endgame, "rook_file_bonus[0].endgame"});
+    parameters.push_back({0, 40, &rook_file_bonus[1].midgame, "rook_file_bonus[1].midgame"});
+    parameters.push_back({0, 30, &rook_file_bonus[1].endgame, "rook_file_bonus[1].endgame"});
+
+    parameters.push_back({0, 40, &isolated_pawn_penalty[0].midgame, "isolated_pawn_penalty[0].midgame"});
+    parameters.push_back({0, 40, &isolated_pawn_penalty[0].endgame, "isolated_pawn_penalty[0].endgame"});
+    parameters.push_back({0, 20, &isolated_pawn_penalty[1].midgame, "isolated_pawn_penalty[1].midgame"});
+    parameters.push_back({0, 20, &isolated_pawn_penalty[1].endgame, "isolated_pawn_penalty[1].endgame"});
+
+    parameters.push_back({0, 40, &backward_pawn_penalty[0].midgame, "backward_pawn_penalty[0].midgame"});
+    parameters.push_back({0, 40, &backward_pawn_penalty[0].endgame, "backward_pawn_penalty[0].endgame"});
+    parameters.push_back({0, 20, &backward_pawn_penalty[1].midgame, "backward_pawn_penalty[1].midgame"});
+    parameters.push_back({0, 20, &backward_pawn_penalty[1].endgame, "backward_pawn_penalty[1].endgame"});
+
+    parameters.push_back({0, 20, &minor_threat_bonus[1].midgame, "minor_threat_bonus[1].midgame"});
+    parameters.push_back({0, 20, &minor_threat_bonus[1].endgame, "minor_threat_bonus[1].endgame"});
+    parameters.push_back({0, 40, &minor_threat_bonus[2].midgame, "minor_threat_bonus[2].midgame"});
+    parameters.push_back({0, 40, &minor_threat_bonus[2].endgame, "minor_threat_bonus[2].endgame"});
+    parameters.push_back({0, 40, &minor_threat_bonus[3].midgame, "minor_threat_bonus[3].midgame"});
+    parameters.push_back({0, 40, &minor_threat_bonus[3].endgame, "minor_threat_bonus[3].endgame"});
+    parameters.push_back({0, 80, &minor_threat_bonus[4].midgame, "minor_threat_bonus[4].midgame"});
+    parameters.push_back({0, 80, &minor_threat_bonus[4].endgame, "minor_threat_bonus[4].endgame"});
+    parameters.push_back({0, 80, &minor_threat_bonus[5].midgame, "minor_threat_bonus[5].midgame"});
+    parameters.push_back({0, 80, &minor_threat_bonus[5].endgame, "minor_threat_bonus[5].endgame"});
+
+    parameters.push_back({0, 20, &rook_threat_bonus[1].midgame, "rook_threat_bonus[1].midgame"});
+    parameters.push_back({0, 20, &rook_threat_bonus[1].endgame, "rook_threat_bonus[1].endgame"});
+    parameters.push_back({0, 60, &rook_threat_bonus[2].midgame, "rook_threat_bonus[2].midgame"});
+    parameters.push_back({0, 70, &rook_threat_bonus[2].endgame, "rook_threat_bonus[2].endgame"});
+    parameters.push_back({0, 60, &rook_threat_bonus[3].midgame, "rook_threat_bonus[3].midgame"});
+    parameters.push_back({0, 70, &rook_threat_bonus[3].endgame, "rook_threat_bonus[3].endgame"});
+    parameters.push_back({0, 20, &rook_threat_bonus[4].midgame, "rook_threat_bonus[4].midgame"});
+    parameters.push_back({0, 20, &rook_threat_bonus[4].endgame, "rook_threat_bonus[4].endgame"});
+    parameters.push_back({0, 60, &rook_threat_bonus[5].midgame, "rook_threat_bonus[5].midgame"});
+    parameters.push_back({0, 70, &rook_threat_bonus[5].endgame, "rook_threat_bonus[5].endgame"});
+
+    parameters.push_back({0, 200, &PAWN_MID, "PAWN_MID"});
+    parameters.push_back({0, 200, &PAWN_END, "PAWN_END"});
+
+    parameters.push_back({0, 800, &KNIGHT_MID, "KNIGHT_MID"});
+    parameters.push_back({0, 800, &KNIGHT_END, "KNIGHT_END"});
+
+    parameters.push_back({0, 800, &BISHOP_MID, "BISHOP_MID"});
+    parameters.push_back({0, 800, &BISHOP_END, "BISHOP_END"});
+
+    parameters.push_back({0, 1000, &ROOK_MID, "ROOK_MID"});
+    parameters.push_back({0, 1000, &ROOK_END, "ROOK_END"});
+
+    parameters.push_back({0, 2000, &QUEEN_MID, "QUEEN_MID"});
+    parameters.push_back({0, 2000, &QUEEN_END, "QUEEN_END"});
 }
 
 void tune() {
