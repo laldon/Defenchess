@@ -25,6 +25,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <thread>
+#include "params.h"
 
 typedef uint8_t Square;
 typedef uint64_t Bitboard;
@@ -175,19 +176,6 @@ const int
     MATE_IN_MAX_PLY = MATE - MAX_PLY,
     MATED_IN_MAX_PLY = -MATE + MAX_PLY;
 
-//     PAWN_MID = 100, PAWN_END = 140,
-//     KNIGHT_MID = 400, KNIGHT_END = 440,
-//     BISHOP_MID = 430, BISHOP_END = 470,
-//     ROOK_MID = 650, ROOK_END = 710,
-//     QUEEN_MID = 1300, QUEEN_END = 1350;
-
-extern int
-    PAWN_MID, PAWN_END,
-    KNIGHT_MID, KNIGHT_END,
-    BISHOP_MID, BISHOP_END,
-    ROOK_MID, ROOK_END,
-    QUEEN_MID, QUEEN_END;
-
 const int RANK_1 = 0,
           RANK_2 = 1,
           RANK_3 = 2,
@@ -272,71 +260,6 @@ const int piece_values[14] = {0, 0, PAWN_MID, PAWN_MID, KNIGHT_MID, KNIGHT_MID, 
 
 const char piece_chars[14] = {'\0', '\0', '\0', '\0', 'N', 'n', 'B', 'b', 'R', 'r', 'Q', 'q', 'K', 'k'};
 extern int mvvlva_values[12][14];
-
-typedef struct Score {
-    int midgame;
-    int endgame;
-
-    Score(int x=0, int y=0) : midgame(x), endgame(y)
-    {}
-
-    inline Score operator+(const Score& a) const
-    {
-        return Score(midgame + a.midgame, endgame + a.endgame);
-    }
-    inline Score operator-(const Score& a) const
-    {
-        return Score(midgame - a.midgame, endgame - a.endgame);
-    }
-    inline Score operator+=(const Score& a) 
-    {
-        this->midgame += a.midgame;
-        this->endgame += a.endgame;
-        return *this;
-    }
-    inline Score operator-=(const Score& a) 
-    {        
-        this->midgame -= a.midgame;
-        this->endgame -= a.endgame;
-        return *this;
-    }
-    inline Score operator/(const Score& a) const
-    {
-        return Score(midgame / a.midgame, endgame / a.endgame);
-    }
-    inline Score operator*(const Score& a) const
-    {
-        return Score(midgame * a.midgame, endgame * a.endgame);
-    }
-    inline Score operator+=(const int& a) 
-    {
-        this->midgame += a;
-        this->endgame += a;
-        return *this;
-    }
-    inline Score operator-=(const int& a)
-    {
-        this->midgame -= a;
-        this->endgame -= a;
-        return *this;
-    }
-    inline Score operator+(const int& a) const
-    {
-        return Score(midgame + a, endgame + a);
-    }
-    inline Score operator-(const int& a) const
-    {
-        return Score(midgame - a, endgame - a);
-    }
-    inline Score operator/(const int& a) const
-    {
-        return Score(midgame / a, endgame / a);
-    }
-    inline Score operator*(const int& a) const
-    {
-        return Score(midgame * a, endgame * a);
-    }
-} Score;
 
 extern Score pst[14][64];
 
