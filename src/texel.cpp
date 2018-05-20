@@ -113,9 +113,9 @@ double single_error(double result, double qi, double k) {
     return pow(result - sigmoid(qi, k), 2);
 }
 
-void find_error(double k, int thread_id) {
+void find_error(int param, double k, int thread_id) {
     string line;
-    ifstream fens("fewfens.txt");
+    ifstream fens("laserfens.txt");
 
     int n = 0;
     double sum = 0.0;
@@ -140,22 +140,22 @@ void find_error(double k, int thread_id) {
         qi = p->color == white ? qi : -qi;
         sum += single_error(result, qi, k);
     }
-    cout << "errors[" << int(k * 100) << "]: " << sum / double(n) << endl;
-    value_errors[int(k * 100)] = sum / double(n);
+    cout << "errors[" << param << "]: " << sum / double(n) << endl;
+    value_errors[param] = sum / double(n);
 }
 
 void tune() {
-    double min_error = 1.0;
-    double k = 0.8, best = 0.8;
+    double min_error = 1000000.0;
+    int x = 0, best = 0;
     while (true) {
-        if (k > 1.2) {
+        if (x > 120) {
             break;
         }
         for (int i = 0; i < num_threads; ++i) {
             SearchThread *t = &search_threads[i];
-            t->thread_obj = std::thread(find_error, k, i);
-            k += 0.01;
-            if (k > 1.2) {
+            t->thread_obj = std::thread(find_error, x, double(x) / 100.0, i);
+            ++x;
+            if (x > 120) {
                 break;
             }
         }
@@ -167,15 +167,15 @@ void tune() {
         }
     }
     cout << "Done" << endl;
-    for (k = 0.8; k < 1.2; k += 0.01) {
-        double err = value_errors[int(k * 100)];
-        cout << "errors[" << k << "] = " << err << endl;
+    for (x = 0; x <= 120; ++x) {
+        double err = value_errors[x];
+        cout << "errors[" << x << "] = " << err << endl;
         if (err < min_error) {
             min_error = err;
-            best = k;
+            best = x;
         }
 
     }
-    cout << "best k: " << best << endl;
+    cout << "best protected_piece_bonus.midgame: " << best << endl;
 }
 
