@@ -163,18 +163,18 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
     bool tt_hit;
     TTEntry *tte = get_tte(p->hash, tt_hit);
     int tte_score = md->static_eval = UNDEFINED;
-    // if (tt_hit) {
-    //     tte_move = tte->move;
-    //     if (tte->depth >= new_depth) {
-    //         tte_score = tt_to_score(tte->score, ply);
-    //         if (!is_principal &&
-    //             (tte_flag(tte) == FLAG_EXACT ||
-    //             (tte_flag(tte) == FLAG_BETA && tte_score >= beta) ||
-    //             (tte_flag(tte) == FLAG_ALPHA && tte_score <= alpha))) {
-    //                 return tte_score;
-    //         }
-    //     }
-    // }
+    if (tt_hit) {
+        tte_move = tte->move;
+        if (tte->depth >= new_depth) {
+            tte_score = tt_to_score(tte->score, ply);
+            if (!is_principal &&
+                (tte_flag(tte) == FLAG_EXACT ||
+                (tte_flag(tte) == FLAG_BETA && tte_score >= beta) ||
+                (tte_flag(tte) == FLAG_ALPHA && tte_score <= alpha))) {
+                    return tte_score;
+            }
+        }
+    }
 
     int best_score;
     if (!in_check) {
@@ -187,9 +187,9 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
             md->static_eval = best_score = evaluate(p);
         }
         if (best_score >= beta) {
-            // if (!tt_hit) {
-            //     set_tte(p->hash, tte, 0, new_depth, score_to_tt(best_score, ply), md->static_eval, FLAG_BETA);
-            // }
+            if (!tt_hit) {
+                set_tte(p->hash, tte, 0, new_depth, score_to_tt(best_score, ply), md->static_eval, FLAG_BETA);
+            }
             return best_score;
         }
         if (is_principal && best_score > alpha) {
@@ -257,7 +257,7 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
                 if (is_principal && score < beta) {
                     alpha = score;
                 } else {
-                    // set_tte(p->hash, tte, move, new_depth, score_to_tt(score, ply), md->static_eval, FLAG_BETA);
+                    set_tte(p->hash, tte, move, new_depth, score_to_tt(score, ply), md->static_eval, FLAG_BETA);
                     return score;
                 }
             }
@@ -269,7 +269,7 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
     }
 
     uint8_t flag = is_principal && best_move ? FLAG_EXACT : FLAG_ALPHA;
-    // set_tte(p->hash, tte, best_move, new_depth, score_to_tt(best_score, ply), md->static_eval, flag);
+    set_tte(p->hash, tte, best_move, new_depth, score_to_tt(best_score, ply), md->static_eval, flag);
     assert(best_score >= -MATE && best_score <= MATE);
     return best_score;
 }
