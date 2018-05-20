@@ -136,7 +136,7 @@ void init_parameters() {
 
     parameters.push_back({0, 30, 0, &protected_piece_bonus.midgame, "protected_piece_bonus.midgame"});
 
-    parameters.push_back({0, 20, 0, &rook_pawn_bonus.midgame, "rook_pawn_bonus.midgame"});
+    parameters.push_back({0, 40, 0, &rook_pawn_bonus.midgame, "rook_pawn_bonus.midgame"});
     parameters.push_back({0, 40, 0, &rook_pawn_bonus.endgame, "rook_pawn_bonus.endgame"});
 
     parameters.push_back({0, 40, 0, &minor_piece_behind_pawn.midgame, "minor_piece_behind_pawn.midgame"});
