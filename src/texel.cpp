@@ -149,7 +149,7 @@ void single_error(int thread_id, double k) {
 double find_error(double k) {
     n = 0;
     sum = 0.0;
-    fens.open("halffens.txt");
+    fens.open("allfens.txt");
     for (int i = 0; i < num_threads; ++i) {
         SearchThread *t = &search_threads[i];
         t->thread_obj = std::thread(single_error, i, k);
@@ -162,40 +162,53 @@ double find_error(double k) {
     return sum / double(n);
 }
 
+typedef struct Variable {
+    int min;
+    int max;
+    int *variable;
+    string name;
+} Variable;
+
+vector<Variable> variables;
+
 void tune() {
-    int min = 0, max = 60;
-    int mid = 1 + (min + max) / 2;
-    double k = 0.93;
+    variables.push_back({0, 100, &queen_check_penalty, "queen_check_penalty"});
+    for (unsigned i = 0; i < variables.size(); ++i) {
+        Variable var = variables[i];
+        int min = var.min, max = var.max;
+        int mid = 1 + (min + max) / 2;
+        double k = 0.93;
 
-    queen_check_penalty = min;
-    double min_err = find_error(k);
-    cout << "errors[" << min << "]: " << min_err << endl;
+        *var.variable = min;
+        double min_err = find_error(k);
+        cout << "errors[" << min << "]: " << min_err << endl;
 
-    queen_check_penalty = max;
-    double max_err = find_error(k);
-    cout << "errors[" << max << "]: " << max_err << endl;
+        *var.variable = max;
+        double max_err = find_error(k);
+        cout << "errors[" << max << "]: " << max_err << endl;
 
-    queen_check_penalty = mid;
-    double mid_err = find_error(k);
-    cout << "errors[" << mid << "]: " << mid_err << endl;
-
-    while (true) {
-        if (mid == min || mid == max) {
-            break;
-        }
-        if (min_err < max_err) {
-            max = mid;
-            max_err = mid_err;
-            mid = 1 + (min + max) / 2;
-        } else if (max_err < min_err) {
-            min = mid;
-            min_err = mid_err;
-            mid = 1 + (min + max) / 2;
-        }
-        queen_check_penalty = mid;
-        mid_err = find_error(k);
+        *var.variable = mid;
+        double mid_err = find_error(k);
         cout << "errors[" << mid << "]: " << mid_err << endl;
+
+        while (true) {
+            if (mid == min || mid == max) {
+                break;
+            }
+            if (min_err < max_err) {
+                max = mid;
+                max_err = mid_err;
+                mid = 1 + (min + max) / 2;
+            } else if (max_err < min_err) {
+                min = mid;
+                min_err = mid_err;
+                mid = 1 + (min + max) / 2;
+            }
+            *var.variable = mid;
+            mid_err = find_error(k);
+            cout << "errors[" << mid << "]: " << mid_err << endl;
+        }
+        cout << "best " << var.name << ": " << mid << endl;
     }
-    cout << "best: " << mid << endl;
 }
 
