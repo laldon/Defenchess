@@ -110,78 +110,79 @@ double sigmoid(double s, double k) {
     return 1.0 / (1.0 + pow(10.0, -k * s / 400.0));
 }
 
-mutex mtx;
+mutex sum_mtx, file_mtx;
+int n;
 double sum;
+ifstream fens;
 
-void single_error(int thread_id, double k, string line) {
-    vector<string> fen_info = fen_split(line);
-    Position *p = import_fen(fen_info[0], thread_id);
-    Metadata *md = &p->my_thread->metadatas[0];
-    string result_str = fen_info[1];
-    double result;
-    if (result_str == "1-0") {
-        result = 1.0;
-    } else if (result_str == "0-1") {
-        result = 0.0;
-    } else if (result_str == "1/2-1/2") {
-        result = 0.5;
-    } else {
-        assert(false);
-        result = -1.0;
+void single_error(int thread_id, double k) {
+    string line;
+    while (fens.good()) {
+        file_mtx.lock();
+        if (getline(fens, line)) {
+            file_mtx.unlock();
+            vector<string> fen_info = fen_split(line);
+            Position *p = import_fen(fen_info[0], thread_id);
+            Metadata *md = &p->my_thread->metadatas[0];
+            string result_str = fen_info[1];
+            double result;
+            if (result_str == "1-0") {
+                result = 1.0;
+            } else if (result_str == "0-1") {
+                result = 0.0;
+            } else if (result_str == "1/2-1/2") {
+                result = 0.5;
+            } else {
+                assert(false);
+                result = -1.0;
+            }
+            double qi = alpha_beta_quiescence(p, md, -MATE, MATE, -1, is_checked(p));
+            qi = p->color == white ? qi : -qi;
+
+            sum_mtx.lock();
+            sum += pow(result - sigmoid(qi, k), 2);
+            ++n;
+            sum_mtx.unlock();
+        } else {
+            file_mtx.unlock();
+            break;
+        }
     }
-    double qi = alpha_beta_quiescence(p, md, -MATE, MATE, -1, is_checked(p));
-    qi = p->color == white ? qi : -qi;
-
-    mtx.lock();
-    sum += pow(result - sigmoid(qi, k), 2);
-    mtx.unlock();
 }
 
-void find_error(double k) {
-    string line;
-    ifstream fens("fewfens.txt");
-
-    int n = 0;
+void find_error(int k) {
+    n = 0;
     sum = 0.0;
-    bool eof = false;
-    while (!eof) {
-        for (int i = 0; i < num_threads; ++i) {
-            if (getline(fens, line)) {
-                SearchThread *t = &search_threads[i];
-                t->thread_obj = std::thread(single_error, i, k, line);
-                ++n;
-            } else {
-                eof = true;
-                break;
-            }
-        }
-        for (int i = 0; i < num_threads; ++i) {
-            SearchThread *t = &search_threads[i];
-            if (t->thread_obj.joinable()) {
-                t->thread_obj.join();
-            }
-        }
+    fens.open("fewfens.txt");
+    for (int i = 0; i < num_threads; ++i) {
+        SearchThread *t = &search_threads[i];
+        t->thread_obj = std::thread(single_error, i, double(k) / 100.0);
     }
-    cout << "errors[" << int(k * 100) << "]: " << sum / double(n) << endl;
-    value_errors[int(k * 100)] = sum / double(n);
+    for (int i = 0; i < num_threads; ++i) {
+        SearchThread *t = &search_threads[i];
+        t->thread_obj.join();
+    }
+    fens.close();
+    cout << "errors[" << k << "]: " << sum / double(n) << endl;
+    value_errors[k] = sum / double(n);
 }
 
 void tune() {
     double min_error = 1.0;
-    double k = 0.8, best = 0.8;
-    for(; k <= 1.2; k += 0.01) {
+    int k = 80, best = 80;
+    for(; k <= 120; ++k) {
         find_error(k);
     }
     cout << "Done" << endl;
-    for (int x = 0; x <= 120; ++x) {
+    for (int x = 80; x <= 120; ++x) {
         double err = value_errors[x];
-        cout << "errors[" << x << "] = " << err << endl;
+        // cout << "errors[" << x << "] = " << err << endl;
         if (err < min_error) {
             min_error = err;
             best = x;
         }
 
     }
-    cout << "best protected_piece_bonus.midgame: " << best << endl;
+    cout << "best k: " << best << endl;
 }
 

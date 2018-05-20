@@ -108,23 +108,22 @@ Position* add_pieces(Position* p){
     return p;
 }
 
-std::vector<std::string> split_fen(std::string s) {
-    std::vector<std::string> tmp;
+void split_fen(std::string s, std::vector<std::string> &m) {
     unsigned l_index = 0;
     for (unsigned i = 0 ; i < s.length() ; i++) {
         if (s[i] == ' ') {
-            tmp.push_back(s.substr(l_index, i - l_index));
+            m.push_back(s.substr(l_index, i - l_index));
             l_index = i + 1;
         }
         if (i == s.length() - 1) {
-            tmp.push_back(s.substr(l_index));
+            m.push_back(s.substr(l_index));
         }
     }
-    return tmp;
 }
 
 Position* import_fen(std::string fen, int thread_id){
-    std::vector<std::string> matches = split_fen(fen);
+    std::vector<std::string> matches;
+    split_fen(fen, matches);
     
     Color color;
     if (matches[1][0] == 'w') {
