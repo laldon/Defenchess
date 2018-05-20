@@ -139,7 +139,7 @@ double single_error(int thread_id, double k, string line) {
 
 void find_error(double k) {
     string line;
-    ifstream fens("fewfens.txt");
+    ifstream fens("laserfens.txt");
 
     int n = 0;
     sum = 0.0;
@@ -173,15 +173,15 @@ void tune() {
         find_error(k);
     }
     cout << "Done" << endl;
-    for (k = 0.8; k < 1.2; k += 0.01) {
-        double err = value_errors[int(k * 100)];
-        cout << "errors[" << k << "] = " << err << endl;
+    for (x = 0; x <= 120; ++x) {
+        double err = value_errors[x];
+        cout << "errors[" << x << "] = " << err << endl;
         if (err < min_error) {
             min_error = err;
-            best = k;
+            best = x;
         }
 
     }
-    cout << "best k: " << best << endl;
+    cout << "best protected_piece_bonus.midgame: " << best << endl;
 }
 
