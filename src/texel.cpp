@@ -16,7 +16,6 @@
     along with Defenchess.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define __TUNE__
 #ifdef __TUNE__
 
 #include "texel.h"
