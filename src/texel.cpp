@@ -277,26 +277,73 @@ int find_min_error(Parameter *param) {
                 return min;
             }
             max = min + (max - min) / 2;
+            set_parameter(param, max);
             if (errors[max] < -1.0L) {
                 errors[max] = find_error();
             }
             max_err = errors[max];
-            set_parameter(param, max);
             cout << "errors[" << max << "]:\t" << max_err << endl;
         } else {
             if (min == max - 1) {
                 return max;
             }
             min = min + (max - min) / 2;
+            set_parameter(param, min);
             if (errors[min] < -1.0) {
                 errors[min] = find_error();
             }
             min_err = errors[min];
-            set_parameter(param, min);
             cout << "errors[" << min << "]:\t" << min_err << endl;
         }
     }
     return min;
+}
+
+void find_best_k() {
+    // Clear errors
+    for (int i = 0; i < 10000; ++i) {
+        errors[i] = -2.0L;
+    }
+
+    int min = 80, max = 120;
+
+    k = (long double)(min) / 100.0L;
+    long double min_err = find_error();
+    errors[min] = min_err;
+    cout << "errors[" << min << "]:\t" << min_err << endl;
+
+    k = (long double)(max) / 100.0L;
+    long double max_err = find_error();
+    errors[max] = max_err;
+    cout << "errors[" << max << "]:\t" << max_err << endl;
+
+    while (max > min) {
+        if (min_err < max_err) {
+            if (min == max - 1) {
+                k = (long double)(min) / 100.0L;
+                return;
+            }
+            max = min + (max - min) / 2;
+            k = (long double)(max) / 100.0L;
+            if (errors[max] < -1.0L) {
+                errors[max] = find_error();
+            }
+            max_err = errors[max];
+            cout << "errors[" << max << "]:\t" << max_err << endl;
+        } else {
+            if (min == max - 1) {
+                k = (long double)(max) / 100.0L;
+                return;
+            }
+            min = min + (max - min) / 2;
+            k = (long double)(min) / 100.0L;
+            if (errors[min] < -1.0) {
+                errors[min] = find_error();
+            }
+            min_err = errors[min];
+            cout << "errors[" << min << "]:\t" << min_err << endl;
+        }
+    }
 }
 
 void tune() {
@@ -304,6 +351,8 @@ void tune() {
     init_parameters();
     int iterations = 2;
     for (int iteration = 0; iteration < iterations; ++iteration) {
+        find_best_k();
+        cout << "best k: " << k << endl;
         for (unsigned i = 0; i < parameters.size(); ++i) {
             Parameter *param = &parameters[i];
             int optimal = find_min_error(param);
