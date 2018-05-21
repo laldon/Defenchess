@@ -16,6 +16,8 @@
     along with Defenchess.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef __TUNE__
+
 #ifndef TEXEL_H
 #define TEXEL_H
 
@@ -25,3 +27,4 @@ void tune();
 
 #endif
 
+#endif

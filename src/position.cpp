@@ -141,11 +141,11 @@ Position* import_fen(std::string fen, int thread_id){
     } else {
         halfmove_clock = 1;
     }
-    root_ply = 2 * (halfmove_clock - 1) + color;
 
     SearchThread *main_thread = &search_threads[thread_id];
-    Position *p = &(main_thread->positions[root_ply]);
-    main_thread->search_ply = root_ply;
+    main_thread->root_ply = 2 * (halfmove_clock - 1) + color;
+    Position *p = &(main_thread->positions[main_thread->root_ply]);
+    main_thread->search_ply = main_thread->root_ply;
     p->color = color;
 
     p->bbs[white_occupy] = 0;
@@ -316,7 +316,7 @@ Position* start_pos(){
     p->castling = 15;
     p->enpassant = 0;
     p->hash = p->pawn_hash = 0;
-    main_thread->search_ply = root_ply = 0;
+    main_thread->search_ply = main_thread->root_ply = 0;
     p->pinned[white] = pinned_piece_squares(p, white);
     p->pinned[black] = pinned_piece_squares(p, black);
     calculate_score(p);

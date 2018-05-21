@@ -338,8 +338,10 @@ void run_command(string s) {
         see();
     if (s == "bench")
         bench();
+#ifdef __TUNE__
     if (s == "tune")
         tune();
+#endif
 }
 
 void loop() {

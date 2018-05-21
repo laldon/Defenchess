@@ -142,8 +142,7 @@ TTEntry *get_tte(uint64_t hash, bool &tt_hit) {
     tt_hit = false;
     return replacement;
 #else
-    uint64_t index = hash & table.bucket_mask;
-    Bucket *bucket = &table.tt[index];
+    Bucket *bucket = &table.tt[0];
     tt_hit = false;
     return &bucket->ttes[0];
 #endif

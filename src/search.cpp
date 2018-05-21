@@ -77,7 +77,7 @@ bool is_draw(Position *p) {
                 break;
             }
             if (p->hash == position->hash) {
-                if (index >= root_ply)
+                if (index >= p->my_thread->root_ply)
                     return true;
 
                 ++repetition_count;
@@ -154,7 +154,7 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
         return 0;
     }
 
-    md->current_move = 0;
+    md->current_move = no_move;
     (md+1)->ply = ply + 1;
     bool is_principal = beta - alpha > 1;
     int new_depth = in_check || depth >= 0 ? 0 : -1;
@@ -162,7 +162,8 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
     Move tte_move = no_move;
     bool tt_hit;
     TTEntry *tte = get_tte(p->hash, tt_hit);
-    int tte_score = md->static_eval = UNDEFINED;
+    int tte_score;
+    tte_score = md->static_eval = UNDEFINED;
     if (tt_hit) {
         tte_move = tte->move;
         if (tte->depth >= new_depth) {

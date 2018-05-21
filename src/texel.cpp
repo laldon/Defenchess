@@ -16,6 +16,8 @@
     along with Defenchess.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef __TUNE__
+
 #include "texel.h"
 #include <cmath>
 #include <fstream>
@@ -25,8 +27,6 @@
 #include "tt.h"
 #include <mutex>
 #include "pst.h"
-#include <gmp.h>
-#include <mpfr.h>
 
 using namespace std;
 
@@ -53,17 +53,16 @@ void fen_split(string s, vector<string> &f) {
     }
 }
 
-
 double sigmoid(double s, double k) {
     return 1.0 / (1.0 + pow(10.0, -k * s / 400.0));
 }
 
 mutex sum_mtx, file_mtx;
 int n;
-mpfr_t sum, sig, k;
+double sum;
 ifstream fens;
 
-void single_error(int thread_id) {
+void single_error(int thread_id, double k) {
     string line;
     while (fens.good()) {
         file_mtx.lock();
@@ -71,8 +70,17 @@ void single_error(int thread_id) {
             file_mtx.unlock();
             vector<string> fen_info;
             fen_split(line, fen_info);
+
             Position *p = import_fen(fen_info[0], thread_id);
+            if (is_checked(p)) {
+                continue;
+            }
+
             Metadata *md = &p->my_thread->metadatas[0];
+            md->current_move = no_move;
+            md->static_eval = UNDEFINED;
+            md->ply = 0;
+
             string result_str = fen_info[1];
             double result;
             if (result_str == "1-0") {
@@ -85,23 +93,11 @@ void single_error(int thread_id) {
                 assert(false);
                 result = -1.0;
             }
-            int qi = alpha_beta_quiescence(p, md, -MATE, MATE, -1, is_checked(p));
+            double qi = double(alpha_beta_quiescence(p, md, -MATE, MATE, -1, false));
             qi = p->color == white ? qi : -qi;
 
             sum_mtx.lock();
-
-            // The below operations are emulating sum += pow(result - sigmoid(qi, k), 2);
-            mpfr_set_si(sig, int64_t(-qi), MPFR_RNDD);
-            mpfr_mul(sig, sig, k, MPFR_RNDD);
-            mpfr_div_ui(sig, sig, 400ULL, MPFR_RNDD);
-            mpfr_ui_pow(sig, 10ULL, sig, MPFR_RNDD);
-            mpfr_add_ui(sig, sig, 1ULL, MPFR_RNDD);
-            mpfr_ui_div(sig, 1ULL, sig, MPFR_RNDD);
-
-            mpfr_d_sub(sig, result, sig, MPFR_RNDD);
-            mpfr_pow_ui(sig, sig, 2ULL, MPFR_RNDD);
-
-            mpfr_add(sum, sum, sig, MPFR_RNDD);
+            sum += pow(result - sigmoid(qi, k), 2.0);
             ++n;
             sum_mtx.unlock();
         } else {
@@ -111,20 +107,20 @@ void single_error(int thread_id) {
     }
 }
 
-double find_error() {
+double find_error(double k) {
     n = 0;
-    mpfr_set_ui(sum, 0ULL, MPFR_RNDD);
+    sum = 0.0;
     fens.open("fewfens.txt");
     for (int i = 0; i < num_threads; ++i) {
         SearchThread *t = &search_threads[i];
-        t->thread_obj = std::thread(single_error, i);
+        t->thread_obj = std::thread(single_error, i, k);
     }
     for (int i = 0; i < num_threads; ++i) {
         SearchThread *t = &search_threads[i];
         t->thread_obj.join();
     }
     fens.close();
-    return mpfr_get_d(sum, MPFR_RNDD);
+    return sum / double(n);
 }
 
 void init_parameters() {
@@ -255,15 +251,8 @@ void set_parameter(Parameter *param, int value) {
 }
 
 void tune() {
-    mpfr_init2(sum, 1000);
-    mpfr_init2(sig, 1000);
-    mpfr_init2(k, 1000);
-
-    // Set k to 0.93
-    mpfr_set_ui(k, 93ULL, MPFR_RNDD);
-    mpfr_div_ui(k, k, 100ULL, MPFR_RNDD);
-
-    cout.precision(15);
+    double k = 0.93;
+    cout.precision(32);
     init_parameters();
     int iterations = 2;
     for (int iteration = 0; iteration < iterations; ++iteration) {
@@ -273,15 +262,15 @@ void tune() {
             int mid = 1 + (min + max) / 2;
 
             set_parameter(param, min);
-            double min_err = find_error();
+            double min_err = find_error(k);
             cout << "errors[" << min << "]: " << min_err << endl;
 
             set_parameter(param, max);
-            double max_err = find_error();
+            double max_err = find_error(k);
             cout << "errors[" << max << "]: " << max_err << endl;
 
             set_parameter(param, mid);
-            double mid_err = find_error();
+            double mid_err = find_error(k);
             cout << "errors[" << mid << "]: " << mid_err << endl;
 
             while (true) {
@@ -298,7 +287,7 @@ void tune() {
                     mid = 1 + (min + max) / 2;
                 }
                 set_parameter(param, mid);
-                mid_err = find_error();
+                mid_err = find_error(k);
                 cout << "errors[" << mid << "]: " << mid_err << endl;
             }
             param->best = mid;
@@ -312,3 +301,4 @@ void tune() {
     }
 }
 
+#endif
