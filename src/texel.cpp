@@ -251,11 +251,11 @@ void set_parameter(Parameter *param, int value) {
     }
 }
 
-long double errors[2000];
+long double errors[10000];
 
 int find_min_error(Parameter *param) {
     // Clear errors
-    for (int i = 0; i < 2000; ++i) {
+    for (int i = 0; i < 10000; ++i) {
         errors[i] = -2.0L;
     }
 
