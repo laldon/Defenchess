@@ -16,6 +16,7 @@
     along with Defenchess.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#define __TUNE__
 #ifdef __TUNE__
 
 #include "texel.h"
@@ -53,16 +54,17 @@ void fen_split(string s, vector<string> &f) {
     }
 }
 
-double sigmoid(double s, double k) {
-    return 1.0 / (1.0 + pow(10.0, -k * s / 400.0));
-}
-
 mutex sum_mtx, file_mtx;
 int n;
-double sum;
+long double sum;
 ifstream fens;
+long double k = 0.93L;
 
-void single_error(int thread_id, double k) {
+long double sigmoid(long double s) {
+    return 1.0L / (1.0L + pow(10.0L, -k * s / 400.0L));
+}
+
+void single_error(int thread_id) {
     string line;
     while (fens.good()) {
         file_mtx.lock();
@@ -82,22 +84,22 @@ void single_error(int thread_id, double k) {
             md->ply = 0;
 
             string result_str = fen_info[1];
-            double result;
+            long double result;
             if (result_str == "1-0") {
-                result = 1.0;
+                result = 1.0L;
             } else if (result_str == "0-1") {
-                result = 0.0;
+                result = 0.0L;
             } else if (result_str == "1/2-1/2") {
-                result = 0.5;
+                result = 0.5L;
             } else {
-                assert(false);
-                result = -1.0;
+                exit(1);
+                result = -1.0L;
             }
-            double qi = double(alpha_beta_quiescence(p, md, -MATE, MATE, -1, false));
+            int qi = alpha_beta_quiescence(p, md, -MATE, MATE, -1, false);
             qi = p->color == white ? qi : -qi;
 
             sum_mtx.lock();
-            sum += pow(result - sigmoid(qi, k), 2.0);
+            sum += pow(result - sigmoid((long double) qi), 2.0);
             ++n;
             sum_mtx.unlock();
         } else {
@@ -107,20 +109,20 @@ void single_error(int thread_id, double k) {
     }
 }
 
-double find_error(double k) {
+long double find_error() {
     n = 0;
-    sum = 0.0;
+    sum = 0.0L;
     fens.open("fewfens.txt");
     for (int i = 0; i < num_threads; ++i) {
         SearchThread *t = &search_threads[i];
-        t->thread_obj = std::thread(single_error, i, k);
+        t->thread_obj = std::thread(single_error, i);
     }
     for (int i = 0; i < num_threads; ++i) {
         SearchThread *t = &search_threads[i];
         t->thread_obj.join();
     }
     fens.close();
-    return sum / double(n);
+    return sum / ((long double) (n));
 }
 
 void init_parameters() {
@@ -250,48 +252,64 @@ void set_parameter(Parameter *param, int value) {
     }
 }
 
+long double errors[2000];
+
+int find_min_error(Parameter *param) {
+    // Clear errors
+    for (int i = 0; i < 2000; ++i) {
+        errors[i] = -2.0L;
+    }
+
+    int min = param->min, max = param->max;
+
+    set_parameter(param, min);
+    long double min_err = find_error();
+    errors[min] = min_err;
+    cout << "errors[" << min << "]:\t" << min_err << endl;
+
+    set_parameter(param, max);
+    long double max_err = find_error();
+    errors[max] = max_err;
+    cout << "errors[" << max << "]:\t" << max_err << endl;
+
+    while (max > min) {
+        if (min_err < max_err) {
+            if (min == max - 1) {
+                return min;
+            }
+            max = min + (max - min) / 2;
+            if (errors[max] < -1.0L) {
+                errors[max] = find_error();
+            }
+            max_err = errors[max];
+            set_parameter(param, max);
+            cout << "errors[" << max << "]:\t" << max_err << endl;
+        } else {
+            if (min == max - 1) {
+                return max;
+            }
+            min = min + (max - min) / 2;
+            if (errors[min] < -1.0) {
+                errors[min] = find_error();
+            }
+            min_err = errors[min];
+            set_parameter(param, min);
+            cout << "errors[" << min << "]:\t" << min_err << endl;
+        }
+    }
+    return min;
+}
+
 void tune() {
-    double k = 0.93;
     cout.precision(32);
     init_parameters();
     int iterations = 2;
     for (int iteration = 0; iteration < iterations; ++iteration) {
         for (unsigned i = 0; i < parameters.size(); ++i) {
             Parameter *param = &parameters[i];
-            int min = param->min, max = param->max;
-            int mid = 1 + (min + max) / 2;
-
-            set_parameter(param, min);
-            double min_err = find_error(k);
-            cout << "errors[" << min << "]: " << min_err << endl;
-
-            set_parameter(param, max);
-            double max_err = find_error(k);
-            cout << "errors[" << max << "]: " << max_err << endl;
-
-            set_parameter(param, mid);
-            double mid_err = find_error(k);
-            cout << "errors[" << mid << "]: " << mid_err << endl;
-
-            while (true) {
-                if (mid == min || mid == max) {
-                    break;
-                }
-                if (min_err < max_err) {
-                    max = mid;
-                    max_err = mid_err;
-                    mid = 1 + (min + max) / 2;
-                } else if (max_err < min_err) {
-                    min = mid;
-                    min_err = mid_err;
-                    mid = 1 + (min + max) / 2;
-                }
-                set_parameter(param, mid);
-                mid_err = find_error(k);
-                cout << "errors[" << mid << "]: " << mid_err << endl;
-            }
-            param->best = mid;
-            cout << "best " << param->name << ": " << mid << endl;
+            int optimal = find_min_error(param);
+            param->best = optimal;
+            cout << "best " << param->name << ": " << optimal << endl;
         }
 
         for (unsigned i = 0; i < parameters.size(); ++i) {
