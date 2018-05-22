@@ -25,41 +25,6 @@
 #include "endgame.h"
 #include <iostream>
 
-// Score mobility_bonus[4][32] = {};
-
-// const Score passed_pawn_bonus[7] = {
-//     {3, 3}, {5, 5}, {20, 20}, {45, 45}, {100, 100}, {150, 150} // Pawn is never on RANK_8
-// };
-
-// const Score passed_file_bonus[8] = {
-//     {5, 5}, {1, 5}, {0, -4}, {-11, -7}, {-11, -7}, {0, -4}, {1, 5}, {5, 5}
-// };
-
-// const Score rook_file_bonus[2] = {{12, 4}, {26, 12}};
-
-// const Score isolated_pawn_penalty[2] = {{16, 18}, {8, 11}},
-//             backward_pawn_penalty[2] = {{23, 15}, {14, 7}};
-
-// const Score minor_threat_bonus[6] = {
-//     { 0,  0}, // Empty
-//     { 0, 10}, // Pawn
-//     {20, 20}, // Knight
-//     {20, 20}, // Bishop
-//     {30, 40}, // Rook
-//     {30, 40}  // Queen
-//     // { 0, 0},  // King should never be called
-// };
-
-// const Score rook_threat_bonus[6] = {
-//     { 0,  0}, // Empty
-//     { 0, 10}, // Pawn
-//     {20, 35}, // Knight
-//     {20, 35}, // Bishop
-//     { 0,  0}, // Rook
-//     {20, 30}  // Queen
-//     // { 0, 0}  // King should never be called
-// };
-
 Score connected[2][2][3][8];
 const int connection_bonus[8] = { 0, 8, 15, 10, 45, 60, 100, 200 };
 
