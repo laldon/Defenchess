@@ -331,27 +331,27 @@ void tune() {
             new_guess[pi].value += best_guess[pi].increasing ? 1 : -1;
             set_parameter(&new_guess[pi]);
             double new_error = find_error(new_guess);
-            cout << new_guess[pi].name << "[" << new_guess[pi].value << "]: " << new_error << endl;
+            cout << new_guess[pi].name << "[" << new_guess[pi].value << "]: " << new_error;
 
             if (new_error < best_error) {
                 best_error = new_error;
                 best_guess = new_guess;
                 best_guess[pi].increasing = true;
                 improving = true;
-                cout << new_guess[pi].name << "[" << new_guess[pi].value << "]: " << new_error << "(new best)" << endl;
+                cout << "(new best)" << endl;
             } else {
-                new_guess[pi].value -= 2;
                 new_guess[pi].value -= best_guess[pi].increasing ? 2 : -2;
                 set_parameter(&new_guess[pi]);
                 new_error = find_error(new_guess);
-                cout << new_guess[pi].name << "[" << new_guess[pi].value << "]: " << new_error << endl;
+                cout << endl << new_guess[pi].name << "[" << new_guess[pi].value << "]: " << new_error;
                 if (new_error < best_error) {
                     best_error = new_error;
                     best_guess = new_guess;
                     best_guess[pi].increasing = false;
                     improving = true;
-                    cout << new_guess[pi].name << "[" << new_guess[pi].value << "]: " << new_error << "(new best)" << endl;
+                    cout << "(new best)";
                 }
+                cout << endl;
             }
         }
     }
