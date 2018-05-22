@@ -140,11 +140,6 @@ void init_parameters() {
     parameters.push_back({800, 2000, 0, &QUEEN_MID, "QUEEN_MID"});
     parameters.push_back({800, 2000, 0, &QUEEN_END, "QUEEN_END"});
 
-    parameters.push_back({0, 100, 0, &queen_check_penalty, "queen_check_penalty"});
-    parameters.push_back({0, 100, 0, &rook_check_penalty, "rook_check_penalty"});
-    parameters.push_back({0, 100, 0, &knight_check_penalty, "knight_check_penalty"});
-    parameters.push_back({0, 100, 0, &bishop_check_penalty, "bishop_check_penalty"});
-
     parameters.push_back({0, 30, 0, &protected_piece_bonus.midgame, "protected_piece_bonus.midgame"});
 
     parameters.push_back({0, 40, 0, &rook_pawn_bonus.midgame, "rook_pawn_bonus.midgame"});
