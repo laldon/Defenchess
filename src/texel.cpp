@@ -51,7 +51,8 @@ void fen_split(string s, vector<string> &f) {
 
 mutex sum_mtx, file_mtx;
 int n;
-long double sum;
+long double bad_sum;
+vector<long double> diffs;
 ifstream fens;
 long double k = 0.93L;
 
@@ -94,7 +95,9 @@ void single_error(int thread_id) {
             qi = p->color == white ? qi : -qi;
 
             sum_mtx.lock();
-            sum += pow(result - sigmoid((long double) qi), 2.0L);
+            long double diff = pow(result - sigmoid((long double) qi), 2.0L);
+            bad_sum += diff;
+            diffs.push_back(diff);
             ++n;
             sum_mtx.unlock();
         } else {
@@ -116,9 +119,26 @@ void set_parameter(Parameter *param) {
     }
 }
 
+#pragma GCC push_options
+#pragma GCC optimize ("O0")
+long double kahansum() {
+    long double sum, c, y, t;
+    sum = 0.0L;
+    c = 0.0L;
+    for (unsigned i = 0; i < diffs.size(); ++i) {
+        y = diffs[i] - c;
+        t = sum + y;
+        c = (t - sum) - y;
+        sum = t;
+    }
+    return sum;
+}
+#pragma GCC pop_options
+
 long double find_error(vector<Parameter> params) {
     n = 0;
-    sum = 0.0L;
+    bad_sum = 0.0L;
+    diffs.clear();
     for (unsigned i = 0; i < params.size(); ++i) {
         Parameter *param = &params[i];
         set_parameter(param);
@@ -133,7 +153,8 @@ long double find_error(vector<Parameter> params) {
         t->thread_obj.join();
     }
     fens.close();
-    return sum / ((long double) (n));
+    cout << "bad_sum:\t" << bad_sum << endl << "kahansum:\t" << kahansum() << endl;
+    return bad_sum / ((long double) (n));
 }
 
 void init_parameters(vector<Parameter> &parameters) {
