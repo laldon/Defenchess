@@ -94,7 +94,7 @@ void single_error(int thread_id) {
             qi = p->color == white ? qi : -qi;
 
             sum_mtx.lock();
-            sum += pow(result - sigmoid((long double) qi), 2.0);
+            sum += pow(result - sigmoid((long double) qi), 2.0L);
             ++n;
             sum_mtx.unlock();
         } else {
