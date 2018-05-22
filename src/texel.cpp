@@ -304,6 +304,7 @@ void tune() {
 
     const int nParams = initial_params.size();
     double best_error = find_error(initial_params);
+    cout << "initial error: " << best_error << endl;
     vector<Parameter> best_guess = initial_params;
     bool improving = true;
 
