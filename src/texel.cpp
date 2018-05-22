@@ -34,6 +34,7 @@ typedef struct Parameter {
     int *variable;
     int value;
     string name;
+    bool increasing;
 } Parameter;
 
 void fen_split(string s, vector<string> &f) {
@@ -158,113 +159,113 @@ long double find_error(vector<Parameter> params) {
 }
 
 void init_parameters(vector<Parameter> &parameters) {
-    parameters.push_back({&PAWN_MID, PAWN_MID, "PAWN_MID"});
-    parameters.push_back({&PAWN_END, PAWN_END, "PAWN_END"});
+    parameters.push_back({&PAWN_MID, PAWN_MID, "PAWN_MID", true});
+    parameters.push_back({&PAWN_END, PAWN_END, "PAWN_END", true});
 
-    parameters.push_back({&KNIGHT_MID, KNIGHT_MID, "KNIGHT_MID"});
-    parameters.push_back({&KNIGHT_END, KNIGHT_END, "KNIGHT_END"});
+    parameters.push_back({&KNIGHT_MID, KNIGHT_MID, "KNIGHT_MID", true});
+    parameters.push_back({&KNIGHT_END, KNIGHT_END, "KNIGHT_END", true});
 
-    parameters.push_back({&BISHOP_MID, BISHOP_MID, "BISHOP_MID"});
-    parameters.push_back({&BISHOP_END, BISHOP_END, "BISHOP_END"});
+    parameters.push_back({&BISHOP_MID, BISHOP_MID, "BISHOP_MID", true});
+    parameters.push_back({&BISHOP_END, BISHOP_END, "BISHOP_END", true});
 
-    parameters.push_back({&ROOK_MID, ROOK_MID, "ROOK_MID"});
-    parameters.push_back({&ROOK_END, ROOK_END, "ROOK_END"});
+    parameters.push_back({&ROOK_MID, ROOK_MID, "ROOK_MID", true});
+    parameters.push_back({&ROOK_END, ROOK_END, "ROOK_END", true});
 
-    parameters.push_back({&QUEEN_MID, QUEEN_MID, "QUEEN_MID"});
-    parameters.push_back({&QUEEN_END, QUEEN_END, "QUEEN_END"});
+    parameters.push_back({&QUEEN_MID, QUEEN_MID, "QUEEN_MID", true});
+    parameters.push_back({&QUEEN_END, QUEEN_END, "QUEEN_END", true});
 
-    parameters.push_back({&protected_piece_bonus.midgame, protected_piece_bonus.midgame, "protected_piece_bonus.midgame"});
+    parameters.push_back({&protected_piece_bonus.midgame, protected_piece_bonus.midgame, "protected_piece_bonus.midgame", true});
 
-    parameters.push_back({&rook_pawn_bonus.midgame, rook_pawn_bonus.midgame, "rook_pawn_bonus.midgame"});
-    parameters.push_back({&rook_pawn_bonus.endgame, rook_pawn_bonus.endgame, "rook_pawn_bonus.endgame"});
+    parameters.push_back({&rook_pawn_bonus.midgame, rook_pawn_bonus.midgame, "rook_pawn_bonus.midgame", true});
+    parameters.push_back({&rook_pawn_bonus.endgame, rook_pawn_bonus.endgame, "rook_pawn_bonus.endgame", true});
 
-    parameters.push_back({&minor_piece_behind_pawn.midgame, minor_piece_behind_pawn.midgame, "minor_piece_behind_pawn.midgame"});
+    parameters.push_back({&minor_piece_behind_pawn.midgame, minor_piece_behind_pawn.midgame, "minor_piece_behind_pawn.midgame", true});
 
-    parameters.push_back({&strong_pawn_threat.midgame, strong_pawn_threat.midgame, "strong_pawn_threat.midgame"});
-    parameters.push_back({&strong_pawn_threat.endgame, strong_pawn_threat.endgame, "strong_pawn_threat.endgame"});
+    parameters.push_back({&strong_pawn_threat.midgame, strong_pawn_threat.midgame, "strong_pawn_threat.midgame", true});
+    parameters.push_back({&strong_pawn_threat.endgame, strong_pawn_threat.endgame, "strong_pawn_threat.endgame", true});
 
-    parameters.push_back({&weak_pawn_threat.midgame, weak_pawn_threat.midgame, "weak_pawn_threat.midgame"});
-    parameters.push_back({&weak_pawn_threat.endgame, weak_pawn_threat.endgame, "weak_pawn_threat.endgame"});
+    parameters.push_back({&weak_pawn_threat.midgame, weak_pawn_threat.midgame, "weak_pawn_threat.midgame", true});
+    parameters.push_back({&weak_pawn_threat.endgame, weak_pawn_threat.endgame, "weak_pawn_threat.endgame", true});
 
-    parameters.push_back({&rank_threat_bonus.midgame, rank_threat_bonus.midgame, "rank_threat_bonus.midgame"});
-    parameters.push_back({&rank_threat_bonus.endgame, rank_threat_bonus.endgame, "rank_threat_bonus.endgame"});
+    parameters.push_back({&rank_threat_bonus.midgame, rank_threat_bonus.midgame, "rank_threat_bonus.midgame", true});
+    parameters.push_back({&rank_threat_bonus.endgame, rank_threat_bonus.endgame, "rank_threat_bonus.endgame", true});
 
-    parameters.push_back({&hanging_threat_bonus.midgame, hanging_threat_bonus.midgame, "hanging_threat_bonus.midgame"});
-    parameters.push_back({&hanging_threat_bonus.endgame, hanging_threat_bonus.endgame, "hanging_threat_bonus.endgame"});
+    parameters.push_back({&hanging_threat_bonus.midgame, hanging_threat_bonus.midgame, "hanging_threat_bonus.midgame", true});
+    parameters.push_back({&hanging_threat_bonus.endgame, hanging_threat_bonus.endgame, "hanging_threat_bonus.endgame", true});
 
-    parameters.push_back({&pawn_push_threat_bonus.midgame, pawn_push_threat_bonus.midgame, "pawn_push_threat_bonus.midgame"});
-    parameters.push_back({&pawn_push_threat_bonus.endgame, pawn_push_threat_bonus.endgame, "pawn_push_threat_bonus.endgame"});
+    parameters.push_back({&pawn_push_threat_bonus.midgame, pawn_push_threat_bonus.midgame, "pawn_push_threat_bonus.midgame", true});
+    parameters.push_back({&pawn_push_threat_bonus.endgame, pawn_push_threat_bonus.endgame, "pawn_push_threat_bonus.endgame", true});
 
-    parameters.push_back({&double_pawn_penalty.midgame, double_pawn_penalty.midgame, "double_pawn_penalty.midgame"});
-    parameters.push_back({&double_pawn_penalty.endgame, double_pawn_penalty.endgame, "double_pawn_penalty.endgame"});
+    parameters.push_back({&double_pawn_penalty.midgame, double_pawn_penalty.midgame, "double_pawn_penalty.midgame", true});
+    parameters.push_back({&double_pawn_penalty.endgame, double_pawn_penalty.endgame, "double_pawn_penalty.endgame", true});
 
-    parameters.push_back({&blocked_rook_penalty.midgame, blocked_rook_penalty.midgame, "blocked_rook_penalty.midgame"});
+    parameters.push_back({&blocked_rook_penalty.midgame, blocked_rook_penalty.midgame, "blocked_rook_penalty.midgame", true});
 
-    parameters.push_back({&bishop_pawn_penalty.midgame, bishop_pawn_penalty.midgame, "bishop_pawn_penalty.midgame"});
-    parameters.push_back({&bishop_pawn_penalty.endgame, bishop_pawn_penalty.endgame, "bishop_pawn_penalty.endgame"});
+    parameters.push_back({&bishop_pawn_penalty.midgame, bishop_pawn_penalty.midgame, "bishop_pawn_penalty.midgame", true});
+    parameters.push_back({&bishop_pawn_penalty.endgame, bishop_pawn_penalty.endgame, "bishop_pawn_penalty.endgame", true});
 
-    parameters.push_back({&hindered_passer_penalty.midgame, hindered_passer_penalty.midgame, "hindered_passer_penalty.midgame"});
+    parameters.push_back({&hindered_passer_penalty.midgame, hindered_passer_penalty.midgame, "hindered_passer_penalty.midgame", true});
 
-    parameters.push_back({&bishop_pawn_penalty.midgame, bishop_pawn_penalty.midgame, "bishop_pawn_penalty.midgame"});
-    parameters.push_back({&bishop_pawn_penalty.endgame, bishop_pawn_penalty.endgame, "bishop_pawn_penalty.endgame"});
+    parameters.push_back({&bishop_pawn_penalty.midgame, bishop_pawn_penalty.midgame, "bishop_pawn_penalty.midgame", true});
+    parameters.push_back({&bishop_pawn_penalty.endgame, bishop_pawn_penalty.endgame, "bishop_pawn_penalty.endgame", true});
 
-    parameters.push_back({&king_only_protected_penalty, king_only_protected_penalty, "king_only_protected_penalty"});
-    parameters.push_back({&queen_check_penalty, queen_check_penalty, "queen_check_penalty"});
-    parameters.push_back({&knight_check_penalty, knight_check_penalty, "knight_check_penalty"});
-    parameters.push_back({&rook_check_penalty, rook_check_penalty, "rook_check_penalty"});
-    parameters.push_back({&bishop_check_penalty, bishop_check_penalty, "bishop_check_penalty"});
-    parameters.push_back({&pawn_distance_penalty, pawn_distance_penalty, "pawn_distance_penalty"});
-    parameters.push_back({&king_zone_attack_penalty, king_zone_attack_penalty, "king_zone_attack_penalty"});
+    parameters.push_back({&king_only_protected_penalty, king_only_protected_penalty, "king_only_protected_penalty", true});
+    parameters.push_back({&queen_check_penalty, queen_check_penalty, "queen_check_penalty", true});
+    parameters.push_back({&knight_check_penalty, knight_check_penalty, "knight_check_penalty", true});
+    parameters.push_back({&rook_check_penalty, rook_check_penalty, "rook_check_penalty", true});
+    parameters.push_back({&bishop_check_penalty, bishop_check_penalty, "bishop_check_penalty", true});
+    parameters.push_back({&pawn_distance_penalty, pawn_distance_penalty, "pawn_distance_penalty", true});
+    parameters.push_back({&king_zone_attack_penalty, king_zone_attack_penalty, "king_zone_attack_penalty", true});
 
-    parameters.push_back({&passed_pawn_bonus[0].midgame, passed_pawn_bonus[0].midgame, "passed_pawn_bonus[0].midgame"});
-    parameters.push_back({&passed_pawn_bonus[0].endgame, passed_pawn_bonus[0].endgame, "passed_pawn_bonus[0].endgame"});
-    parameters.push_back({&passed_pawn_bonus[1].midgame, passed_pawn_bonus[1].midgame, "passed_pawn_bonus[1].midgame"});
-    parameters.push_back({&passed_pawn_bonus[1].endgame, passed_pawn_bonus[1].endgame, "passed_pawn_bonus[1].endgame"});
-    parameters.push_back({&passed_pawn_bonus[2].midgame, passed_pawn_bonus[2].midgame, "passed_pawn_bonus[2].midgame"});
-    parameters.push_back({&passed_pawn_bonus[2].endgame, passed_pawn_bonus[2].endgame, "passed_pawn_bonus[2].endgame"});
-    parameters.push_back({&passed_pawn_bonus[3].midgame, passed_pawn_bonus[3].midgame, "passed_pawn_bonus[3].midgame"});
-    parameters.push_back({&passed_pawn_bonus[3].endgame, passed_pawn_bonus[3].endgame, "passed_pawn_bonus[3].endgame"});
-    parameters.push_back({&passed_pawn_bonus[4].midgame, passed_pawn_bonus[4].midgame, "passed_pawn_bonus[4].midgame"});
-    parameters.push_back({&passed_pawn_bonus[4].endgame, passed_pawn_bonus[4].endgame, "passed_pawn_bonus[4].endgame"});
-    parameters.push_back({&passed_pawn_bonus[5].midgame, passed_pawn_bonus[5].midgame, "passed_pawn_bonus[5].midgame"});
-    parameters.push_back({&passed_pawn_bonus[5].endgame, passed_pawn_bonus[5].endgame, "passed_pawn_bonus[5].endgame"});
+    parameters.push_back({&passed_pawn_bonus[0].midgame, passed_pawn_bonus[0].midgame, "passed_pawn_bonus[0].midgame", true});
+    parameters.push_back({&passed_pawn_bonus[0].endgame, passed_pawn_bonus[0].endgame, "passed_pawn_bonus[0].endgame", true});
+    parameters.push_back({&passed_pawn_bonus[1].midgame, passed_pawn_bonus[1].midgame, "passed_pawn_bonus[1].midgame", true});
+    parameters.push_back({&passed_pawn_bonus[1].endgame, passed_pawn_bonus[1].endgame, "passed_pawn_bonus[1].endgame", true});
+    parameters.push_back({&passed_pawn_bonus[2].midgame, passed_pawn_bonus[2].midgame, "passed_pawn_bonus[2].midgame", true});
+    parameters.push_back({&passed_pawn_bonus[2].endgame, passed_pawn_bonus[2].endgame, "passed_pawn_bonus[2].endgame", true});
+    parameters.push_back({&passed_pawn_bonus[3].midgame, passed_pawn_bonus[3].midgame, "passed_pawn_bonus[3].midgame", true});
+    parameters.push_back({&passed_pawn_bonus[3].endgame, passed_pawn_bonus[3].endgame, "passed_pawn_bonus[3].endgame", true});
+    parameters.push_back({&passed_pawn_bonus[4].midgame, passed_pawn_bonus[4].midgame, "passed_pawn_bonus[4].midgame", true});
+    parameters.push_back({&passed_pawn_bonus[4].endgame, passed_pawn_bonus[4].endgame, "passed_pawn_bonus[4].endgame", true});
+    parameters.push_back({&passed_pawn_bonus[5].midgame, passed_pawn_bonus[5].midgame, "passed_pawn_bonus[5].midgame", true});
+    parameters.push_back({&passed_pawn_bonus[5].endgame, passed_pawn_bonus[5].endgame, "passed_pawn_bonus[5].endgame", true});
 
-    parameters.push_back({&rook_file_bonus[0].midgame, rook_file_bonus[0].midgame, "rook_file_bonus[0].midgame"});
-    parameters.push_back({&rook_file_bonus[0].endgame, rook_file_bonus[0].endgame, "rook_file_bonus[0].endgame"});
-    parameters.push_back({&rook_file_bonus[1].midgame, rook_file_bonus[1].midgame, "rook_file_bonus[1].midgame"});
-    parameters.push_back({&rook_file_bonus[1].endgame, rook_file_bonus[1].endgame, "rook_file_bonus[1].endgame"});
+    parameters.push_back({&rook_file_bonus[0].midgame, rook_file_bonus[0].midgame, "rook_file_bonus[0].midgame", true});
+    parameters.push_back({&rook_file_bonus[0].endgame, rook_file_bonus[0].endgame, "rook_file_bonus[0].endgame", true});
+    parameters.push_back({&rook_file_bonus[1].midgame, rook_file_bonus[1].midgame, "rook_file_bonus[1].midgame", true});
+    parameters.push_back({&rook_file_bonus[1].endgame, rook_file_bonus[1].endgame, "rook_file_bonus[1].endgame", true});
 
-    parameters.push_back({&isolated_pawn_penalty[0].midgame, isolated_pawn_penalty[0].midgame, "isolated_pawn_penalty[0].midgame"});
-    parameters.push_back({&isolated_pawn_penalty[0].endgame, isolated_pawn_penalty[0].endgame, "isolated_pawn_penalty[0].endgame"});
-    parameters.push_back({&isolated_pawn_penalty[1].midgame, isolated_pawn_penalty[1].midgame, "isolated_pawn_penalty[1].midgame"});
-    parameters.push_back({&isolated_pawn_penalty[1].endgame, isolated_pawn_penalty[1].endgame, "isolated_pawn_penalty[1].endgame"});
+    parameters.push_back({&isolated_pawn_penalty[0].midgame, isolated_pawn_penalty[0].midgame, "isolated_pawn_penalty[0].midgame", true});
+    parameters.push_back({&isolated_pawn_penalty[0].endgame, isolated_pawn_penalty[0].endgame, "isolated_pawn_penalty[0].endgame", true});
+    parameters.push_back({&isolated_pawn_penalty[1].midgame, isolated_pawn_penalty[1].midgame, "isolated_pawn_penalty[1].midgame", true});
+    parameters.push_back({&isolated_pawn_penalty[1].endgame, isolated_pawn_penalty[1].endgame, "isolated_pawn_penalty[1].endgame", true});
 
-    parameters.push_back({&backward_pawn_penalty[0].midgame, backward_pawn_penalty[0].midgame, "backward_pawn_penalty[0].midgame"});
-    parameters.push_back({&backward_pawn_penalty[0].endgame, backward_pawn_penalty[0].endgame, "backward_pawn_penalty[0].endgame"});
-    parameters.push_back({&backward_pawn_penalty[1].midgame, backward_pawn_penalty[1].midgame, "backward_pawn_penalty[1].midgame"});
-    parameters.push_back({&backward_pawn_penalty[1].endgame, backward_pawn_penalty[1].endgame, "backward_pawn_penalty[1].endgame"});
+    parameters.push_back({&backward_pawn_penalty[0].midgame, backward_pawn_penalty[0].midgame, "backward_pawn_penalty[0].midgame", true});
+    parameters.push_back({&backward_pawn_penalty[0].endgame, backward_pawn_penalty[0].endgame, "backward_pawn_penalty[0].endgame", true});
+    parameters.push_back({&backward_pawn_penalty[1].midgame, backward_pawn_penalty[1].midgame, "backward_pawn_penalty[1].midgame", true});
+    parameters.push_back({&backward_pawn_penalty[1].endgame, backward_pawn_penalty[1].endgame, "backward_pawn_penalty[1].endgame", true});
 
-    parameters.push_back({&minor_threat_bonus[1].midgame, minor_threat_bonus[1].midgame, "minor_threat_bonus[1].midgame"});
-    parameters.push_back({&minor_threat_bonus[1].endgame, minor_threat_bonus[1].endgame, "minor_threat_bonus[1].endgame"});
-    parameters.push_back({&minor_threat_bonus[2].midgame, minor_threat_bonus[2].midgame, "minor_threat_bonus[2].midgame"});
-    parameters.push_back({&minor_threat_bonus[2].endgame, minor_threat_bonus[2].endgame, "minor_threat_bonus[2].endgame"});
-    parameters.push_back({&minor_threat_bonus[3].midgame, minor_threat_bonus[3].midgame, "minor_threat_bonus[3].midgame"});
-    parameters.push_back({&minor_threat_bonus[3].endgame, minor_threat_bonus[3].endgame, "minor_threat_bonus[3].endgame"});
-    parameters.push_back({&minor_threat_bonus[4].midgame, minor_threat_bonus[4].midgame, "minor_threat_bonus[4].midgame"});
-    parameters.push_back({&minor_threat_bonus[4].endgame, minor_threat_bonus[4].endgame, "minor_threat_bonus[4].endgame"});
-    parameters.push_back({&minor_threat_bonus[5].midgame, minor_threat_bonus[5].midgame, "minor_threat_bonus[5].midgame"});
-    parameters.push_back({&minor_threat_bonus[5].endgame, minor_threat_bonus[5].endgame, "minor_threat_bonus[5].endgame"});
+    parameters.push_back({&minor_threat_bonus[1].midgame, minor_threat_bonus[1].midgame, "minor_threat_bonus[1].midgame", true});
+    parameters.push_back({&minor_threat_bonus[1].endgame, minor_threat_bonus[1].endgame, "minor_threat_bonus[1].endgame", true});
+    parameters.push_back({&minor_threat_bonus[2].midgame, minor_threat_bonus[2].midgame, "minor_threat_bonus[2].midgame", true});
+    parameters.push_back({&minor_threat_bonus[2].endgame, minor_threat_bonus[2].endgame, "minor_threat_bonus[2].endgame", true});
+    parameters.push_back({&minor_threat_bonus[3].midgame, minor_threat_bonus[3].midgame, "minor_threat_bonus[3].midgame", true});
+    parameters.push_back({&minor_threat_bonus[3].endgame, minor_threat_bonus[3].endgame, "minor_threat_bonus[3].endgame", true});
+    parameters.push_back({&minor_threat_bonus[4].midgame, minor_threat_bonus[4].midgame, "minor_threat_bonus[4].midgame", true});
+    parameters.push_back({&minor_threat_bonus[4].endgame, minor_threat_bonus[4].endgame, "minor_threat_bonus[4].endgame", true});
+    parameters.push_back({&minor_threat_bonus[5].midgame, minor_threat_bonus[5].midgame, "minor_threat_bonus[5].midgame", true});
+    parameters.push_back({&minor_threat_bonus[5].endgame, minor_threat_bonus[5].endgame, "minor_threat_bonus[5].endgame", true});
 
-    parameters.push_back({&rook_threat_bonus[1].midgame, rook_threat_bonus[1].midgame, "rook_threat_bonus[1].midgame"});
-    parameters.push_back({&rook_threat_bonus[1].endgame, rook_threat_bonus[1].endgame, "rook_threat_bonus[1].endgame"});
-    parameters.push_back({&rook_threat_bonus[2].midgame, rook_threat_bonus[2].midgame, "rook_threat_bonus[2].midgame"});
-    parameters.push_back({&rook_threat_bonus[2].endgame, rook_threat_bonus[2].endgame, "rook_threat_bonus[2].endgame"});
-    parameters.push_back({&rook_threat_bonus[3].midgame, rook_threat_bonus[3].midgame, "rook_threat_bonus[3].midgame"});
-    parameters.push_back({&rook_threat_bonus[3].endgame, rook_threat_bonus[3].endgame, "rook_threat_bonus[3].endgame"});
-    parameters.push_back({&rook_threat_bonus[4].midgame, rook_threat_bonus[4].midgame, "rook_threat_bonus[4].midgame"});
-    parameters.push_back({&rook_threat_bonus[4].endgame, rook_threat_bonus[4].endgame, "rook_threat_bonus[4].endgame"});
-    parameters.push_back({&rook_threat_bonus[5].midgame, rook_threat_bonus[5].midgame, "rook_threat_bonus[5].midgame"});
-    parameters.push_back({&rook_threat_bonus[5].endgame, rook_threat_bonus[5].endgame, "rook_threat_bonus[5].endgame"});
+    parameters.push_back({&rook_threat_bonus[1].midgame, rook_threat_bonus[1].midgame, "rook_threat_bonus[1].midgame", true});
+    parameters.push_back({&rook_threat_bonus[1].endgame, rook_threat_bonus[1].endgame, "rook_threat_bonus[1].endgame", true});
+    parameters.push_back({&rook_threat_bonus[2].midgame, rook_threat_bonus[2].midgame, "rook_threat_bonus[2].midgame", true});
+    parameters.push_back({&rook_threat_bonus[2].endgame, rook_threat_bonus[2].endgame, "rook_threat_bonus[2].endgame", true});
+    parameters.push_back({&rook_threat_bonus[3].midgame, rook_threat_bonus[3].midgame, "rook_threat_bonus[3].midgame", true});
+    parameters.push_back({&rook_threat_bonus[3].endgame, rook_threat_bonus[3].endgame, "rook_threat_bonus[3].endgame", true});
+    parameters.push_back({&rook_threat_bonus[4].midgame, rook_threat_bonus[4].midgame, "rook_threat_bonus[4].midgame", true});
+    parameters.push_back({&rook_threat_bonus[4].endgame, rook_threat_bonus[4].endgame, "rook_threat_bonus[4].endgame", true});
+    parameters.push_back({&rook_threat_bonus[5].midgame, rook_threat_bonus[5].midgame, "rook_threat_bonus[5].midgame", true});
+    parameters.push_back({&rook_threat_bonus[5].endgame, rook_threat_bonus[5].endgame, "rook_threat_bonus[5].endgame", true});
 }
 
 long double errors[10000];
@@ -323,7 +324,6 @@ void tune() {
     find_best_k(initial_params);
     cout << "best k: " << k << endl;
 
-    const int nParams = initial_params.size();
     double best_error = find_error(initial_params);
     cout << "initial error: " << best_error << endl;
     vector<Parameter> best_guess = initial_params;
@@ -331,9 +331,9 @@ void tune() {
 
     while (improving) {
         improving = false;
-        for (int pi = 0; pi < nParams; pi++) {
+        for (unsigned pi = 0; pi < initial_params.size(); pi++) {
             vector<Parameter> new_guess = best_guess;
-            new_guess[pi].value += 1;
+            new_guess[pi].value += best_guess[pi].increasing ? 1 : -1;
             set_parameter(&new_guess[pi]);
             double new_error = find_error(new_guess);
             cout << new_guess[pi].name << "[" << new_guess[pi].value << "]: " << new_error << endl;
@@ -341,16 +341,21 @@ void tune() {
             if (new_error < best_error) {
                 best_error = new_error;
                 best_guess = new_guess;
+                best_guess[pi].increasing = true;
                 improving = true;
+                cout << new_guess[pi].name << "[" << new_guess[pi].value << "]: " << new_error << "(new best)" << endl;
             } else {
                 new_guess[pi].value -= 2;
+                new_guess[pi].value -= best_guess[pi].increasing ? 2 : -2;
                 set_parameter(&new_guess[pi]);
                 new_error = find_error(new_guess);
                 cout << new_guess[pi].name << "[" << new_guess[pi].value << "]: " << new_error << endl;
                 if (new_error < best_error) {
                     best_error = new_error;
                     best_guess = new_guess;
+                    best_guess[pi].increasing = false;
                     improving = true;
+                    cout << new_guess[pi].name << "[" << new_guess[pi].value << "]: " << new_error << "(new best)" << endl;
                 }
             }
         }
