@@ -219,6 +219,18 @@ void init_parameters(vector<Parameter> &parameters) {
     parameters.push_back({&pawn_distance_penalty, pawn_distance_penalty, "pawn_distance_penalty", true});
     parameters.push_back({&king_zone_attack_penalty, king_zone_attack_penalty, "king_zone_attack_penalty", true});
 
+    parameters.push_back({&pawn_shelter_penalty[2], pawn_shelter_penalty[2], "pawn_shelter_penalty[2]", true});
+    parameters.push_back({&pawn_shelter_penalty[3], pawn_shelter_penalty[3], "pawn_shelter_penalty[3]", true});
+    parameters.push_back({&pawn_shelter_penalty[4], pawn_shelter_penalty[4], "pawn_shelter_penalty[4]", true});
+    parameters.push_back({&pawn_shelter_penalty[5], pawn_shelter_penalty[5], "pawn_shelter_penalty[5]", true});
+    parameters.push_back({&pawn_shelter_penalty[6], pawn_shelter_penalty[6], "pawn_shelter_penalty[6]", true});
+    parameters.push_back({&pawn_shelter_penalty[7], pawn_shelter_penalty[7], "pawn_shelter_penalty[7]", true});
+
+    parameters.push_back({&ATTACK_VALUES[2], ATTACK_VALUES[2], "ATTACK_VALUES[2]", true});
+    parameters.push_back({&ATTACK_VALUES[3], ATTACK_VALUES[3], "ATTACK_VALUES[3]", true});
+    parameters.push_back({&ATTACK_VALUES[4], ATTACK_VALUES[4], "ATTACK_VALUES[4]", true});
+    parameters.push_back({&ATTACK_VALUES[5], ATTACK_VALUES[5], "ATTACK_VALUES[5]", true});
+
     parameters.push_back({&passed_pawn_bonus[0].midgame, passed_pawn_bonus[0].midgame, "passed_pawn_bonus[0].midgame", true});
     parameters.push_back({&passed_pawn_bonus[0].endgame, passed_pawn_bonus[0].endgame, "passed_pawn_bonus[0].endgame", true});
     parameters.push_back({&passed_pawn_bonus[1].midgame, passed_pawn_bonus[1].midgame, "passed_pawn_bonus[1].midgame", true});

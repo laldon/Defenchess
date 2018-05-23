@@ -347,6 +347,9 @@ void run_command(string s) {
 void loop() {
     string in_str;
     init();
+#ifdef __TUNE__
+    tune();
+#endif
     root_position = start_pos();
 
     while (true) {

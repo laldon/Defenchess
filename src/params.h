@@ -118,9 +118,9 @@ extern int
     pawn_distance_penalty,
     king_zone_attack_penalty;
 
-const int pawn_shelter_penalty[8] = {0, 0, 10, 30, 40, 50, 50, 50};
-const int tempo = 12;
-const int ATTACK_VALUES[12] = {0,0,0,0,80,80,55,55,45,45,10,10};
+extern int pawn_shelter_penalty[8];
+extern int tempo;
+extern int ATTACK_VALUES[12];
 
 extern Score mobility_bonus[4][32];
 

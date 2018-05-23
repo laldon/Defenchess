@@ -118,7 +118,7 @@ Score evaluate_pawn_structure(Evaluation *eval, Position *p, Color color) {
         Bitboard king_threats = PAWN_CAPTURE_MASK[outpost][color] & eval->king_zone[opp_c];
         if (king_threats) {
             ++eval->num_king_attackers[opp_c];
-            eval->king_zone_score[opp_c] += ATTACK_VALUES[white_pawn];
+            eval->king_zone_score[opp_c] += ATTACK_VALUES[PAWN];
         }
         ++eval->num_pieces[pawn(color)];
         ++eval->num_pieces[color];
@@ -137,7 +137,7 @@ void evaluate_pawn_init(Evaluation *eval, Position *p, Color color) {
         Bitboard king_threats = PAWN_CAPTURE_MASK[outpost][color] & eval->king_zone[opp_c];
         if (king_threats) {
             ++eval->num_king_attackers[opp_c];
-            eval->king_zone_score[opp_c] += ATTACK_VALUES[white_pawn];
+            eval->king_zone_score[opp_c] += ATTACK_VALUES[PAWN];
         }
         ++eval->num_pieces[pawn(color)];
         ++eval->num_pieces[color];
@@ -198,7 +198,7 @@ Score evaluate_bishop(Evaluation *eval, Position *p, Color color) {
         Bitboard king_threats = bishop_targets & eval->king_zone[opp_c];
         if (king_threats) {
             ++eval->num_king_attackers[opp_c];
-            eval->king_zone_score[opp_c] += ATTACK_VALUES[white_bishop];
+            eval->king_zone_score[opp_c] += ATTACK_VALUES[BISHOP];
             eval->num_king_zone_attacks[opp_c] += count(king_threats);
         }
         eval->double_targets[color] |= eval->targets[color] & bishop_targets;
@@ -239,7 +239,7 @@ Score evaluate_knight(Evaluation *eval, Position *p, Color color) {
         Bitboard king_threats = knight_targets & eval->king_zone[opp_c];
         if (king_threats) {
             ++eval->num_king_attackers[opp_c];
-            eval->king_zone_score[opp_c] += ATTACK_VALUES[white_knight];
+            eval->king_zone_score[opp_c] += ATTACK_VALUES[KNIGHT];
             eval->num_king_zone_attacks[opp_c] += count(king_threats);
         }
         eval->double_targets[color] |= eval->targets[color] & knight_targets;
@@ -293,7 +293,7 @@ Score evaluate_rook(Evaluation *eval, Position *p, Color color) {
         Bitboard king_threats = rook_targets & eval->king_zone[opp_c];
         if (king_threats) {
             ++eval->num_king_attackers[opp_c];
-            eval->king_zone_score[opp_c] += ATTACK_VALUES[white_rook];
+            eval->king_zone_score[opp_c] += ATTACK_VALUES[ROOK];
             eval->num_king_zone_attacks[opp_c] += count(king_threats);
         }
         eval->double_targets[color] |= eval->targets[color] & rook_targets;
@@ -324,7 +324,7 @@ Score evaluate_queen(Evaluation *eval, Position *p, Color color) {
         Bitboard king_threats = queen_targets & eval->king_zone[opp_c];
         if (king_threats) {
             ++eval->num_king_attackers[opp_c];
-            eval->king_zone_score[opp_c] += ATTACK_VALUES[white_queen];
+            eval->king_zone_score[opp_c] += ATTACK_VALUES[QUEEN];
             eval->num_king_zone_attacks[opp_c] += count(king_threats);
         }
         eval->double_targets[color] |= eval->targets[color] & queen_targets;

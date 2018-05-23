@@ -44,12 +44,16 @@ Score
 
 int
     king_only_protected_penalty = 11,
-    queen_check_penalty = 50,
-    knight_check_penalty = 50,
-    rook_check_penalty = 55,
-    bishop_check_penalty = 30,
-    pawn_distance_penalty = 10,
-    king_zone_attack_penalty = 6;
+    queen_check_penalty = 35,
+    knight_check_penalty = 46,
+    rook_check_penalty = 48,
+    bishop_check_penalty = 13,
+    pawn_distance_penalty = 7,
+    king_zone_attack_penalty = 4;
+
+int pawn_shelter_penalty[8] = {0, 0, 20, 33, 40, 18, 47, 41};
+int tempo = 12;
+int ATTACK_VALUES[12] = {0, 0, 60, 37, 51, 9};
 
 Score mobility_bonus[4][32] = {};
 
