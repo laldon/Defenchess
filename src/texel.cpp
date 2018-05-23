@@ -154,7 +154,7 @@ long double find_error(vector<Parameter> params) {
 }
 
 void init_parameters(vector<Parameter> &parameters) {
-    parameters.push_back({&PAWN_MID, PAWN_MID, "PAWN_MID", true});
+    // DO NOT TUNE THIS parameters.push_back({&PAWN_MID, PAWN_MID, "PAWN_MID", true});
     parameters.push_back({&PAWN_END, PAWN_END, "PAWN_END", true});
 
     parameters.push_back({&KNIGHT_MID, KNIGHT_MID, "KNIGHT_MID", true});
@@ -179,8 +179,9 @@ void init_parameters(vector<Parameter> &parameters) {
     parameters.push_back({&strong_pawn_threat.midgame, strong_pawn_threat.midgame, "strong_pawn_threat.midgame", true});
     parameters.push_back({&strong_pawn_threat.endgame, strong_pawn_threat.endgame, "strong_pawn_threat.endgame", true});
 
-    parameters.push_back({&weak_pawn_threat.midgame, weak_pawn_threat.midgame, "weak_pawn_threat.midgame", true});
-    parameters.push_back({&weak_pawn_threat.endgame, weak_pawn_threat.endgame, "weak_pawn_threat.endgame", true});
+    // TUNE THESE TWO LATER, THEY'RE BUGGED
+    // parameters.push_back({&weak_pawn_threat.midgame, weak_pawn_threat.midgame, "weak_pawn_threat.midgame", true});
+    // parameters.push_back({&weak_pawn_threat.endgame, weak_pawn_threat.endgame, "weak_pawn_threat.endgame", true});
 
     parameters.push_back({&rank_threat_bonus.midgame, rank_threat_bonus.midgame, "rank_threat_bonus.midgame", true});
     parameters.push_back({&rank_threat_bonus.endgame, rank_threat_bonus.endgame, "rank_threat_bonus.endgame", true});
@@ -257,8 +258,7 @@ void init_parameters(vector<Parameter> &parameters) {
     parameters.push_back({&rook_threat_bonus[2].endgame, rook_threat_bonus[2].endgame, "rook_threat_bonus[2].endgame", true});
     parameters.push_back({&rook_threat_bonus[3].midgame, rook_threat_bonus[3].midgame, "rook_threat_bonus[3].midgame", true});
     parameters.push_back({&rook_threat_bonus[3].endgame, rook_threat_bonus[3].endgame, "rook_threat_bonus[3].endgame", true});
-    parameters.push_back({&rook_threat_bonus[4].midgame, rook_threat_bonus[4].midgame, "rook_threat_bonus[4].midgame", true});
-    parameters.push_back({&rook_threat_bonus[4].endgame, rook_threat_bonus[4].endgame, "rook_threat_bonus[4].endgame", true});
+    // No rook threat bonus 4
     parameters.push_back({&rook_threat_bonus[5].midgame, rook_threat_bonus[5].midgame, "rook_threat_bonus[5].midgame", true});
     parameters.push_back({&rook_threat_bonus[5].endgame, rook_threat_bonus[5].endgame, "rook_threat_bonus[5].endgame", true});
 }
@@ -329,6 +329,9 @@ void tune() {
         for (unsigned pi = 0; pi < initial_params.size(); pi++) {
             vector<Parameter> new_guess = best_guess;
             new_guess[pi].value += best_guess[pi].increasing ? 1 : -1;
+            if (new_guess[pi].value < 0) {
+                continue;
+            }
             set_parameter(&new_guess[pi]);
             double new_error = find_error(new_guess);
 
@@ -341,6 +344,9 @@ void tune() {
             } else {
                 cout << new_guess[pi].name << "[" << new_guess[pi].value << "]:\t" << new_error << endl;
                 new_guess[pi].value -= best_guess[pi].increasing ? 2 : -2;
+                if (new_guess[pi].value < 0) {
+                    continue;
+                }
                 set_parameter(&new_guess[pi]);
                 new_error = find_error(new_guess);
                 if (new_error < best_error) {
