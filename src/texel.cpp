@@ -330,6 +330,59 @@ void find_best_k(vector<Parameter> &parameters) {
     }
 }
 
+void binary_search_parameters(vector<Parameter> &parameters) {
+    // Clear errors
+    for (int i = 0; i < 10000; ++i) {
+        errors[i] = -2.0L;
+    }
+
+    for (unsigned i = 0; i < parameters.size(); ++i) {
+        Parameter *param = &parameters[i];
+        int min = param->value * 4 / 5, max = param->value * 6 / 5;
+        if (param->name == "PAWN_END") {
+            min = PAWN_MID + 1;
+        }
+
+        param->value = min;
+        long double min_err = find_error(parameters);
+        errors[min] = min_err;
+        cout << param->name << "[" << param->value << "]:\t" << min_err << endl;
+
+        param->value = max;
+        long double max_err = find_error(parameters);
+        errors[max] = max_err;
+        cout << param->name << "[" << param->value << "]:\t" << max_err << endl;
+
+        while (max > min) {
+            if (min_err < max_err) {
+                if (min == max - 1) {
+                    param->value = min;
+                    set_parameter(param);
+                    cout << param->name << "[" << param->value << "] (best)" << endl;
+                    break;
+                }
+                max = min + (max - min) / 2;
+                param->value = max;
+                errors[max] = find_error(parameters);
+                max_err = errors[max];
+                cout << param->name << "[" << param->value << "]:\t" << max_err << endl;
+            } else {
+                if (min == max - 1) {
+                    param->value = max;
+                    set_parameter(param);
+                    cout << param->name << "[" << param->value << "] (best)" << endl;
+                    break;
+                }
+                min = min + (max - min) / 2;
+                param->value = min;
+                errors[min] = find_error(parameters);
+                min_err = errors[min];
+                cout << param->name << "[" << param->value << "]:\t" << min_err << endl;
+            }
+        }
+    }
+}
+
 void tune() {
     cout.precision(32);
     vector<Parameter> initial_params;
@@ -337,6 +390,8 @@ void tune() {
     init_parameters(initial_params);
     find_best_k(initial_params);
     cout << "best k: " << k << endl;
+
+    binary_search_parameters(initial_params);
 
     double best_error = find_error(initial_params);
     cout << "initial error:\t" << best_error << endl;
@@ -351,7 +406,6 @@ void tune() {
             if (new_guess[pi].value < 0) {
                 continue;
             }
-            set_parameter(&new_guess[pi]);
             double new_error = find_error(new_guess);
 
             if (new_error < best_error) {
@@ -366,7 +420,6 @@ void tune() {
                 if (new_guess[pi].value < 0) {
                     continue;
                 }
-                set_parameter(&new_guess[pi]);
                 new_error = find_error(new_guess);
                 if (new_error < best_error) {
                     best_error = new_error;
