@@ -25,7 +25,6 @@
 #include "search.h"
 #include "position.h"
 #include "tt.h"
-#include <mutex>
 #include "pst.h"
 
 using namespace std;
@@ -50,9 +49,9 @@ void fen_split(string s, vector<string> &f) {
     }
 }
 
-mutex sum_mtx, file_mtx;
-vector<long double> diffs;
-ifstream fens;
+vector<long double> diffs[MAX_THREADS];
+vector<string> entire_file;
+uint64_t num_fens;
 long double k = 0.93L;
 
 long double sigmoid(long double s) {
@@ -60,46 +59,38 @@ long double sigmoid(long double s) {
 }
 
 void single_error(int thread_id) {
-    string line;
-    while (fens.good()) {
-        file_mtx.lock();
-        if (getline(fens, line)) {
-            file_mtx.unlock();
-            vector<string> fen_info;
-            fen_split(line, fen_info);
+    for (unsigned i = thread_id; i < num_fens; i += num_threads) {
+        string line = entire_file[i];
 
-            Position *p = import_fen(fen_info[0], thread_id);
-            if (is_checked(p)) {
-                continue;
-            }
+        vector<string> fen_info;
+        fen_split(line, fen_info);
 
-            Metadata *md = &p->my_thread->metadatas[0];
-            md->current_move = no_move;
-            md->static_eval = UNDEFINED;
-            md->ply = 0;
-
-            string result_str = fen_info[1];
-            long double result;
-            if (result_str == "1-0") {
-                result = 1.0L;
-            } else if (result_str == "0-1") {
-                result = 0.0L;
-            } else if (result_str == "1/2-1/2") {
-                result = 0.5L;
-            } else {
-                exit(1);
-                result = -1.0L;
-            }
-            int qi = alpha_beta_quiescence(p, md, -MATE, MATE, -1, false);
-            qi = p->color == white ? qi : -qi;
-
-            sum_mtx.lock();
-            diffs.push_back(pow(result - sigmoid((long double) qi), 2.0L));
-            sum_mtx.unlock();
-        } else {
-            file_mtx.unlock();
-            break;
+        Position *p = import_fen(fen_info[0], thread_id);
+        if (is_checked(p)) {
+            continue;
         }
+
+        Metadata *md = &p->my_thread->metadatas[0];
+        md->current_move = no_move;
+        md->static_eval = UNDEFINED;
+        md->ply = 0;
+
+        string result_str = fen_info[1];
+        long double result;
+        if (result_str == "1-0") {
+            result = 1.0L;
+        } else if (result_str == "0-1") {
+            result = 0.0L;
+        } else if (result_str == "1/2-1/2") {
+            result = 0.5L;
+        } else {
+            exit(1);
+            result = -1.0L;
+        }
+        int qi = alpha_beta_quiescence(p, md, -MATE, MATE, -1, false);
+        qi = p->color == white ? qi : -qi;
+
+        diffs[thread_id].push_back(pow(result - sigmoid((long double) qi), 2.0L));
     }
 }
 
@@ -121,33 +112,51 @@ long double kahansum() {
     long double sum, c, y, t;
     sum = 0.0L;
     c = 0.0L;
-    for (unsigned i = 0; i < diffs.size(); ++i) {
-        y = diffs[i] - c;
-        t = sum + y;
-        c = (t - sum) - y;
-        sum = t;
+    for (int thread_id = 0; thread_id < num_threads; ++thread_id) {
+        for (unsigned i = 0; i < diffs[thread_id].size(); ++i) {
+            y = diffs[thread_id][i] - c;
+            t = sum + y;
+            c = (t - sum) - y;
+            sum = t;
+        }
     }
     return sum;
 }
 #pragma GCC pop_options
 
 long double find_error(vector<Parameter> params) {
-    diffs.clear();
     for (unsigned i = 0; i < params.size(); ++i) {
         Parameter *param = &params[i];
         set_parameter(param);
     }
-    fens.open("fewfens.txt");
     for (int i = 0; i < num_threads; ++i) {
+        diffs[i].clear();
         SearchThread *t = &search_threads[i];
         t->thread_obj = std::thread(single_error, i);
     }
+
+    unsigned total_size = 0;
     for (int i = 0; i < num_threads; ++i) {
         SearchThread *t = &search_threads[i];
         t->thread_obj.join();
+        total_size += diffs[i].size();
     }
+    return kahansum() / ((long double) total_size);
+}
+
+void read_entire_file() {
+    ifstream fens;
+    fens.open("fewfens.txt");
+    string line;
+    while (getline(fens, line)) {
+        entire_file.push_back(line);
+        ++num_fens;
+        if (num_fens % 100000 == 0) {
+            cout << "Reading line " << num_fens << endl;
+        }
+    }
+    cout << "Total lines: " << num_fens << endl;
     fens.close();
-    return kahansum() / ((long double) (diffs.size()));
 }
 
 void init_parameters(vector<Parameter> &parameters) {
@@ -312,6 +321,7 @@ void find_best_k(vector<Parameter> &parameters) {
 void tune() {
     cout.precision(32);
     vector<Parameter> initial_params;
+    read_entire_file();
     init_parameters(initial_params);
     find_best_k(initial_params);
     cout << "best k: " << k << endl;
