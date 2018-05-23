@@ -28,7 +28,7 @@
 #include <vector>
 #include <map>
 #include "tb.h"
-#include "texel.h"
+#include "tune.h"
 
 using namespace std;
 

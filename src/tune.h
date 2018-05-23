@@ -18,8 +18,8 @@
 
 #ifdef __TUNE__
 
-#ifndef TEXEL_H
-#define TEXEL_H
+#ifndef TUNE_H
+#define TUNE_H
 
 #include "data.h"
 

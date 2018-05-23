@@ -16,7 +16,6 @@
     along with Defenchess.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "texel.h"
 #include "eval.h"
 #include "bitboard.h"
 #include "target.h"

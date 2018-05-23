@@ -18,7 +18,7 @@
 
 #ifdef __TUNE__
 
-#include "texel.h"
+#include "tune.h"
 #include <cmath>
 #include <fstream>
 #include <iostream>
