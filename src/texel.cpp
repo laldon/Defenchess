@@ -51,7 +51,6 @@ void fen_split(string s, vector<string> &f) {
 }
 
 mutex sum_mtx, file_mtx;
-int n;
 vector<long double> diffs;
 ifstream fens;
 long double k = 0.93L;
@@ -96,7 +95,6 @@ void single_error(int thread_id) {
 
             sum_mtx.lock();
             diffs.push_back(pow(result - sigmoid((long double) qi), 2.0L));
-            ++n;
             sum_mtx.unlock();
         } else {
             file_mtx.unlock();
@@ -134,7 +132,6 @@ long double kahansum() {
 #pragma GCC pop_options
 
 long double find_error(vector<Parameter> params) {
-    n = 0;
     diffs.clear();
     for (unsigned i = 0; i < params.size(); ++i) {
         Parameter *param = &params[i];
@@ -150,7 +147,7 @@ long double find_error(vector<Parameter> params) {
         t->thread_obj.join();
     }
     fens.close();
-    return kahansum() / ((long double) (n));
+    return kahansum() / ((long double) (diffs.size()));
 }
 
 void init_parameters(vector<Parameter> &parameters) {
