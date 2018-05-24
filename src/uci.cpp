@@ -302,6 +302,7 @@ void bench() {
     cout << "Time  : " << time_taken << endl;
     cout << "Nodes : " << nodes << endl;
     cout << "NPS   : " << nodes * 1000 / (time_taken + 1) << endl;
+    exit(EXIT_SUCCESS);
 }
 
 void ucinewgame() {
