@@ -22,7 +22,18 @@
 #define TUNE_H
 
 #include "data.h"
+#include <vector>
+#include <iostream>
 
+typedef struct Parameter {
+    int *variable;
+    int value;
+    std::string name;
+    bool increasing;
+    int stability;
+} Parameter;
+
+void init_parameters(std::vector<Parameter> &parameters);
 void tune();
 
 #endif

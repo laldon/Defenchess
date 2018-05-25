@@ -152,7 +152,7 @@ int bonusKing[2][64] = {
     }
 };
 
-void init_pst() {
+void init_values() {
     for (int s = A1; s <= H8; s++) {
         int flip = s ^ A8;
 
