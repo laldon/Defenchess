@@ -138,7 +138,7 @@ long double find_error(vector<Parameter> params) {
 
 void read_entire_file() {
     ifstream fens;
-    fens.open("fewfens.txt");
+    fens.open("allfens.txt");
     string line;
     while (getline(fens, line)) {
         entire_file.push_back(line);
@@ -258,6 +258,13 @@ void tune() {
     vector<Parameter> initial_params;
     read_entire_file();
     init_parameters(initial_params);
+    for (unsigned i = 0; i < initial_params.size(); ++i) {
+        for (unsigned j = i + 1; j < initial_params.size(); ++j) {
+            if (initial_params[i].name == initial_params[j].name) {
+                cout << initial_params[i].name << endl;
+            }
+        }
+    }
     find_best_k(initial_params);
     cout << "best k: " << k << endl;
 
@@ -292,6 +299,7 @@ void tune() {
                     best_guess[pi].increasing = true;
                     improving = true;
                     cout << new_guess[pi].name << "[" << new_guess[pi].value << "]:\t" << new_error << " (best)" << endl;
+                    best_guess[pi].stability = 1;
                     continue;
                 } else {
                     cout << new_guess[pi].name << "[" << new_guess[pi].value << "]:\t" << new_error << endl;
@@ -309,6 +317,7 @@ void tune() {
                     best_guess[pi].increasing = false;
                     improving = true;
                     cout << new_guess[pi].name << "[" << new_guess[pi].value << "]:\t" << new_error << " (best)" << endl;
+                    best_guess[pi].stability = 1;
                     continue;
                 } else {
                     cout << new_guess[pi].name << "[" << new_guess[pi].value << "]:\t" << new_error << endl;
@@ -372,9 +381,6 @@ void init_parameters(vector<Parameter> &parameters) {
     parameters.push_back({&bishop_pawn_penalty.endgame, bishop_pawn_penalty.endgame, "bishop_pawn_penalty.endgame", true, 1});
 
     parameters.push_back({&hindered_passer_penalty.midgame, hindered_passer_penalty.midgame, "hindered_passer_penalty.midgame", true, 1});
-
-    parameters.push_back({&bishop_pawn_penalty.midgame, bishop_pawn_penalty.midgame, "bishop_pawn_penalty.midgame", true, 1});
-    parameters.push_back({&bishop_pawn_penalty.endgame, bishop_pawn_penalty.endgame, "bishop_pawn_penalty.endgame", true, 1});
 
     parameters.push_back({&king_only_protected_penalty, king_only_protected_penalty, "king_only_protected_penalty", true, 1});
     parameters.push_back({&queen_check_penalty, queen_check_penalty, "queen_check_penalty", true, 1});
