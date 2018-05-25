@@ -88,14 +88,7 @@ void single_error(int thread_id) {
 
 void set_parameter(Parameter *param) {
     *param->variable = param->value;
-    if (param->name == "PAWN_MID" || param->name == "PAWN_END" ||
-        param->name == "KNIGHT_MID" || param->name == "KNIGHT_END" ||
-        param->name == "BISHOP_MID" || param->name == "BISHOP_END" ||
-        param->name == "ROOK_MID" || param->name == "ROOK_END" ||
-        param->name == "QUEEN_MID" || param->name == "QUEEN_END"
-    ) {
-        init_values();
-    }
+    init_values();
 }
 
 #pragma GCC push_options
@@ -138,7 +131,7 @@ long double find_error(vector<Parameter> params) {
 
 void read_entire_file() {
     ifstream fens;
-    fens.open("allfens.txt");
+    fens.open("fewfens.txt");
     string line;
     while (getline(fens, line)) {
         entire_file.push_back(line);
@@ -255,36 +248,35 @@ void binary_search_parameters(vector<Parameter> &parameters) {
 
 void tune() {
     cout.precision(32);
-    vector<Parameter> initial_params;
+    vector<Parameter> best_guess;
     read_entire_file();
-    init_parameters(initial_params);
+    init_parameters(best_guess);
 
-    for (unsigned i = 0; i < initial_params.size(); ++i) {
-        for (unsigned j = i + 1; j < initial_params.size(); ++j) {
-            if (initial_params[i].name == initial_params[j].name) {
-                cout << "duplicate " << initial_params[i].name << endl;
+    for (unsigned i = 0; i < best_guess.size(); ++i) {
+        for (unsigned j = i + 1; j < best_guess.size(); ++j) {
+            if (best_guess[i].name == best_guess[j].name) {
+                cout << "duplicate " << best_guess[i].name << endl;
                 exit(1);
             }
         }
     }
 
-    find_best_k(initial_params);
+    find_best_k(best_guess);
     cout << "best k: " << k << endl;
 
-    binary_search_parameters(initial_params);
-    double best_error = find_error(initial_params);
+    double best_error = find_error(best_guess);
     cout << "initial error:\t" << best_error << endl;
-    vector<Parameter> best_guess = initial_params;
 
     for (int iteration = 0; iteration < 2; ++iteration) {
         for (unsigned p = 0; p < best_guess.size(); ++p) {
             best_guess[p].stability = 1;
         }
 
+        binary_search_parameters(best_guess);
         bool improving = true;
         while (improving) {
             improving = false;
-            for (unsigned pi = 0; pi < initial_params.size(); pi++) {
+            for (unsigned pi = 0; pi < best_guess.size(); pi++) {
                 if (best_guess[pi].stability >= 5) {
                     continue;
                 }
