@@ -21,6 +21,6 @@
 
 #include "data.h"
 
-void init_pst();
+void init_values();
 
 #endif

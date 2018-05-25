@@ -91,6 +91,8 @@ extern int
     ROOK_MID, ROOK_END,
     QUEEN_MID, QUEEN_END;
 
+extern int piece_values[14];
+
 // Bonuses
 extern Score
     protected_piece_bonus,

@@ -254,10 +254,6 @@ enum _Square : Square {
     A8, B8, C8, D8, E8, F8, G8, H8
 };
 
-// Give kings a value for SEE
-const int piece_values[14] = {0, 0, PAWN_MID, PAWN_MID, KNIGHT_MID, KNIGHT_MID, BISHOP_MID, BISHOP_MID,
-                              ROOK_MID, ROOK_MID, QUEEN_MID, QUEEN_MID, 100 * QUEEN_MID, 100 * QUEEN_MID};
-
 const char piece_chars[14] = {'\0', '\0', '\0', '\0', 'N', 'n', 'B', 'b', 'R', 'r', 'Q', 'q', 'K', 'k'};
 extern int mvvlva_values[12][14];
 
