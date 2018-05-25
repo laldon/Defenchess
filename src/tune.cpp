@@ -258,13 +258,16 @@ void tune() {
     vector<Parameter> initial_params;
     read_entire_file();
     init_parameters(initial_params);
+
     for (unsigned i = 0; i < initial_params.size(); ++i) {
         for (unsigned j = i + 1; j < initial_params.size(); ++j) {
             if (initial_params[i].name == initial_params[j].name) {
-                cout << initial_params[i].name << endl;
+                cout << "duplicate " << initial_params[i].name << endl;
+                exit(1);
             }
         }
     }
+
     find_best_k(initial_params);
     cout << "best k: " << k << endl;
 

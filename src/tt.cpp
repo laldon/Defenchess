@@ -32,7 +32,7 @@ const uint64_t pawntt_size = one_mb * 1ULL; // 1 MB
 const uint64_t pawntt_mod = (uint64_t)(pawntt_size / sizeof(PawnTTEntry));
 
 void init_tt() {
-    table.tt_size = one_mb * 8ULL; // 8 MB
+    table.tt_size = one_mb * 256ULL; // 256 MB
     table.tt = (Bucket*) malloc(table.tt_size);
     table.bucket_mask = (uint64_t)(table.tt_size / sizeof(Bucket) - 1);
     table.generation = 0;

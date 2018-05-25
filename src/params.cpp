@@ -42,7 +42,7 @@ Score
 Score
     double_pawn_penalty = {11, 26},
     blocked_rook_penalty = {65, 0},
-    bishop_pawn_penalty = {7, 7},
+    bishop_pawn_penalty = {6, 11},
     hindered_passer_penalty = {1, 0};
 
 int
