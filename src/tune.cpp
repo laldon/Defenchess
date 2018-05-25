@@ -94,7 +94,7 @@ void set_parameter(Parameter *param) {
         param->name == "ROOK_MID" || param->name == "ROOK_END" ||
         param->name == "QUEEN_MID" || param->name == "QUEEN_END"
     ) {
-        init_pst();
+        init_values();
     }
 }
 

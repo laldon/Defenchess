@@ -187,4 +187,25 @@ void init_values() {
         pst[black_queen][s]  = Score{-bonusQueen [0][sq], -bonusQueen [1][sq]} - Score{QUEEN_MID, QUEEN_END};
         pst[black_king][s]   = Score{-bonusKing  [0][sq], -bonusKing  [1][sq]} - Score{0, 0};
     }
+
+    piece_values[0] = 0;
+    piece_values[1] = 0;
+    piece_values[2] = PAWN_MID;
+    piece_values[3] = PAWN_END;
+    piece_values[4] = KNIGHT_MID;
+    piece_values[5] = KNIGHT_END;
+    piece_values[6] = BISHOP_MID;
+    piece_values[7] = BISHOP_END;
+    piece_values[8] = ROOK_MID;
+    piece_values[9] = ROOK_END;
+    piece_values[10] = QUEEN_MID;
+    piece_values[11] = QUEEN_END;
+    piece_values[12] = QUEEN_MID * 100;
+    piece_values[13] = QUEEN_MID * 100;
+
+    for (int i = 0; i < 12; i++) {
+        for (int j = 0; j < 14; j++) {
+            mvvlva_values[i][j] = piece_values[i] - j;
+        }
+    }
 }

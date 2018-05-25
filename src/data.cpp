@@ -374,14 +374,6 @@ void init_polyglot() {
     }
 }
 
-void init_values() {
-    for (int i = 0; i < 12; i++) {
-        for (int j = 0; j < 14; j++) {
-            mvvlva_values[i][j] = piece_values[i] - j;
-        }
-    }
-}
-
 void init_passed_pawns() {
     Bitboard PASSED_PAWN_HORIZONTAL[64][2];
     for (int i = 0; i < 64; i++) {
@@ -654,9 +646,8 @@ void init_masks() {
     init_between();
     init_fromto();
     init_pawns();
-    init_pst();
-    init_polyglot();
     init_values();
+    init_polyglot();
     init_passed_pawns();
     init_pawn_masks();
     init_adj();

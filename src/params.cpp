@@ -25,6 +25,9 @@ int
     ROOK_MID = 703, ROOK_END = 729,
     QUEEN_MID = 1450, QUEEN_END = 1369;
 
+int piece_values[14] = {0, 0, PAWN_MID, PAWN_MID, KNIGHT_MID, KNIGHT_MID, BISHOP_MID, BISHOP_MID,
+                              ROOK_MID, ROOK_MID, QUEEN_MID, QUEEN_MID, 100 * QUEEN_MID, 100 * QUEEN_MID};
+
 Score
     protected_piece_bonus = {9, 0},
     rook_pawn_bonus = {0, 2},
