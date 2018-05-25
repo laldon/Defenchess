@@ -208,9 +208,6 @@ void init_parameters(vector<Parameter> &parameters) {
 
     parameters.push_back({&hindered_passer_penalty.midgame, hindered_passer_penalty.midgame, "hindered_passer_penalty.midgame", true});
 
-    parameters.push_back({&bishop_pawn_penalty.midgame, bishop_pawn_penalty.midgame, "bishop_pawn_penalty.midgame", true});
-    parameters.push_back({&bishop_pawn_penalty.endgame, bishop_pawn_penalty.endgame, "bishop_pawn_penalty.endgame", true});
-
     parameters.push_back({&king_only_protected_penalty, king_only_protected_penalty, "king_only_protected_penalty", true});
     parameters.push_back({&queen_check_penalty, queen_check_penalty, "queen_check_penalty", true});
     parameters.push_back({&knight_check_penalty, knight_check_penalty, "knight_check_penalty", true});
