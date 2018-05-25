@@ -283,6 +283,7 @@ void bench() {
     int tmp_myremain = myremain;
     think_depth_limit = 13;
     myremain = 3600000;
+    is_timeout = false;
 
     for (int i = 0; i < 36; i++){
         cout << "\nPosition [" << (i + 1) << "|36]\n" << endl;
