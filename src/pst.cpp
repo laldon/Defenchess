@@ -191,15 +191,15 @@ void init_values() {
     piece_values[0] = 0;
     piece_values[1] = 0;
     piece_values[2] = PAWN_MID;
-    piece_values[3] = PAWN_END;
+    piece_values[3] = PAWN_MID;
     piece_values[4] = KNIGHT_MID;
-    piece_values[5] = KNIGHT_END;
+    piece_values[5] = KNIGHT_MID;
     piece_values[6] = BISHOP_MID;
-    piece_values[7] = BISHOP_END;
+    piece_values[7] = BISHOP_MID;
     piece_values[8] = ROOK_MID;
-    piece_values[9] = ROOK_END;
+    piece_values[9] = ROOK_MID;
     piece_values[10] = QUEEN_MID;
-    piece_values[11] = QUEEN_END;
+    piece_values[11] = QUEEN_MID;
     piece_values[12] = QUEEN_MID * 100;
     piece_values[13] = QUEEN_MID * 100;
 
