@@ -19,76 +19,76 @@
 #include "params.h"
 
 int
-    PAWN_MID = 100, PAWN_END = 123,
-    KNIGHT_MID = 425, KNIGHT_END = 426,
-    BISHOP_MID = 430, BISHOP_END = 466,
-    ROOK_MID = 703, ROOK_END = 729,
-    QUEEN_MID = 1450, QUEEN_END = 1369;
+    PAWN_MID = 100, PAWN_END = 134,
+    KNIGHT_MID = 441, KNIGHT_END = 448,
+    BISHOP_MID = 484, BISHOP_END = 480,
+    ROOK_MID = 729, ROOK_END = 746,
+    QUEEN_MID = 1533, QUEEN_END = 1400;
 
 int piece_values[14] = {0, 0, PAWN_MID, PAWN_MID, KNIGHT_MID, KNIGHT_MID, BISHOP_MID, BISHOP_MID,
                               ROOK_MID, ROOK_MID, QUEEN_MID, QUEEN_MID, 100 * QUEEN_MID, 100 * QUEEN_MID};
 
 Score
-    protected_piece_bonus = {9, 0},
-    rook_pawn_bonus = {0, 2},
-    minor_piece_behind_pawn = {10, 0},
-    strong_pawn_threat = {78, 27},
+    protected_piece_bonus = {4, 0},
+    rook_pawn_bonus = {1, 17},
+    minor_piece_behind_pawn = {8, 0},
+    strong_pawn_threat = {75, 32},
     weak_pawn_threat = {40, 40},
-    rank_threat_bonus = {6, 0},
-    hanging_threat_bonus = {3, 15},
-    pawn_push_threat_bonus = {29, 11};
+    rank_threat_bonus = {3, 0},
+    hanging_threat_bonus = {0, 21},
+    pawn_push_threat_bonus = {28, 13};
 
 // Penalties
 Score
-    double_pawn_penalty = {6, 14},
-    blocked_rook_penalty = {68, 0},
-    bishop_pawn_penalty = {6, 6},
-    hindered_passer_penalty = {2, 0};
+    double_pawn_penalty = {11, 26},
+    blocked_rook_penalty = {65, 0},
+    bishop_pawn_penalty = {7, 7},
+    hindered_passer_penalty = {1, 0};
 
 int
-    king_only_protected_penalty = 10,
-    queen_check_penalty = 36,
-    knight_check_penalty = 47,
-    rook_check_penalty = 46,
-    bishop_check_penalty = 14,
-    pawn_distance_penalty = 9,
-    king_zone_attack_penalty = 4;
+    king_only_protected_penalty = 7,
+    queen_check_penalty = 32,
+    knight_check_penalty = 35,
+    rook_check_penalty = 38,
+    bishop_check_penalty = 8,
+    pawn_distance_penalty = 10,
+    king_zone_attack_penalty = 5;
 
-int pawn_shelter_penalty[8] = {0, 0, 19, 33, 35, 50, 50, 50};
+int pawn_shelter_penalty[8] = {0, 0, 18, 31, 28, 22, 68, 52};
 int tempo = 12;
-int ATTACK_VALUES[12] = {0, 0, 59, 37, 47, 9};
+int ATTACK_VALUES[12] = {0, 0, 69, 43, 47, 9};
 
 Score mobility_bonus[4][32] = {};
 
 Score passed_pawn_bonus[7] = {
-    {0, 11}, {0, 14}, {18, 18}, {27, 39}, {77, 113}, {100, 229} // Pawn is never on RANK_8
+    {0, 18}, {0, 18}, {10, 24}, {29, 38}, {91, 91}, {202, 116} // Pawn is never on RANK_8
 };
 
 Score passed_file_bonus[8] = {
     {5, 5}, {1, 5}, {0, -4}, {-11, -7}, {-11, -7}, {0, -4}, {1, 5}, {5, 5}
 };
 
-Score rook_file_bonus[2] = {{21, 0}, {38, 8}};
+Score rook_file_bonus[2] = {{15, 0}, {41, 14}};
 
-Score isolated_pawn_penalty[2] = {{16, 14}, { 3, 12}},
-      backward_pawn_penalty[2] = {{25, 23}, { 6,  0}};
+Score isolated_pawn_penalty[2] = {{11, 25}, {12, 5}},
+      backward_pawn_penalty[2] = {{34, 32}, {13, 0}};
 
 Score minor_threat_bonus[6] = {
     { 0,  0}, // Empty
-    { 3, 16}, // Pawn
-    {16, 42}, // Knight
-    {14, 44}, // Bishop
-    {50, 15}, // Rook
-    {41,  3}  // Queen
+    { 3, 24}, // Pawn
+    {20, 39}, // Knight
+    {39, 19}, // Bishop
+    {61,  8}, // Rook
+    {36, 15}  // Queen
     // { 0, 0},  // King should never be called
 };
 
 Score rook_threat_bonus[6] = {
     { 0,  0}, // Empty
-    { 3, 20}, // Pawn
-    {23, 27}, // Knight
-    {20, 51}, // Bishop
+    {10, 26}, // Pawn
+    {28, 33}, // Knight
+    {31, 36}, // Bishop
     { 0,  0}, // Rook
-    {75, 34}  // Queen
+    {65, 11}  // Queen
     // { 0, 0}  // King should never be called
 };
