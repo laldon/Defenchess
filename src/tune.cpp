@@ -354,10 +354,6 @@ void init_parameters(vector<Parameter> &parameters) {
     parameters.push_back({&strong_pawn_threat.midgame, strong_pawn_threat.midgame, "strong_pawn_threat.midgame", true, 1});
     parameters.push_back({&strong_pawn_threat.endgame, strong_pawn_threat.endgame, "strong_pawn_threat.endgame", true, 1});
 
-    // TUNE THESE TWO LATER, THEY'RE BUGGED
-    // parameters.push_back({&weak_pawn_threat.midgame, weak_pawn_threat.midgame, "weak_pawn_threat.midgame", true, 1});
-    // parameters.push_back({&weak_pawn_threat.endgame, weak_pawn_threat.endgame, "weak_pawn_threat.endgame", true, 1});
-
     parameters.push_back({&rank_threat_bonus.midgame, rank_threat_bonus.midgame, "rank_threat_bonus.midgame", true, 1});
     parameters.push_back({&rank_threat_bonus.endgame, rank_threat_bonus.endgame, "rank_threat_bonus.endgame", true, 1});
 
