@@ -439,10 +439,6 @@ Score evaluate_threat(Evaluation *eval, Position *p, Color color) {
         Bitboard safe_pawns = p->bbs[pawn(color)] & (~eval->targets[opp_c] | eval->targets[color]);
         Bitboard safe_threats = generate_pawn_threats(safe_pawns, color) & attacked_non_pawns;
         threat_score += strong_pawn_threat * count(safe_threats);
-
-        if (attacked_non_pawns ^ safe_threats) {
-            threat_score += weak_pawn_threat;
-        }
     }
 
     Bitboard very_supported = eval->targets[pawn(opp_c)] | (eval->double_targets[opp_c] & ~eval->double_targets[color]);

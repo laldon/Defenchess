@@ -33,7 +33,6 @@ Score
     rook_pawn_bonus = {3, 18},
     minor_piece_behind_pawn = {9, 0},
     strong_pawn_threat = {75, 31},
-    weak_pawn_threat = {131, 86},
     rank_threat_bonus = {2, 0},
     hanging_threat_bonus = {2, 21},
     pawn_push_threat_bonus = {25, 16};
