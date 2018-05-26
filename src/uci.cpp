@@ -28,6 +28,7 @@
 #include <vector>
 #include <map>
 #include "tb.h"
+#include "tune.h"
 
 using namespace std;
 
@@ -209,7 +210,7 @@ void startpos() {
 void cmd_fen() {
     string fen_str = word_list[2] + " " + word_list[3] + " " + word_list[4] + " " + word_list[5] + " " + word_list[6] + " " + word_list[7];
 
-    root_position = import_fen(fen_str.c_str());
+    root_position = import_fen(fen_str, 0);
 
     if (word_equal(8, "moves")) {
         for (unsigned i = 9 ; i < word_list.size() ; i++) {
@@ -286,7 +287,7 @@ void bench() {
 
     for (int i = 0; i < 36; i++){
         cout << "\nPosition [" << (i + 1) << "|36]\n" << endl;
-        Position *p = import_fen(benchmarks[i].c_str());
+        Position *p = import_fen(benchmarks[i], 0);
 
         think(p);
         nodes += search_threads[0].nodes;
@@ -339,11 +340,18 @@ void run_command(string s) {
         see();
     if (s == "bench")
         bench();
+#ifdef __TUNE__
+    if (s == "tune")
+        tune();
+#endif
 }
 
 void loop() {
     string in_str;
     init();
+#ifdef __TUNE__
+    tune();
+#endif
     root_position = start_pos();
 
     while (true) {

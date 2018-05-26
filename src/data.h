@@ -25,6 +25,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <thread>
+#include "params.h"
 
 typedef uint8_t Square;
 typedef uint64_t Bitboard;
@@ -173,13 +174,7 @@ const int
     TIMEOUT = 32003,
 
     MATE_IN_MAX_PLY = MATE - MAX_PLY,
-    MATED_IN_MAX_PLY = -MATE + MAX_PLY,
-
-    PAWN_MID = 100, PAWN_END = 140,
-    KNIGHT_MID = 400, KNIGHT_END = 440,
-    BISHOP_MID = 430, BISHOP_END = 470,
-    ROOK_MID = 650, ROOK_END = 710,
-    QUEEN_MID = 1300, QUEEN_END = 1350;
+    MATED_IN_MAX_PLY = -MATE + MAX_PLY;
 
 const int RANK_1 = 0,
           RANK_2 = 1,
@@ -259,77 +254,8 @@ enum _Square : Square {
     A8, B8, C8, D8, E8, F8, G8, H8
 };
 
-// Give kings a value for SEE
-const int piece_values[14] = {0, 0, PAWN_MID, PAWN_MID, KNIGHT_MID, KNIGHT_MID, BISHOP_MID, BISHOP_MID,
-                              ROOK_MID, ROOK_MID, QUEEN_MID, QUEEN_MID, 100 * QUEEN_MID, 100 * QUEEN_MID};
-
 const char piece_chars[14] = {'\0', '\0', '\0', '\0', 'N', 'n', 'B', 'b', 'R', 'r', 'Q', 'q', 'K', 'k'};
 extern int mvvlva_values[12][14];
-
-typedef struct Score {
-    int midgame;
-    int endgame;
-
-    Score(int x=0, int y=0) : midgame(x), endgame(y)
-    {}
-
-    inline Score operator+(const Score& a) const
-    {
-        return Score(midgame + a.midgame, endgame + a.endgame);
-    }
-    inline Score operator-(const Score& a) const
-    {
-        return Score(midgame - a.midgame, endgame - a.endgame);
-    }
-    inline Score operator+=(const Score& a) 
-    {
-        this->midgame += a.midgame;
-        this->endgame += a.endgame;
-        return *this;
-    }
-    inline Score operator-=(const Score& a) 
-    {        
-        this->midgame -= a.midgame;
-        this->endgame -= a.endgame;
-        return *this;
-    }
-    inline Score operator/(const Score& a) const
-    {
-        return Score(midgame / a.midgame, endgame / a.endgame);
-    }
-    inline Score operator*(const Score& a) const
-    {
-        return Score(midgame * a.midgame, endgame * a.endgame);
-    }
-    inline Score operator+=(const int& a) 
-    {
-        this->midgame += a;
-        this->endgame += a;
-        return *this;
-    }
-    inline Score operator-=(const int& a)
-    {
-        this->midgame -= a;
-        this->endgame -= a;
-        return *this;
-    }
-    inline Score operator+(const int& a) const
-    {
-        return Score(midgame + a, endgame + a);
-    }
-    inline Score operator-(const int& a) const
-    {
-        return Score(midgame - a, endgame - a);
-    }
-    inline Score operator/(const int& a) const
-    {
-        return Score(midgame / a, endgame / a);
-    }
-    inline Score operator*(const int& a) const
-    {
-        return Score(midgame * a, endgame * a);
-    }
-} Score;
 
 extern Score pst[14][64];
 
@@ -528,6 +454,7 @@ struct SearchThread {
     std::thread thread_obj;
     Position    positions[1024];
     int         thread_id;
+    int         root_ply;
     int         search_ply;
     Metadata    metadatas[MAX_PLY + 1];
     Move        counter_moves[14][64];
@@ -546,7 +473,6 @@ extern int myremain;
 extern int total_remaining;
 extern int moves_to_go;
 extern volatile bool is_timeout;
-extern int root_ply;
 extern int think_depth_limit;
 extern int num_threads;
 extern int move_overhead;

@@ -23,13 +23,13 @@
 #include "data.h"
 #include "move_utils.h"
 #include "move.h"
-#include <cstring>
+#include <iostream>
 
 Position* start_pos();
 void calculate_score(Position *p);
 void calculate_hash(Position *p);
 void calculate_material(Position *p);
 
-Position* import_fen(const char* fen);
+Position* import_fen(std::string fen, int thread_id);
 
 #endif

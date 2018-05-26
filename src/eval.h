@@ -25,37 +25,6 @@
 
 void print_eval(Position *p);
 
-// Bonuses
-const Score
-    protected_piece_bonus = {10, 0},
-    rook_pawn_bonus = {5, 15},
-    minor_piece_behind_pawn = {10, 0},
-    strong_pawn_threat = {100, 100},
-    weak_pawn_threat = {40, 40},
-    rank_threat_bonus = {10, 2},
-    hanging_threat_bonus = {30, 15},
-    pawn_push_threat_bonus = {20, 15};
-
-// Penalties
-const Score
-    double_pawn_penalty = {10, 20},
-    blocked_rook_penalty = {70, 0},
-    bishop_pawn_penalty = {5, 5},
-    hindered_passer_penalty = {5, 0};
-
-const int
-    king_only_protected_penalty = 11,
-    queen_check_penalty = 50,
-    knight_check_penalty = 50,
-    rook_check_penalty = 55,
-    bishop_check_penalty = 30,
-    pawn_distance_penalty = 10,
-    king_zone_attack_penalty = 6;
-
-const int pawn_shelter_penalty[8] = {0, 0, 10, 30, 40, 50, 50, 50};
-const int tempo = 12;
-const int ATTACK_VALUES[12] = {0,0,0,0,80,80,55,55,45,45,10,10};
-
 int evaluate(Position *p);
 void init_eval();
 
