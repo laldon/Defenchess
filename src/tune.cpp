@@ -144,25 +144,16 @@ void read_entire_file() {
     fens.close();
 }
 
-long double errors[10000];
-
 void find_best_k(vector<Parameter> &parameters) {
-    // Clear errors
-    for (int i = 0; i < 10000; ++i) {
-        errors[i] = -2.0L;
-    }
-
     int min = 80, max = 120;
 
     k = (long double)(min) / 100.0L;
     long double min_err = find_error(parameters);
-    errors[min] = min_err;
-    cout << "errors[" << min << "]:\t" << min_err << endl;
+    cout << "k[" << min << "]:\t" << min_err << endl;
 
     k = (long double)(max) / 100.0L;
     long double max_err = find_error(parameters);
-    errors[max] = max_err;
-    cout << "errors[" << max << "]:\t" << max_err << endl;
+    cout << "k[" << max << "]:\t" << max_err << endl;
 
     while (max > min) {
         if (min_err < max_err) {
@@ -172,11 +163,8 @@ void find_best_k(vector<Parameter> &parameters) {
             }
             max = min + (max - min) / 2;
             k = (long double)(max) / 100.0L;
-            if (errors[max] < -1.0L) {
-                errors[max] = find_error(parameters);
-            }
-            max_err = errors[max];
-            cout << "errors[" << max << "]:\t" << max_err << endl;
+            max_err = find_error(parameters);
+            cout << "k[" << max << "]:\t" << max_err << endl;
         } else {
             if (min == max - 1) {
                 k = (long double)(max) / 100.0L;
@@ -184,36 +172,33 @@ void find_best_k(vector<Parameter> &parameters) {
             }
             min = min + (max - min) / 2;
             k = (long double)(min) / 100.0L;
-            if (errors[min] < -1.0) {
-                errors[min] = find_error(parameters);
-            }
-            min_err = errors[min];
-            cout << "errors[" << min << "]:\t" << min_err << endl;
+            min_err = find_error(parameters);
+            cout << "k[" << min << "]:\t" << min_err << endl;
         }
     }
 }
 
 void binary_search_parameters(vector<Parameter> &parameters) {
-    // Clear errors
-    for (int i = 0; i < 10000; ++i) {
-        errors[i] = -2.0L;
-    }
-
     for (unsigned i = 0; i < parameters.size(); ++i) {
         Parameter *param = &parameters[i];
-        int min = param->value * 4 / 5, max = param->value * 6 / 5;
+        int min, max;
+        if (param->value < 0) {
+            min = param->value * 6 / 5;
+            max = param->value * 4 / 5;
+        } else {
+            min = param->value * 4 / 5;
+            max = param->value * 6 / 5;
+        }
         if (param->name == "PAWN_END") {
             min = PAWN_MID + 1;
         }
 
         param->value = min;
         long double min_err = find_error(parameters);
-        errors[min] = min_err;
         cout << param->name << "[" << param->value << "]:\t" << min_err << endl;
 
         param->value = max;
         long double max_err = find_error(parameters);
-        errors[max] = max_err;
         cout << param->name << "[" << param->value << "]:\t" << max_err << endl;
 
         while (max > min) {
@@ -226,8 +211,7 @@ void binary_search_parameters(vector<Parameter> &parameters) {
                 }
                 max = min + (max - min) / 2;
                 param->value = max;
-                errors[max] = find_error(parameters);
-                max_err = errors[max];
+                max_err = find_error(parameters);
                 cout << param->name << "[" << param->value << "]:\t" << max_err << endl;
             } else {
                 if (min == max - 1) {
@@ -238,8 +222,7 @@ void binary_search_parameters(vector<Parameter> &parameters) {
                 }
                 min = min + (max - min) / 2;
                 param->value = min;
-                errors[min] = find_error(parameters);
-                min_err = errors[min];
+                min_err = find_error(parameters);
                 cout << param->name << "[" << param->value << "]:\t" << min_err << endl;
             }
         }
@@ -278,15 +261,12 @@ void tune() {
         while (improving) {
             improving = false;
             for (unsigned pi = 0; pi < best_guess.size(); pi++) {
-                if (best_guess[pi].stability >= 5) {
+                if (best_guess[pi].stability >= 3) {
                     continue;
                 }
 
                 vector<Parameter> new_guess = best_guess;
                 new_guess[pi].value += best_guess[pi].increasing ? 1 : -1;
-                if (new_guess[pi].value < 0) {
-                    continue;
-                }
 
                 double new_error = find_error(new_guess);
                 if (new_error < best_error) {
@@ -302,9 +282,6 @@ void tune() {
                 }
 
                 new_guess[pi].value -= best_guess[pi].increasing ? 2 : -2;
-                if (new_guess[pi].value < 0) {
-                    continue;
-                }
 
                 new_error = find_error(new_guess);
                 if (new_error < best_error) {
@@ -320,6 +297,11 @@ void tune() {
                     ++best_guess[pi].stability;
                 }
             }
+
+            for (unsigned i = 0; i < best_guess.size(); ++i) {
+                Parameter *param = &best_guess[i];
+                cout << "best " << param->name << ": " << param->value << endl;
+            }
         }
     }
 
@@ -331,12 +313,37 @@ void tune() {
 
 void init_pst(vector<Parameter> &parameters) {
     for (int i = 0; i < 2; ++i) {
-        for (int j = 0; j < 63; ++j) {
+        for (int j = 0; j < 32; ++j) {
             parameters.push_back({&bonusPawn[i][j], bonusPawn[i][j], "bonusPawn[" + to_string(i) + "][" + to_string(j) + "]", true, 1});
+        }
+    }
+
+    for (int i = 0; i < 2; ++i) {
+        for (int j = 0; j < 32; ++j) {
             parameters.push_back({&bonusKnight[i][j], bonusKnight[i][j], "bonusKnight[" + to_string(i) + "][" + to_string(j) + "]", true, 1});
+        }
+    }
+
+    for (int i = 0; i < 2; ++i) {
+        for (int j = 0; j < 32; ++j) {
             parameters.push_back({&bonusBishop[i][j], bonusBishop[i][j], "bonusBishop[" + to_string(i) + "][" + to_string(j) + "]", true, 1});
+        }
+    }
+
+    for (int i = 0; i < 2; ++i) {
+        for (int j = 0; j < 32; ++j) {
             parameters.push_back({&bonusRook[i][j], bonusRook[i][j], "bonusRook[" + to_string(i) + "][" + to_string(j) + "]", true, 1});
+        }
+    }
+
+    for (int i = 0; i < 2; ++i) {
+        for (int j = 0; j < 32; ++j) {
             parameters.push_back({&bonusQueen[i][j], bonusQueen[i][j], "bonusQueen[" + to_string(i) + "][" + to_string(j) + "]", true, 1});
+        }
+    }
+
+    for (int i = 0; i < 2; ++i) {
+        for (int j = 0; j < 32; ++j) {
             parameters.push_back({&bonusKing[i][j], bonusKing[i][j], "bonusKing[" + to_string(i) + "][" + to_string(j) + "]", true, 1});
         }
     }
