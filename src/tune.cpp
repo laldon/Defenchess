@@ -250,7 +250,8 @@ void tune() {
     cout.precision(32);
     vector<Parameter> best_guess;
     read_entire_file();
-    init_parameters(best_guess);
+    // init_parameters(best_guess);
+    init_pst(best_guess);
 
     for (unsigned i = 0; i < best_guess.size(); ++i) {
         for (unsigned j = i + 1; j < best_guess.size(); ++j) {
@@ -325,6 +326,19 @@ void tune() {
     for (unsigned i = 0; i < best_guess.size(); ++i) {
         Parameter *param = &best_guess[i];
         cout << "best " << param->name << ": " << param->value << endl;
+    }
+}
+
+void init_pst(vector<Parameter> &parameters) {
+    for (int i = 0; i < 2; ++i) {
+        for (int j = 0; j < 63; ++j) {
+            parameters.push_back({&bonusPawn[i][j], bonusPawn[i][j], "bonusPawn[" + to_string(i) + "][" + to_string(j) + "]", true, 1});
+            parameters.push_back({&bonusKnight[i][j], bonusKnight[i][j], "bonusKnight[" + to_string(i) + "][" + to_string(j) + "]", true, 1});
+            parameters.push_back({&bonusBishop[i][j], bonusBishop[i][j], "bonusBishop[" + to_string(i) + "][" + to_string(j) + "]", true, 1});
+            parameters.push_back({&bonusRook[i][j], bonusRook[i][j], "bonusRook[" + to_string(i) + "][" + to_string(j) + "]", true, 1});
+            parameters.push_back({&bonusQueen[i][j], bonusQueen[i][j], "bonusQueen[" + to_string(i) + "][" + to_string(j) + "]", true, 1});
+            parameters.push_back({&bonusKing[i][j], bonusKing[i][j], "bonusKing[" + to_string(i) + "][" + to_string(j) + "]", true, 1});
+        }
     }
 }
 

@@ -257,8 +257,6 @@ enum _Square : Square {
 const char piece_chars[14] = {'\0', '\0', '\0', '\0', 'N', 'n', 'B', 'b', 'R', 'r', 'Q', 'q', 'K', 'k'};
 extern int mvvlva_values[12][14];
 
-extern Score pst[14][64];
-
 typedef struct CopyThingSize {
     //? COPIED 
     uint64_t     pawn_hash;
