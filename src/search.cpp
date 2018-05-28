@@ -635,6 +635,8 @@ void think(Position *p) {
     std::memset(pv_at_depth, 0, sizeof(pv_at_depth));
     std::memset(score_at_depth, 0, sizeof(score_at_depth));
 
+	double fail_low_score = 1.0;
+
     initialize_threads();
     while (depth <= think_depth_limit) {
         int aspiration = 20;
@@ -679,6 +681,7 @@ void think(Position *p) {
             }
             if (score <= alpha) {
                 alpha = std::max(score - aspiration, -MATE);
+				fail_low_score = alpha * 1.0 / score;
                 failed_low = true;
             } else if (score >= beta) {
                 beta = std::min(score + aspiration, MATE);
@@ -719,15 +722,15 @@ void think(Position *p) {
 
         if (depth >= 10) {
             if (failed_low) {
-                myremain = std::min(max_time_usage, myremain * 11 / 10); // %10 panic time
+                myremain = std::min(max_time_usage, (int) (myremain * fail_low_score)); // %10 panic time
             }
             int score_diff = score_at_depth[depth - 1] - score_at_depth[depth - 2];
 
             if (score_diff < -10) {
-                myremain = std::min(max_time_usage, myremain * 21 / 20);
+                myremain = std::min(max_time_usage, myremain * (100 + score_diff) / 100);
             }
             if (score_diff > 10) {
-                myremain = std::max(init_remain / 2, myremain * 98 / 100);
+                myremain = std::max(init_remain / 2, myremain * (100 - std::min(20, score_diff)) / 100);
             }
             if (pv_at_depth[depth - 1] == pv_at_depth[depth - 2]) {
                 myremain = std::max(init_remain / 2, myremain * 94 / 100);

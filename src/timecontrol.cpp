@@ -21,9 +21,13 @@
 #include <cfloat>
 #include <cmath>
 
+double move_importance(int movestogo) {
+	return (-pow(movestogo, 3) + 3910 * movestogo + 51178) / 20000;
+}
+
 TTime moves_in_time(int increment, int remaining, int movestogo){
     int importance;
-    importance = 5 * std::sqrt(movestogo);
+    importance = move_importance(movestogo);
 
     int average_time = remaining / movestogo;
     int extra = average_time * importance * 3 / 200;
