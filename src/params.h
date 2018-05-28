@@ -139,4 +139,13 @@ extern Score minor_threat_bonus[6];
 
 extern Score rook_threat_bonus[6];
 
+extern Score pst[14][64];
+
+extern int bonusPawn[2][32];
+extern int bonusKnight[2][32];
+extern int bonusBishop[2][32];
+extern int bonusRook[2][32];
+extern int bonusQueen[2][32];
+extern int bonusKing[2][32];
+
 #endif
