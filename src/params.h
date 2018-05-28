@@ -124,7 +124,7 @@ extern int pawn_shelter_penalty[8];
 extern int tempo;
 extern int ATTACK_VALUES[12];
 
-extern Score mobility_bonus[4][32];
+extern Score mobility_bonus[6][32];
 
 extern Score passed_pawn_bonus[7];
 
