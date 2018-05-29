@@ -384,7 +384,7 @@ Score evaluate_king(Evaluation *eval, Position *p, Color color) {
 
         Bitboard b = eval->targets[opp_c] & ~eval->targets[color] & eval->king_zone[color] & ~p->bbs[opp_c];
         king_danger += count(b) * king_danger_mult;
-        king_danger += eval->num_king_attackers[color] * eval->king_zone_score[color];
+        king_danger += eval->num_king_attackers[color] * eval->king_zone_score[color] * 5 / 7;
         king_danger += eval->num_king_zone_attacks[color] * king_zone_attack_penalty;
 
         if (p->pinned[color]) {

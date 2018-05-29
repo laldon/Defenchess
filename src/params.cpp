@@ -47,16 +47,16 @@ Score
 
 // King safety
 int
-    king_only_protected_penalty = 72,
-    queen_check_penalty = 314,
-    knight_check_penalty = 271,
-    rook_check_penalty = 344,
-    bishop_check_penalty = 194,
+    king_only_protected_penalty = 69,
+    queen_check_penalty = 298,
+    knight_check_penalty = 296,
+    rook_check_penalty = 329,
+    bishop_check_penalty = 198,
     pawn_distance_penalty = 7,
-    king_zone_attack_penalty = 22,
-    queen_number_mult = 461,
-    king_danger_mult = 104,
-    pinned_bonus = 44,
+    king_zone_attack_penalty = 40,
+    queen_number_mult = 444,
+    king_danger_mult = 92,
+    pinned_bonus = 55,
     king_danger_divisor_mid = 2048,
     king_danger_divisor_end = 32;
 
