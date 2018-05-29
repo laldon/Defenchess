@@ -638,7 +638,7 @@ int scaling_factor(Evaluation *eval, Position *p, Material *eval_material) {
         return 4;  // This is KRPKR since we have no other endgames yet.
     }
 
-    Color winner = winning_side(p);
+    Color winner = p->non_pawn_material[white] > p->non_pawn_material[black] ? white : black;
     Color loser = opponent_color(winner);
 
     if (eval->num_pieces[pawn(winner)] <= 1 &&
