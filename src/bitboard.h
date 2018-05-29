@@ -25,7 +25,7 @@
 inline int count(Bitboard b) { return __builtin_popcountll(b); }
 
 inline Square lsb(Bitboard b) { assert(b != 0); return (Square)(__builtin_ctzll(b)); }
-inline Square msb(Bitboard b) { return (Square)(63 ^ __builtin_clzll(b)); }
+inline Square msb(Bitboard b) { assert(b != 0); return (Square)(63 ^ __builtin_clzll(b)); }
 
 inline Square pop(Bitboard *b) {
     const Square sq = lsb(*b);
