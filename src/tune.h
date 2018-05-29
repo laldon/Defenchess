@@ -16,20 +16,27 @@
     along with Defenchess.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef POSITION_H
-#define POSITION_H
+#ifdef __TUNE__
 
-#include "bitboard.h"
+#ifndef TUNE_H
+#define TUNE_H
+
 #include "data.h"
-#include "move_utils.h"
-#include "move.h"
+#include <vector>
 #include <iostream>
 
-Position* start_pos();
-void calculate_score(Position *p);
-void calculate_hash(Position *p);
-void calculate_material(Position *p);
+typedef struct Parameter {
+    int *variable;
+    int value;
+    std::string name;
+    bool increasing;
+    int stability;
+} Parameter;
 
-Position* import_fen(std::string fen, int thread_id);
+void init_parameters(std::vector<Parameter> &parameters);
+void init_pst(std::vector<Parameter> &parameters);
+void tune();
+
+#endif
 
 #endif

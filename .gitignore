@@ -3,3 +3,6 @@ settings.json
 img/
 scripts/
 *.jpg
+*.txt
+*.pgn
+*.swp

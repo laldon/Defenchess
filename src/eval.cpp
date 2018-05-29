@@ -24,41 +24,6 @@
 #include "endgame.h"
 #include <iostream>
 
-Score mobility_bonus[4][32] = {};
-
-const Score passed_pawn_bonus[7] = {
-    {3, 3}, {5, 5}, {20, 20}, {45, 45}, {100, 100}, {150, 150} // Pawn is never on RANK_8
-};
-
-const Score passed_file_bonus[8] = {
-    {5, 5}, {1, 5}, {0, -4}, {-11, -7}, {-11, -7}, {0, -4}, {1, 5}, {5, 5}
-};
-
-const Score rook_file_bonus[2] = {{12, 4}, {26, 12}};
-
-const Score isolated_pawn_penalty[2] = {{16, 18}, {8, 11}},
-            backward_pawn_penalty[2] = {{23, 15}, {14, 7}};
-
-const Score minor_threat_bonus[6] = {
-    { 0,  0}, // Empty
-    { 0, 10}, // Pawn
-    {20, 20}, // Knight
-    {20, 20}, // Bishop
-    {30, 40}, // Rook
-    {30, 40}  // Queen
-    // { 0, 0},  // King should never be called
-};
-
-const Score rook_threat_bonus[6] = {
-    { 0,  0}, // Empty
-    { 0, 10}, // Pawn
-    {20, 35}, // Knight
-    {20, 35}, // Bishop
-    { 0,  0}, // Rook
-    {20, 30}  // Queen
-    // { 0, 0}  // King should never be called
-};
-
 Score connected[2][2][3][8];
 const int connection_bonus[8] = { 0, 8, 15, 10, 45, 60, 100, 200 };
 
@@ -152,7 +117,7 @@ Score evaluate_pawn_structure(Evaluation *eval, Position *p, Color color) {
         Bitboard king_threats = PAWN_CAPTURE_MASK[outpost][color] & eval->king_zone[opp_c];
         if (king_threats) {
             ++eval->num_king_attackers[opp_c];
-            eval->king_zone_score[opp_c] += ATTACK_VALUES[white_pawn];
+            eval->king_zone_score[opp_c] += ATTACK_VALUES[PAWN];
         }
         ++eval->num_pieces[pawn(color)];
         ++eval->num_pieces[color];
@@ -171,7 +136,7 @@ void evaluate_pawn_init(Evaluation *eval, Position *p, Color color) {
         Bitboard king_threats = PAWN_CAPTURE_MASK[outpost][color] & eval->king_zone[opp_c];
         if (king_threats) {
             ++eval->num_king_attackers[opp_c];
-            eval->king_zone_score[opp_c] += ATTACK_VALUES[white_pawn];
+            eval->king_zone_score[opp_c] += ATTACK_VALUES[PAWN];
         }
         ++eval->num_pieces[pawn(color)];
         ++eval->num_pieces[color];
@@ -232,7 +197,7 @@ Score evaluate_bishop(Evaluation *eval, Position *p, Color color) {
         Bitboard king_threats = bishop_targets & eval->king_zone[opp_c];
         if (king_threats) {
             ++eval->num_king_attackers[opp_c];
-            eval->king_zone_score[opp_c] += ATTACK_VALUES[white_bishop];
+            eval->king_zone_score[opp_c] += ATTACK_VALUES[BISHOP];
             eval->num_king_zone_attacks[opp_c] += count(king_threats);
         }
         eval->double_targets[color] |= eval->targets[color] & bishop_targets;
@@ -273,7 +238,7 @@ Score evaluate_knight(Evaluation *eval, Position *p, Color color) {
         Bitboard king_threats = knight_targets & eval->king_zone[opp_c];
         if (king_threats) {
             ++eval->num_king_attackers[opp_c];
-            eval->king_zone_score[opp_c] += ATTACK_VALUES[white_knight];
+            eval->king_zone_score[opp_c] += ATTACK_VALUES[KNIGHT];
             eval->num_king_zone_attacks[opp_c] += count(king_threats);
         }
         eval->double_targets[color] |= eval->targets[color] & knight_targets;
@@ -327,7 +292,7 @@ Score evaluate_rook(Evaluation *eval, Position *p, Color color) {
         Bitboard king_threats = rook_targets & eval->king_zone[opp_c];
         if (king_threats) {
             ++eval->num_king_attackers[opp_c];
-            eval->king_zone_score[opp_c] += ATTACK_VALUES[white_rook];
+            eval->king_zone_score[opp_c] += ATTACK_VALUES[ROOK];
             eval->num_king_zone_attacks[opp_c] += count(king_threats);
         }
         eval->double_targets[color] |= eval->targets[color] & rook_targets;
@@ -358,7 +323,7 @@ Score evaluate_queen(Evaluation *eval, Position *p, Color color) {
         Bitboard king_threats = queen_targets & eval->king_zone[opp_c];
         if (king_threats) {
             ++eval->num_king_attackers[opp_c];
-            eval->king_zone_score[opp_c] += ATTACK_VALUES[white_queen];
+            eval->king_zone_score[opp_c] += ATTACK_VALUES[QUEEN];
             eval->num_king_zone_attacks[opp_c] += count(king_threats);
         }
         eval->double_targets[color] |= eval->targets[color] & queen_targets;

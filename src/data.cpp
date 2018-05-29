@@ -81,7 +81,6 @@ int move_overhead = 100;
 
 SearchThread search_threads[MAX_THREADS];
 
-int root_ply = 0;
 int mvvlva_values[12][14];
 
 int reductions[2][64][64];
@@ -97,12 +96,12 @@ void get_ready() {
     }
 
     SearchThread *main_thread = &search_threads[0];
-    root_ply = main_thread->search_ply;
+    main_thread->root_ply = main_thread->search_ply;
 
     // Copy over the root position
     for (int i = 1; i < MAX_THREADS; ++i) {
         SearchThread *t = &(search_threads[i]);
-        t->search_ply = root_ply;
+        t->root_ply = t->search_ply = main_thread->root_ply;
 
         // Need to fully copy the position
         std::memcpy(t->positions + main_thread->search_ply, main_thread->positions + main_thread->search_ply, sizeof(Position));
@@ -375,14 +374,6 @@ void init_polyglot() {
     }
 }
 
-void init_values() {
-    for (int i = 0; i < 12; i++) {
-        for (int j = 0; j < 14; j++) {
-            mvvlva_values[i][j] = piece_values[i] - j;
-        }
-    }
-}
-
 void init_passed_pawns() {
     Bitboard PASSED_PAWN_HORIZONTAL[64][2];
     for (int i = 0; i < 64; i++) {
@@ -639,6 +630,7 @@ void init_threads() {
         std::memset(search_thread->positions, 0, sizeof(search_thread->positions));
         search_thread->thread_id = i;
         search_thread->search_ply = 0;
+        search_thread->root_ply = 0;
     }
 }
 
@@ -654,9 +646,8 @@ void init_masks() {
     init_between();
     init_fromto();
     init_pawns();
-    init_pst();
-    init_polyglot();
     init_values();
+    init_polyglot();
     init_passed_pawns();
     init_pawn_masks();
     init_adj();
