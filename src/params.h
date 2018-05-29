@@ -120,10 +120,8 @@ extern int
     bishop_check_penalty,
     pawn_distance_penalty,
     king_zone_attack_penalty,
-    pawn_shelter_divisor,
     queen_number_mult,
     king_danger_mult,
-    king_zone_divisor,
     pinned_bonus,
     king_danger_divisor_mid,
     king_danger_divisor_end;

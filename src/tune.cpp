@@ -398,21 +398,18 @@ void init_parameters(vector<Parameter> &parameters) {
 
     parameters.push_back({&hindered_passer_penalty.midgame, hindered_passer_penalty.midgame, "hindered_passer_penalty.midgame", true, 1});
 
+    parameters.push_back({&pawn_distance_penalty, pawn_distance_penalty, "pawn_distance_penalty", true, 1});
+
     parameters.push_back({&king_only_protected_penalty, king_only_protected_penalty, "king_only_protected_penalty", true, 1});
     parameters.push_back({&queen_check_penalty, queen_check_penalty, "queen_check_penalty", true, 1});
     parameters.push_back({&knight_check_penalty, knight_check_penalty, "knight_check_penalty", true, 1});
     parameters.push_back({&rook_check_penalty, rook_check_penalty, "rook_check_penalty", true, 1});
     parameters.push_back({&bishop_check_penalty, bishop_check_penalty, "bishop_check_penalty", true, 1});
-    parameters.push_back({&pawn_distance_penalty, pawn_distance_penalty, "pawn_distance_penalty", true, 1});
     parameters.push_back({&king_zone_attack_penalty, king_zone_attack_penalty, "king_zone_attack_penalty", true, 1});
 
-    parameters.push_back({&pawn_shelter_divisor, pawn_shelter_divisor, "pawn_shelter_divisor", true, 1});
     parameters.push_back({&queen_number_mult, queen_number_mult, "queen_number_mult", true, 1});
     parameters.push_back({&king_danger_mult, king_danger_mult, "king_danger_mult", true, 1});
-    parameters.push_back({&king_zone_divisor, king_zone_divisor, "king_zone_divisor", true, 1});
     parameters.push_back({&pinned_bonus, pinned_bonus, "pinned_bonus", true, 1});
-    parameters.push_back({&king_danger_divisor_mid, king_danger_divisor_mid, "king_danger_divisor_mid", true, 1});
-    parameters.push_back({&king_danger_divisor_end, king_danger_divisor_end, "king_danger_divisor_end", true, 1});
 
     parameters.push_back({&pawn_shelter_penalty[2], pawn_shelter_penalty[2], "pawn_shelter_penalty[2]", true, 1});
     parameters.push_back({&pawn_shelter_penalty[3], pawn_shelter_penalty[3], "pawn_shelter_penalty[3]", true, 1});

@@ -47,20 +47,18 @@ Score
 
 // King safety
 int
-    king_only_protected_penalty = 7,
-    queen_check_penalty = 32,
-    knight_check_penalty = 33,
-    rook_check_penalty = 38,
-    bishop_check_penalty = 23,
-    pawn_distance_penalty = 6,
-    king_zone_attack_penalty = 5,
-    pawn_shelter_divisor = 10,
-    queen_number_mult = 54,
-    king_danger_mult = 10,
-    king_zone_divisor = 14,
-    pinned_bonus = 6,
-    king_danger_divisor_mid = 29,
-    king_danger_divisor_end = 2;
+    king_only_protected_penalty = 72,
+    queen_check_penalty = 314,
+    knight_check_penalty = 271,
+    rook_check_penalty = 344,
+    bishop_check_penalty = 194,
+    pawn_distance_penalty = 7,
+    king_zone_attack_penalty = 22,
+    queen_number_mult = 461,
+    king_danger_mult = 104,
+    pinned_bonus = 44,
+    king_danger_divisor_mid = 2048,
+    king_danger_divisor_end = 32;
 
 int pawn_shelter_penalty[8] = {0, 0, 20, 31, 32, 50, 50, 50};
 int tempo = 12;
