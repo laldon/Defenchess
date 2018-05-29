@@ -380,15 +380,15 @@ Score evaluate_king(Evaluation *eval, Position *p, Color color) {
 
     if (eval->num_king_attackers[color] > (1 - eval->num_pieces[queen(opp_c)])) {
         // Attackers to the king extended zone
-        int king_danger = -pawn_shelter_value / 10 - 48 * !eval->num_pieces[queen(opp_c)];
+        int king_danger = -pawn_shelter_value / pawn_shelter_divisor - queen_number_mult * !eval->num_pieces[queen(opp_c)];
 
         Bitboard b = eval->targets[opp_c] & ~eval->targets[color] & eval->king_zone[color] & ~p->bbs[opp_c];
-        king_danger += count(b) * 10;
-        king_danger += eval->num_king_attackers[color] * eval->king_zone_score[color] / 12;
+        king_danger += count(b) * king_danger_mult;
+        king_danger += eval->num_king_attackers[color] * eval->king_zone_score[color] / king_zone_divisor;
         king_danger += eval->num_king_zone_attacks[color] * king_zone_attack_penalty;
 
         if (p->pinned[color]) {
-            king_danger += 6;
+            king_danger += pinned_bonus;
         }
 
         // Unprotected and attacked squares in the king zone
@@ -420,7 +420,7 @@ Score evaluate_king(Evaluation *eval, Position *p, Color color) {
         }
 
         if (king_danger > 0) {
-            king_score -= Score{king_danger * king_danger / 32, king_danger / 2};
+            king_score -= Score{king_danger * king_danger / king_danger_divisor_mid, king_danger / king_danger_divisor_end};
         }
     }
 

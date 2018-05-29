@@ -111,6 +111,7 @@ extern Score
     bishop_pawn_penalty,
     hindered_passer_penalty;
 
+// King safety
 extern int
     king_only_protected_penalty,
     queen_check_penalty,
@@ -118,7 +119,14 @@ extern int
     rook_check_penalty,
     bishop_check_penalty,
     pawn_distance_penalty,
-    king_zone_attack_penalty;
+    king_zone_attack_penalty,
+    pawn_shelter_divisor,
+    queen_number_mult,
+    king_danger_mult,
+    king_zone_divisor,
+    pinned_bonus,
+    king_danger_divisor_mid,
+    king_danger_divisor_end;
 
 extern int pawn_shelter_penalty[8];
 extern int tempo;

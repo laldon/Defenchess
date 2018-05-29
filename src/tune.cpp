@@ -131,7 +131,7 @@ long double find_error(vector<Parameter> params) {
 
 void read_entire_file() {
     ifstream fens;
-    fens.open("fewfens.txt");
+    fens.open("allfens.txt");
     string line;
     while (getline(fens, line)) {
         entire_file.push_back(line);
@@ -233,8 +233,8 @@ void tune() {
     cout.precision(32);
     vector<Parameter> best_guess;
     read_entire_file();
-    // init_parameters(best_guess);
-    init_pst(best_guess);
+    init_parameters(best_guess);
+    // init_pst(best_guess);
 
     for (unsigned i = 0; i < best_guess.size(); ++i) {
         for (unsigned j = i + 1; j < best_guess.size(); ++j) {
@@ -405,6 +405,14 @@ void init_parameters(vector<Parameter> &parameters) {
     parameters.push_back({&bishop_check_penalty, bishop_check_penalty, "bishop_check_penalty", true, 1});
     parameters.push_back({&pawn_distance_penalty, pawn_distance_penalty, "pawn_distance_penalty", true, 1});
     parameters.push_back({&king_zone_attack_penalty, king_zone_attack_penalty, "king_zone_attack_penalty", true, 1});
+
+    parameters.push_back({&pawn_shelter_divisor, pawn_shelter_divisor, "pawn_shelter_divisor", true, 1});
+    parameters.push_back({&queen_number_mult, queen_number_mult, "queen_number_mult", true, 1});
+    parameters.push_back({&king_danger_mult, king_danger_mult, "king_danger_mult", true, 1});
+    parameters.push_back({&king_zone_divisor, king_zone_divisor, "king_zone_divisor", true, 1});
+    parameters.push_back({&pinned_bonus, pinned_bonus, "pinned_bonus", true, 1});
+    parameters.push_back({&king_danger_divisor_mid, king_danger_divisor_mid, "king_danger_divisor_mid", true, 1});
+    parameters.push_back({&king_danger_divisor_end, king_danger_divisor_end, "king_danger_divisor_end", true, 1});
 
     parameters.push_back({&pawn_shelter_penalty[2], pawn_shelter_penalty[2], "pawn_shelter_penalty[2]", true, 1});
     parameters.push_back({&pawn_shelter_penalty[3], pawn_shelter_penalty[3], "pawn_shelter_penalty[3]", true, 1});
