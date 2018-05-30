@@ -640,7 +640,7 @@ void think(Position *p) {
 
     initialize_threads();
     while (depth <= think_depth_limit) {
-        int aspiration = 20;
+        int aspiration = 10;
         int alpha = -MATE;
         int beta = MATE;
 
