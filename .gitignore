@@ -2,6 +2,7 @@ Defenchess*
 settings.json
 img/
 scripts/
+cmake-*
 .idea
 *.jpg
 *.txt

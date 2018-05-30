@@ -759,11 +759,11 @@ void think(Position *p) {
 
                 for (int i : {2, 3}) {
                     if (last_best_move_depth * i >= depth) {
-                        myremain = std::max(init_remain / 2, myremain * (2*depth - last_best_move_depth) / depth);
+                         myremain = std::max(init_remain / 2, myremain * 95 / 100);
                     }
 
                     if (score_diff_by_depth * i >= depth) {
-                        myremain = std::max(init_remain / 2, myremain * (2*depth - score_diff_by_depth) / depth);
+                        myremain = std::max(init_remain / 2, myremain * 95 / 100);
                     }
                 }
 
