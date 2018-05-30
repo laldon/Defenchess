@@ -131,7 +131,7 @@ long double find_error(vector<Parameter> params) {
 
 void read_entire_file() {
     ifstream fens;
-    fens.open("fewfens.txt");
+    fens.open("allfens.txt");
     string line;
     while (getline(fens, line)) {
         entire_file.push_back(line);
@@ -181,14 +181,7 @@ void find_best_k(vector<Parameter> &parameters) {
 void binary_search_parameters(vector<Parameter> &parameters) {
     for (unsigned i = 0; i < parameters.size(); ++i) {
         Parameter *param = &parameters[i];
-        int min, max;
-        if (param->value < 0) {
-            min = param->value * 6 / 5;
-            max = param->value * 4 / 5;
-        } else {
-            min = param->value * 4 / 5;
-            max = param->value * 6 / 5;
-        }
+        int min = param->value - 10, max = param->value + 10;
         if (param->name == "PAWN_END") {
             min = PAWN_MID + 1;
         }
@@ -234,7 +227,8 @@ void tune() {
     vector<Parameter> best_guess;
     read_entire_file();
     // init_parameters(best_guess);
-    init_pst(best_guess);
+    // init_pst(best_guess);
+    init_mobility(best_guess);
 
     for (unsigned i = 0; i < best_guess.size(); ++i) {
         for (unsigned j = i + 1; j < best_guess.size(); ++j) {
@@ -308,6 +302,28 @@ void tune() {
     for (unsigned i = 0; i < best_guess.size(); ++i) {
         Parameter *param = &best_guess[i];
         cout << "best " << param->name << ": " << param->value << endl;
+    }
+}
+
+void init_mobility(vector<Parameter> &parameters) {
+    for (int i = 0; i <= 8; ++i) {
+        parameters.push_back({&mobility_bonus[KNIGHT][i].midgame, mobility_bonus[KNIGHT][i].midgame, "mobility_bonus[KNIGHT][" + to_string(i) + "].midgame", true, 1});
+        parameters.push_back({&mobility_bonus[KNIGHT][i].endgame, mobility_bonus[KNIGHT][i].endgame, "mobility_bonus[KNIGHT][" + to_string(i) + "].endgame", true, 1});
+    }
+
+    for (int i = 0; i <= 13; ++i) {
+        parameters.push_back({&mobility_bonus[BISHOP][i].midgame, mobility_bonus[BISHOP][i].midgame, "mobility_bonus[BISHOP][" + to_string(i) + "].midgame", true, 1});
+        parameters.push_back({&mobility_bonus[BISHOP][i].endgame, mobility_bonus[BISHOP][i].endgame, "mobility_bonus[BISHOP][" + to_string(i) + "].endgame", true, 1});
+    }
+
+    for (int i = 0; i <= 14; ++i) {
+        parameters.push_back({&mobility_bonus[ROOK][i].midgame, mobility_bonus[ROOK][i].midgame, "mobility_bonus[ROOK][" + to_string(i) + "].midgame", true, 1});
+        parameters.push_back({&mobility_bonus[ROOK][i].endgame, mobility_bonus[ROOK][i].endgame, "mobility_bonus[ROOK][" + to_string(i) + "].endgame", true, 1});
+    }
+
+    for (int i = 0; i <= 28; ++i) {
+        parameters.push_back({&mobility_bonus[QUEEN][i].midgame, mobility_bonus[QUEEN][i].midgame, "mobility_bonus[QUEEN][" + to_string(i) + "].midgame", true, 1});
+        parameters.push_back({&mobility_bonus[QUEEN][i].endgame, mobility_bonus[QUEEN][i].endgame, "mobility_bonus[QUEEN][" + to_string(i) + "].endgame", true, 1});
     }
 }
 

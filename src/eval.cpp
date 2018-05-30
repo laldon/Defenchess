@@ -36,31 +36,6 @@ void init_eval() {
         int v = 15 * supported + ((connection_bonus[r] + (adjacent ? (connection_bonus[r + 1] - connection_bonus[r]) / 2 : 0)) >> opposed);
         connected[opposed][adjacent][supported][r] = Score{v, v * (r - 2) / 4};
     }
-
-    // Init mobility
-    // Knights (max 8 moves)
-    for (int i = 0; i <= 8; ++i) {
-        mobility_bonus[0][i].midgame = int(30 * log((double) i + 1)) - 50;
-        mobility_bonus[0][i].endgame = int(30 * log((double) i + 1)) - 50;
-    }
-
-    // Bishops (max 13 moves)
-    for (int i = 0; i <= 13; ++i) {
-        mobility_bonus[1][i].midgame = int(30 * log((double) i + 1)) - 30;
-        mobility_bonus[1][i].endgame = int(30 * log((double) i + 1)) - 30;
-    }
-
-    // Rooks (max 14 moves)
-    for (int i = 0; i <= 14; ++i) {
-        mobility_bonus[2][i].midgame = int(25 * log((double) i + 1)) - 40;
-        mobility_bonus[2][i].endgame = int(50 * log((double) i + 1)) - 40;
-    }
-
-    // Queens (max 28 moves)
-    for (int i = 0; i <= 28; ++i) {
-        mobility_bonus[3][i].midgame = int(40 * log((double) (i / 3) + 1)) - 20;
-        mobility_bonus[3][i].endgame = int(70 * log((double) (i / 4) + 1)) - 20;
-    }
 }
 
 Score evaluate_pawn_structure(Evaluation *eval, Position *p, Color color) {
@@ -191,7 +166,7 @@ Score evaluate_bishop(Evaluation *eval, Position *p, Color color) {
 
         // Mobility
         int mobility = count(bishop_targets & eval->mobility_area[color]);
-        eval->mobility_score[color] += mobility_bonus[1][mobility];
+        eval->mobility_score[color] += mobility_bonus[BISHOP][mobility];
 
         // King threats
         Bitboard king_threats = bishop_targets & eval->king_zone[opp_c];
@@ -232,7 +207,7 @@ Score evaluate_knight(Evaluation *eval, Position *p, Color color) {
 
         // Mobility
         int mobility = count(knight_targets & eval->mobility_area[color]);
-        eval->mobility_score[color] += mobility_bonus[0][mobility];
+        eval->mobility_score[color] += mobility_bonus[KNIGHT][mobility];
 
         // King threats
         Bitboard king_threats = knight_targets & eval->king_zone[opp_c];
@@ -264,7 +239,7 @@ Score evaluate_rook(Evaluation *eval, Position *p, Color color) {
 
         // Mobility
         int mobility = count(rook_targets & eval->mobility_area[color]);
-        eval->mobility_score[color] += mobility_bonus[2][mobility];
+        eval->mobility_score[color] += mobility_bonus[ROOK][mobility];
 
         // Rooks threatening enemy pawns
         if (rank(outpost, color) > RANK_4) {
@@ -317,7 +292,7 @@ Score evaluate_queen(Evaluation *eval, Position *p, Color color) {
 
         // Mobility
         int mobility = count(queen_targets & eval->mobility_area[color]);
-        eval->mobility_score[color] += mobility_bonus[3][mobility];
+        eval->mobility_score[color] += mobility_bonus[QUEEN][mobility];
 
         // King threats
         Bitboard king_threats = queen_targets & eval->king_zone[opp_c];
