@@ -31,8 +31,10 @@
 bool main_thread_finished = false;
 std::vector<Move> root_moves = {};
 
+
 Move pv_at_depth[MAX_PLY * 2];
 int  score_at_depth[MAX_PLY * 2];
+int last_best_move_depth, score_diff_by_depth;
 
 void print_pv() {
     int i = 0;
@@ -639,6 +641,8 @@ void think(Position *p) {
     std::memset(score_at_depth, 0, sizeof(score_at_depth));
 
 	double fail_low_score = 1.0;
+	last_best_move_depth = 0;
+	score_diff_by_depth = 0;
 
     initialize_threads();
     while (depth <= think_depth_limit) {
@@ -720,25 +724,49 @@ void think(Position *p) {
         print_pv();
 
         previous_guess = current_guess;
+
         pv_at_depth[depth - 1] = main_pv.moves[0];
+
         score_at_depth[depth - 1] = current_guess;
 
-        if (depth >= 10) {
-            if (failed_low) {
-                myremain = std::min(max_time_usage, (int) (myremain * fail_low_score)); // %10 panic time
-            }
-            int score_diff = score_at_depth[depth - 1] - score_at_depth[depth - 2];
+        int score_diff;
 
-            if (score_diff < -10) {
-                myremain = std::min(max_time_usage, myremain * (100 + score_diff) / 100);
-            }
-            if (score_diff > 10) {
-                myremain = std::max(init_remain / 2, myremain * (100 - std::min(20, score_diff)) / 100);
-            }
-            if (pv_at_depth[depth - 1] == pv_at_depth[depth - 2]) {
-                myremain = std::max(init_remain / 2, myremain * 94 / 100);
+        if (depth >= 2) {
+            if (pv_at_depth[depth - 2] == pv_at_depth[depth - 1]) {
+                last_best_move_depth++;
             } else {
-                myremain = std::max(init_remain, myremain);
+                last_best_move_depth = 0;
+            }
+
+
+            score_diff = score_at_depth[depth - 1] - score_at_depth[depth - 2];
+            if (score_diff <= 25 && score_diff >= -25) {
+                score_diff_by_depth++;
+            } else {
+                score_diff_by_depth = 0;
+            }
+
+
+            if (depth >= 10) {
+
+                if (failed_low) {
+                    myremain = std::min(max_time_usage, (int) (myremain * 115 / 100)); // %10 panic time
+                }
+
+                if (score_diff < -10) {
+                    myremain = std::min(max_time_usage, myremain * (100 + score_diff) / 100);
+                }
+
+                for (int i : {2, 3}) {
+                    if (last_best_move_depth * i >= depth) {
+                        myremain = std::max(init_remain / 2, myremain * (2*depth - last_best_move_depth) / depth);
+                    }
+
+                    if (score_diff_by_depth * i >= depth) {
+                        myremain = std::max(init_remain / 2, myremain * (2*depth - score_diff_by_depth) / depth);
+                    }
+                }
+
             }
         }
         ++depth;
