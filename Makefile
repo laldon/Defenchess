@@ -55,3 +55,6 @@ perft:
 
 debug:
 	$(CC) $(CFLAGS) -g -D__DEBUG__ src/fathom/tbprobe.cpp src/*.cpp -o $(NAME)_debug$(ext) $(ext2)
+
+fsanitize:
+	$(CC) $(CFLAGS) -fsanitize=undefined -fuse-ld=gold -g -D__DEBUG__ src/fathom/tbprobe.cpp src/*.cpp -o $(NAME)_debug$(ext) $(ext2)

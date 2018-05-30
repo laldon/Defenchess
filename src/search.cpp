@@ -72,6 +72,9 @@ bool is_draw(Position *p) {
         int index = p->my_thread->search_ply - 2;
         while (index >= p->my_thread->search_ply - p->last_irreversible) {
             index -= 2;
+            if (index < 0) {
+                break;
+            }
             Position *position = &(p->my_thread->positions[index]);
             if (!position) {
                 break;

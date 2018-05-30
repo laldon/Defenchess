@@ -2,6 +2,7 @@ Defenchess*
 settings.json
 img/
 scripts/
+.idea
 *.jpg
 *.txt
 *.pgn
