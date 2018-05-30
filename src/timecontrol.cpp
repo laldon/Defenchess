@@ -22,7 +22,7 @@
 #include <cmath>
 
 int move_importance(int movestogo) {
-	return 5 * sqrt(movestogo);
+    return 5 * sqrt(movestogo);
 }
 
 TTime moves_in_time(int increment, int remaining, int movestogo){
