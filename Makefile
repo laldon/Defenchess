@@ -39,16 +39,22 @@ winrelease:
 	$(CC) $(CFLAGS) -static $(OPT) -DNDEBUG src/fathom/tbprobe.cpp src/*.cpp -o $(NAME)_$(version).exe $(ext2)
 
 winfeature:
-	$(CC) $(CFLAGS) -static $(OPT) -DNDEBUG src/fathom/tbprobe.cpp src/*.cpp -o $(NAME)_$(version)_$(feature).exe $(ext2)
+	$(CC) $(CFLAGS) -static $(OPT) -DNDEBUG src/fathom/tbprobe.cpp src/*.cpp -o $(feature).exe $(ext2)
 
 release:
 	$(CC) $(CFLAGS) $(OPT) -DNDEBUG src/fathom/tbprobe.cpp src/*.cpp -o $(NAME)_$(version)$(ext) $(ext2)
 
+tune:
+	$(CC) $(CFLAGS) $(OPT) -D__TUNE__ -DNDEBUG src/fathom/tbprobe.cpp src/*.cpp -o $(NAME)_tune$(ext) $(ext2)
+
 feature:
-	$(CC) $(CFLAGS) $(OPT) -DNDEBUG src/fathom/tbprobe.cpp src/*.cpp -o $(NAME)_$(version)_$(feature)$(ext) $(ext2)
+	$(CC) $(CFLAGS) $(OPT) -DNDEBUG src/fathom/tbprobe.cpp src/*.cpp -o $(feature)$(ext) $(ext2)
 
 perft:
 	$(CC) $(CFLAGS) $(OPT) -D__PERFT__ src/fathom/tbprobe.cpp src/*.cpp -o $(NAME)_perft$(ext) $(ext2)
 
 debug:
 	$(CC) $(CFLAGS) -g -D__DEBUG__ src/fathom/tbprobe.cpp src/*.cpp -o $(NAME)_debug$(ext) $(ext2)
+
+fsanitize:
+	$(CC) $(CFLAGS) -fsanitize=undefined -fuse-ld=gold -g -D__DEBUG__ src/fathom/tbprobe.cpp src/*.cpp -o $(NAME)_debug$(ext) $(ext2)

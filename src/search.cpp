@@ -31,6 +31,9 @@
 bool main_thread_finished = false;
 std::vector<Move> root_moves = {};
 
+Move pv_at_depth[MAX_PLY * 2];
+int  score_at_depth[MAX_PLY * 2];
+
 void print_pv() {
     int i = 0;
     while (i < main_pv.size) {
@@ -69,12 +72,15 @@ bool is_draw(Position *p) {
         int index = p->my_thread->search_ply - 2;
         while (index >= p->my_thread->search_ply - p->last_irreversible) {
             index -= 2;
+            if (index < 0) {
+                break;
+            }
             Position *position = &(p->my_thread->positions[index]);
             if (!position) {
                 break;
             }
             if (p->hash == position->hash) {
-                if (index >= root_ply)
+                if (index >= p->my_thread->root_ply)
                     return true;
 
                 ++repetition_count;
@@ -90,6 +96,11 @@ bool is_draw(Position *p) {
     return false;
 }
 
+void update_history(SearchThread *thread, Piece piece, Square to, int bonus) {
+    int value = thread->history[piece][to];
+    thread->history[piece][to] += bonus - value * std::abs(bonus) / 16384;
+}
+
 void save_killer(Position *p, Metadata *md, Move move, int depth, Move *quiets, int quiets_count) {
     SearchThread *my_thread = p->my_thread;
     if (move != md->killers[0]) {
@@ -98,11 +109,11 @@ void save_killer(Position *p, Metadata *md, Move move, int depth, Move *quiets, 
     }
     Piece piece = p->pieces[move_from(move)];
     int bonus = depth > 17 ? 0 : depth * depth;
-    my_thread->history[piece][move_to(move)] += bonus;
+    update_history(my_thread, piece, move_to(move), bonus);
 
     for (int i = 0; i < quiets_count; ++i) {
         Move q = quiets[i];
-        my_thread->history[p->pieces[move_from(q)]][move_to(q)] -= bonus;
+        update_history(my_thread, p->pieces[move_from(q)], move_to(q), -bonus);
     }
 
     if ((md-1)->current_move) {
@@ -110,12 +121,6 @@ void save_killer(Position *p, Metadata *md, Move move, int depth, Move *quiets, 
         Piece prev_piece = p->pieces[prev_to];
 
         my_thread->counter_moves[prev_piece][prev_to] = move;
-
-        my_thread->countermove_history[piece][move_to(move)] += bonus;
-        for (int i = 0; i < quiets_count; ++i) {
-            Move q = quiets[i];
-            my_thread->countermove_history[p->pieces[move_from(q)]][move_to(q)] -= bonus;
-        }
     }
 }
 
@@ -152,22 +157,24 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
         return 0;
     }
 
-    md->current_move = 0;
+    md->current_move = no_move;
     (md+1)->ply = ply + 1;
     bool is_principal = beta - alpha > 1;
     int new_depth = in_check || depth >= 0 ? 0 : -1;
 
     Move tte_move = no_move;
-    TTEntry *tte = get_tte(p->hash);
-    int tte_score = md->static_eval = UNDEFINED;
-    if (tte) {
+    bool tt_hit;
+    TTEntry *tte = get_tte(p->hash, tt_hit);
+    int tte_score;
+    tte_score = md->static_eval = UNDEFINED;
+    if (tt_hit) {
         tte_move = tte->move;
         if (tte->depth >= new_depth) {
             tte_score = tt_to_score(tte->score, ply);
             if (!is_principal &&
-                (tte->flag == FLAG_EXACT ||
-                (tte->flag == FLAG_BETA && tte_score >= beta) ||
-                (tte->flag == FLAG_ALPHA && tte_score <= alpha))) {
+                (tte_flag(tte) == FLAG_EXACT ||
+                (tte_flag(tte) == FLAG_BETA && tte_score >= beta) ||
+                (tte_flag(tte) == FLAG_ALPHA && tte_score <= alpha))) {
                     return tte_score;
             }
         }
@@ -176,14 +183,16 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
     int best_score;
     if (!in_check) {
         bool is_null = ply > 0 && (md-1)->current_move == null_move;
-        if (is_null) {
+        if (tt_hit && tte->static_eval != UNDEFINED) {
+            md->static_eval = best_score = tte->static_eval;
+        } else if (is_null) {
             md->static_eval = best_score = tempo * 2 - (md-1)->static_eval;
         } else {
             md->static_eval = best_score = evaluate(p);
         }
         if (best_score >= beta) {
-            if (!tte) {
-                set_tte(p->hash, 0, new_depth, score_to_tt(best_score, ply), FLAG_BETA);
+            if (!tt_hit) {
+                set_tte(p->hash, tte, 0, new_depth, score_to_tt(best_score, ply), md->static_eval, FLAG_BETA);
             }
             return best_score;
         }
@@ -238,7 +247,7 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
         undo_move(position);
         assert(is_timeout || main_thread_finished || (score >= -MATE && score <= MATE));
 
-        if (is_timeout) {
+        if (is_timeout && p->my_thread->depth > 1) {
             return TIMEOUT;
         }
 
@@ -252,7 +261,7 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
                 if (is_principal && score < beta) {
                     alpha = score;
                 } else {
-                    set_tte(p->hash, move, new_depth, score_to_tt(score, ply), FLAG_BETA);
+                    set_tte(p->hash, tte, move, new_depth, score_to_tt(score, ply), md->static_eval, FLAG_BETA);
                     return score;
                 }
             }
@@ -264,15 +273,17 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
     }
 
     uint8_t flag = is_principal && best_move ? FLAG_EXACT : FLAG_ALPHA;
-    set_tte(p->hash, best_move, new_depth, score_to_tt(best_score, ply), flag);
+    set_tte(p->hash, tte, best_move, new_depth, score_to_tt(best_score, ply), md->static_eval, flag);
     assert(best_score >= -MATE && best_score <= MATE);
     return best_score;
 }
 
 int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool in_check, bool cut) {
     assert(-MATE <= alpha && alpha < beta && beta <= MATE);
-    assert(0 <= depth);
     assert(in_check == is_checked(p));
+    if (depth < 1) {
+        return alpha_beta_quiescence(p, md, alpha, beta, 0, in_check);
+    }
 
     int ply = md->ply;
     if (is_main_thread(p)) {
@@ -311,15 +322,16 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
     Move tte_move = no_move;
     int tte_score;
     tte_score = md->static_eval = UNDEFINED;
-    TTEntry *tte = get_tte(pos_hash);
-    if (tte) {
+    bool tt_hit;
+    TTEntry *tte = get_tte(pos_hash, tt_hit);
+    if (tt_hit) {
         tte_move = tte->move;
         if (tte->depth >= depth) {
             tte_score = tt_to_score(tte->score, ply);
             if (!is_principal &&
-                (tte->flag == FLAG_EXACT ||
-                (tte->flag == FLAG_BETA && tte_score >= beta) ||
-                (tte->flag == FLAG_ALPHA && tte_score <= alpha))) {
+                (tte_flag(tte) == FLAG_EXACT ||
+                (tte_flag(tte) == FLAG_BETA && tte_score >= beta) ||
+                (tte_flag(tte) == FLAG_ALPHA && tte_score <= alpha))) {
                     if (tte_score >= beta && !in_check && tte_move && !is_capture_or_promotion(p, tte_move)) {
                         save_killer(p, md, tte_move, depth, nullptr, 0);
                     }
@@ -342,7 +354,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
             if (flag == FLAG_EXACT ||
                 (flag == FLAG_BETA && tb_score >= beta) ||
                 (flag == FLAG_ALPHA && tb_score <= alpha)) {
-                    set_tte(pos_hash, 0, std::min(depth + 6, MAX_PLY - 1), score_to_tt(tb_score, ply), flag);
+                    set_tte(pos_hash, tte, 0, std::min(depth + 6, MAX_PLY - 1), score_to_tt(tb_score, ply), UNDEFINED, flag);
                     return tb_score;
                 }
         }
@@ -350,10 +362,9 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
 
     bool is_null = ply > 0 && (md-1)->current_move == null_move;
     if (!in_check) {
-        if (depth < 1) {
-            return alpha_beta_quiescence(p, md, alpha, beta, 0, in_check);
-        }
-        if (is_null) {
+        if (tt_hit && tte->static_eval != UNDEFINED) {
+            md->static_eval = tte->static_eval;
+        } else if (is_null) {
             md->static_eval = tempo * 2 - (md-1)->static_eval;
         } else {
             md->static_eval = evaluate(p);
@@ -413,8 +424,8 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
     if (!tte_move && depth >= 6 && (is_principal || md->static_eval + 150 >= beta)) {
         new_depth = 3 * depth / 4 - 2;
         alpha_beta(p, md, alpha, beta, new_depth, in_check, cut);
-        tte = get_tte(pos_hash);
-        if (tte) {
+        tte = get_tte(pos_hash, tt_hit);
+        if (tt_hit) {
             tte_move = tte->move;
             tte_score = tt_to_score(tte->score, ply);
         }
@@ -459,7 +470,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
             !root_node &&
             excluded_move == no_move &&
             tte_score != UNDEFINED && std::abs(tte_score) < MATE_IN_MAX_PLY &&
-            (tte->flag == FLAG_EXACT || tte->flag == FLAG_BETA) &&
+            (tte_flag(tte) == FLAG_EXACT || tte_flag(tte) == FLAG_BETA) &&
             tte->depth >= depth - 3 &&
             is_legal(p, move)) {
                 int rbeta = std::max(tte_score - 2 * depth, -MATE + 1);
@@ -504,7 +515,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         int score;
 
         if (is_principal && num_moves == 1) {
-            score = -alpha_beta(position, md+1, -beta, -alpha, std::max(0, new_depth), checks, false);
+            score = -alpha_beta(position, md+1, -beta, -alpha, new_depth, checks, false);
         } else {
             // late move reductions
             int reduction = 0;
@@ -517,27 +528,29 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
                     ++reduction;
                 }
 
-                // Piece piece = p->pieces[move_from(move)];
-                // int quiet_score = p->my_thread->history[piece][move_to(move)] +
-                //                   p->my_thread->countermove_history[piece][move_to(move)];
+                Piece piece = p->pieces[move_from(move)];
+                int quiet_score = p->my_thread->history[piece][move_to(move)];
+                if (quiet_score <= -8192) {
+                    ++reduction;
+                }
                 reduction = std::max(reduction, 0);
             }
 
-            score = -alpha_beta(position, md+1, -alpha - 1, -alpha, std::max(0, new_depth - reduction), checks, true);
+            score = -alpha_beta(position, md+1, -alpha - 1, -alpha, new_depth - reduction, checks, true);
 
             // Verify late move reduction and re-run the search if necessary.
             if (reduction > 0 && score > alpha) {
-                score = -alpha_beta(position, md+1, -alpha - 1, -alpha, std::max(0, new_depth), checks, !cut);
+                score = -alpha_beta(position, md+1, -alpha - 1, -alpha, new_depth, checks, !cut);
             }
 
             if (is_principal && score > alpha && score < beta) {
-                score = -alpha_beta(position, md+1, -beta, -alpha, std::max(0, new_depth), checks, false);
+                score = -alpha_beta(position, md+1, -beta, -alpha, new_depth, checks, false);
             }
         }
         undo_move(position);
         assert(is_timeout || main_thread_finished || (score >= -MATE && score <= MATE));
 
-        if (check_time(p) || is_timeout) {
+        if ((check_time(p) || is_timeout) && p->my_thread->depth > 1) {
             return TIMEOUT;
         }
 
@@ -555,7 +568,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
                         save_killer(p, md, move, depth, quiets, quiets_count - 1);
                     }
                     if (excluded_move == no_move) {
-                        set_tte(pos_hash, move, depth, score_to_tt(score, ply), FLAG_BETA);
+                        set_tte(pos_hash, tte, move, depth, score_to_tt(score, ply), md->static_eval, FLAG_BETA);
                     }
                     return score;
                 }
@@ -569,7 +582,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
 
     if (excluded_move == no_move) {
         uint8_t flag = is_principal && best_move ? FLAG_EXACT : FLAG_ALPHA;
-        set_tte(pos_hash, best_move, depth, score_to_tt(best_score, ply), flag);
+        set_tte(pos_hash, tte, best_move, depth, score_to_tt(best_score, ply), md->static_eval, flag);
     }
     if (!in_check && best_move && !is_capture_or_promotion(p, best_move)) {
         save_killer(p, md, best_move, depth, quiets, quiets_count - 1);
@@ -579,6 +592,9 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
 }
 
 void think(Position *p) {
+    // Set the table generation
+    start_search();
+
     // First check TB
     Move tb_move;
     bool in_check = is_checked(p);
@@ -603,26 +619,28 @@ void think(Position *p) {
         Move move;
         while ((move = next_move(&movegen)) != no_move) {
             if (is_legal(p, move)) {
-                root_moves.push_back(move);            
+                root_moves.push_back(move);
             }
         }
-        if (eval_material->endgame_type == DRAW_ENDGAME || (in_check && root_moves.size() == 1)) {
-            std::cout << "bestmove " << move_to_str(movegen.moves[0].move) << std::endl;
+        if (eval_material->endgame_type == DRAW_ENDGAME || root_moves.size() == 1) {
+            std::cout << "bestmove " << move_to_str(root_moves[0]) << std::endl;
             return;
         }
     }
     int previous_guess = -MATE;
     int current_guess = -MATE;
     int init_remain = myremain;
+    int max_time_usage = std::min(total_remaining, init_remain * 3);
 
     gettimeofday(&start_ts, NULL);
     int depth = 1;
 
     std::memset(pv_at_depth, 0, sizeof(pv_at_depth));
+    std::memset(score_at_depth, 0, sizeof(score_at_depth));
 
     initialize_threads();
     while (depth <= think_depth_limit) {
-        int aspiration = 20;
+        int aspiration = 10;
         int alpha = -MATE;
         int beta = MATE;
 
@@ -640,9 +658,11 @@ void think(Position *p) {
                 Position *tp = &t->positions[t->search_ply];
                 Metadata *tmd = &t->metadatas[0];
                 int thread_depth = depth + (i % 4);
+                t->depth = thread_depth;
                 t->thread_obj = std::thread(alpha_beta, tp, tmd, alpha, beta, thread_depth, in_check, false);
             }
 
+            main_thread->depth = depth;
             score = alpha_beta(p, md, alpha, beta, depth, in_check, false);
             main_thread_finished = true;
 
@@ -675,9 +695,6 @@ void think(Position *p) {
         if (is_timeout) {
             break;
         }
-        if (depth >= 18 && failed_low) {
-            myremain = std::min(total_remaining, std::min(init_remain * 4 / 3, myremain * 21 / 20)); // %5 panic time
-        }
 
         gettimeofday(&curr_time, NULL);
         int time_taken = time_passed();
@@ -693,25 +710,38 @@ void think(Position *p) {
             std::cout << "cp " << current_guess * 100 / PAWN_END;
         }
 
+        std::cout << " hashfull " << hashfull();
+
         uint64_t nodes = sum_nodes();
         std::cout << " nodes " << nodes <<  " nps " << nodes*1000/(time_taken+1) << " time " << time_taken << " pv ";
         print_pv();
 
         previous_guess = current_guess;
         pv_at_depth[depth - 1] = main_pv.moves[0];
+        score_at_depth[depth - 1] = current_guess;
 
-        if (depth >= 18 && depth <= 30 && std::abs(current_guess) < KNOWN_WIN && std::abs(current_guess) > 30 &&
-                pv_at_depth[depth - 1] == pv_at_depth[depth - 2] &&
-                pv_at_depth[depth - 1] == pv_at_depth[depth - 3] &&
-                pv_at_depth[depth - 1] == pv_at_depth[depth - 4] &&
-                pv_at_depth[depth - 1] == pv_at_depth[depth - 5] &&
-                pv_at_depth[depth - 1] == pv_at_depth[depth - 6]
-        ) {
-            myremain = std::max(init_remain / 3, myremain * 95 / 100);
+        if (depth >= 10) {
+            if (failed_low) {
+                myremain = std::min(max_time_usage, myremain * 11 / 10); // %10 panic time
+            }
+            int score_diff = score_at_depth[depth - 1] - score_at_depth[depth - 2];
+
+            if (score_diff < -10) {
+                myremain = std::min(max_time_usage, myremain * 21 / 20);
+            }
+            if (score_diff > 10) {
+                myremain = std::max(init_remain / 2, myremain * 98 / 100);
+            }
+            if (pv_at_depth[depth - 1] == pv_at_depth[depth - 2]) {
+                myremain = std::max(init_remain / 2, myremain * 94 / 100);
+            } else {
+                myremain = std::max(init_remain, myremain);
+            }
         }
         ++depth;
     }
     gettimeofday(&curr_time, NULL);
+    std::cout << "info time " << time_passed() << std::endl;
     std::cout << "bestmove " << move_to_str(main_pv.moves[0]);
     if (main_pv.size > 1) {
         std::cout << " ponder " << move_to_str(main_pv.moves[1]);

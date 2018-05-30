@@ -17,7 +17,7 @@
 */
 
 #include "position.h"
-#include <iostream>
+#include <vector>
 
 void calculate_score(Position *p) {
     p->score = Score{0, 0};
@@ -108,16 +108,22 @@ Position* add_pieces(Position* p){
     return p;
 }
 
-Position* import_fen(const char* fen){
-    char *buffer = (char *)calloc(strlen(fen) + 1, 1);
-    strcat(buffer, fen);
-
-    char *matches[6] = {};
-    char *token = strtok(buffer, " ");
-    for (int i = 0; i < 6 && token; i++) {
-        matches[i] = token;
-        token = strtok(NULL, " ");
+void split_fen(std::string s, std::vector<std::string> &m) {
+    unsigned l_index = 0;
+    for (unsigned i = 0 ; i < s.length() ; i++) {
+        if (s[i] == ' ') {
+            m.push_back(s.substr(l_index, i - l_index));
+            l_index = i + 1;
+        }
+        if (i == s.length() - 1) {
+            m.push_back(s.substr(l_index));
+        }
     }
+}
+
+Position* import_fen(std::string fen, int thread_id){
+    std::vector<std::string> matches;
+    split_fen(fen, matches);
     
     Color color;
     if (matches[1][0] == 'w') {
@@ -130,16 +136,16 @@ Position* import_fen(const char* fen){
     }
 
     int halfmove_clock;
-    if (matches[5]) {
-        halfmove_clock = atoi(matches[5]);
+    if (matches[5] != "") {
+        halfmove_clock = stoi(matches[5]);
     } else {
         halfmove_clock = 1;
     }
-    root_ply = 2 * (halfmove_clock - 1) + color;
 
-    SearchThread *main_thread = &search_threads[0];
-    Position *p = &(main_thread->positions[root_ply]);
-    main_thread->search_ply = root_ply;
+    SearchThread *main_thread = &search_threads[thread_id];
+    main_thread->root_ply = 2 * (halfmove_clock - 1) + color;
+    Position *p = &(main_thread->positions[main_thread->root_ply]);
+    main_thread->search_ply = main_thread->root_ply;
     p->color = color;
 
     p->bbs[white_occupy] = 0;
@@ -166,9 +172,9 @@ Position* import_fen(const char* fen){
     }
 
     int sq = A8;
-    for (char *ch = matches[0]; *ch; ch++) {
+    for(char& c : matches[0]) {
         Piece piece = (Piece) 32;
-        switch(*ch) {
+        switch(c) {
         case 'P':
             piece = white_pawn;
             break;
@@ -212,7 +218,7 @@ Position* import_fen(const char* fen){
             break;
         case '1': case '2': case '3': case '4':
         case '5': case '6': case '7': case '8':
-            sq += *ch - '0';
+            sq += c - '0';
         }
         if (piece != 32) {
             p->pieces[sq] = piece;
@@ -223,8 +229,8 @@ Position* import_fen(const char* fen){
     }
 
     p->castling = 0;
-    for (char *ch = matches[2]; *ch; ch++) {
-        switch(*ch) {
+    for(char& c : matches[2]) {
+        switch(c) {
         case 'K':
             p->castling |= 1;
             break;
@@ -248,8 +254,8 @@ Position* import_fen(const char* fen){
         p->enpassant = 0;
     }
 
-    if (matches[4]) {
-        p->last_irreversible = atoi(matches[4]);
+    if (matches[4] != "") {
+        p->last_irreversible = stoi(matches[4]);
     } else {
         p->last_irreversible = 0;
     }
@@ -260,7 +266,6 @@ Position* import_fen(const char* fen){
     calculate_score(p);
     calculate_hash(p);
     calculate_material(p);
-    free(buffer);
     p->my_thread = main_thread;
     return p;
 }
@@ -311,7 +316,7 @@ Position* start_pos(){
     p->castling = 15;
     p->enpassant = 0;
     p->hash = p->pawn_hash = 0;
-    main_thread->search_ply = root_ply = 0;
+    main_thread->search_ply = main_thread->root_ply = 0;
     p->pinned[white] = pinned_piece_squares(p, white);
     p->pinned[black] = pinned_piece_squares(p, black);
     calculate_score(p);

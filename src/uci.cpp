@@ -27,8 +27,8 @@
 #include "tt.h"
 #include <vector>
 #include <map>
-#include <iostream>
 #include "tb.h"
+#include "tune.h"
 
 using namespace std;
 
@@ -82,6 +82,7 @@ void uci() {
     cout << "option name Hash type spin default 256 min 1 max 16384" << endl;
     cout << "option name Threads type spin default 1 min 1 max " << MAX_THREADS << endl;
     cout << "option name SyzygyPath type string default <empty>" << endl;
+    cout << "option name MoveOverhead type spin default 100 min 0 max 5000" << endl;
     cout << "uciok" << endl;
 }
 
@@ -209,7 +210,7 @@ void startpos() {
 void cmd_fen() {
     string fen_str = word_list[2] + " " + word_list[3] + " " + word_list[4] + " " + word_list[5] + " " + word_list[6] + " " + word_list[7];
 
-    root_position = import_fen(fen_str.c_str());
+    root_position = import_fen(fen_str, 0);
 
     if (word_equal(8, "moves")) {
         for (unsigned i = 9 ; i < word_list.size() ; i++) {
@@ -235,8 +236,12 @@ void cmd_fen() {
 }
 
 void see() {
-    Move move = uci2move(root_position, word_list[1]);
-    cout << see_capture(root_position, move) << endl;
+    if (word_list[1] == "test") {
+        see_test();
+    } else {
+        Move move = uci2move(root_position, word_list[1]);
+        cout << see_capture(root_position, move) << endl;
+    }
 }
 
 void cmd_position() {
@@ -260,7 +265,46 @@ void setoption() {
         num_threads = std::min(MAX_THREADS, stoi(value));
     } else if (name == "SyzygyPath") {
         init_syzygy(value);
+    } else if (name == "MoveOverhead") {
+        move_overhead = stoi(value);
     }
+}
+
+int bench_time(struct timeval s, struct timeval e) {
+    return (((e.tv_sec - s.tv_sec) * 1000000) + (e.tv_usec - s.tv_usec)) / 1000;
+}
+
+void bench() {
+    uint64_t nodes = 0;
+
+    struct timeval bench_start, bench_end;
+    gettimeofday(&bench_start, nullptr);
+    int tmp_depth = think_depth_limit;
+    int tmp_myremain = myremain;
+    think_depth_limit = 13;
+    is_timeout = false;
+
+    for (int i = 0; i < 36; i++){
+        cout << "\nPosition [" << (i + 1) << "|36]\n" << endl;
+        Position *p = import_fen(benchmarks[i], 0);
+
+        myremain = 3600000;
+        think(p);
+        nodes += search_threads[0].nodes;
+
+        clear_tt();
+    }
+
+    gettimeofday(&bench_end, nullptr);
+    int time_taken = bench_time(bench_start, bench_end);
+    think_depth_limit = tmp_depth;
+    myremain = tmp_myremain;
+
+    cout << "\n------------------------\n";
+    cout << "Time  : " << time_taken << endl;
+    cout << "Nodes : " << nodes << endl;
+    cout << "NPS   : " << nodes * 1000 / (time_taken + 1) << endl;
+    exit(EXIT_SUCCESS);
 }
 
 void ucinewgame() {
@@ -294,11 +338,20 @@ void run_command(string s) {
         stop();
     if (s == "see")
         see();
+    if (s == "bench")
+        bench();
+#ifdef __TUNE__
+    if (s == "tune")
+        tune();
+#endif
 }
 
 void loop() {
     string in_str;
     init();
+#ifdef __TUNE__
+    tune();
+#endif
     root_position = start_pos();
 
     while (true) {

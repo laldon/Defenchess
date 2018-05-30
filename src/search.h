@@ -32,9 +32,11 @@ const int futility_move_counts[2][8] = {
 };
 
 inline int lmr(bool is_pv, int depth, int num_moves) {
+    assert(depth >= 1 && num_moves >= 1);
     return reductions[is_pv][std::min(depth, 63)][std::min(num_moves, 63)];
 }
 
+int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int depth, bool in_check);
 void think(Position *p);
 void print_pv();
 

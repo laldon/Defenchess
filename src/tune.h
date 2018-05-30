@@ -16,28 +16,28 @@
     along with Defenchess.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef TEST_H
-#define TEST_H
+#ifdef __TUNE__
 
-#include <iostream>
-#include <sys/time.h>
+#ifndef TUNE_H
+#define TUNE_H
 
-#include "bitboard.h"
 #include "data.h"
-#include "move_utils.h"
-#include "move.h"
-#include "position.h"
-#include "search.h"
-#include "movegen.h"
-#include "target.h"
-#include "magic.h"
-#include "see.h"
+#include <vector>
+#include <iostream>
 
-#include "stdio.h"
+typedef struct Parameter {
+    int *variable;
+    int value;
+    std::string name;
+    bool increasing;
+    int stability;
+} Parameter;
 
-uint64_t Perft(int index, Position* p, bool root, bool in_check);
+void init_parameters(std::vector<Parameter> &parameters);
+void init_pst(std::vector<Parameter> &parameters);
+void init_mobility(std::vector<Parameter> &parameters);
+void tune();
 
-void see_test();
-void perft_test();
+#endif
 
 #endif

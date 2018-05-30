@@ -81,11 +81,13 @@ Move next_move(MoveGen *movegen) {
             if (movegen->tte_move) {
                 return movegen->tte_move;
             }
+            /* fallthrough */
 
         case GOOD_CAPTURES_SORT:
             generate_moves<CAPTURE>(movegen, movegen->position);
             score_moves(movegen, SCORE_CAPTURE);
             ++movegen->stage;
+            /* fallthrough */
 
         case GOOD_CAPTURES:
             while (movegen->head < movegen->tail) {
@@ -103,6 +105,7 @@ Move next_move(MoveGen *movegen) {
                 !is_capture(movegen->position, move)) {
                 return move;
             }
+            /* fallthrough */
 
         case KILLER_MOVES:
             ++movegen->stage;
@@ -113,6 +116,7 @@ Move next_move(MoveGen *movegen) {
                 !is_capture(movegen->position, move)) {
                 return move;
             }
+            /* fallthrough */
 
         case COUNTER_MOVES:
             ++movegen->stage;
@@ -125,14 +129,16 @@ Move next_move(MoveGen *movegen) {
                 !is_capture(movegen->position, move)) {
                 return move;
             }
+            /* fallthrough */
 
         case QUIETS_SORT:
             movegen->head = movegen->end_bad_captures;
             movegen->tail = movegen->end_bad_captures;
             generate_moves<SILENT>(movegen, movegen->position);
             score_moves(movegen, SCORE_QUIET);
-            insertion_sort(movegen->moves, movegen->head, movegen->tail, -500 * movegen->depth);
+            insertion_sort(movegen->moves, movegen->head, movegen->tail, -1024 * movegen->depth);
             ++movegen->stage;
+            /* fallthrough */
 
         case QUIETS:
             while (movegen->head < movegen->tail) {
@@ -146,6 +152,7 @@ Move next_move(MoveGen *movegen) {
             }
             ++movegen->stage;
             movegen->head = 0;
+            /* fallthrough */
 
         case BAD_CAPTURES:
             if (movegen->head < movegen->end_bad_captures) {
@@ -158,11 +165,13 @@ Move next_move(MoveGen *movegen) {
             if (movegen->tte_move) {
                 return movegen->tte_move;
             }
+            /* fallthrough */
 
         case EVASIONS_SORT:
             generate_evasions(movegen, movegen->position);
             score_moves(movegen, SCORE_EVASION);
             ++movegen->stage;
+            /* fallthrough */
 
         case EVASIONS:
             while (movegen->head < movegen->tail) {
@@ -178,11 +187,13 @@ Move next_move(MoveGen *movegen) {
             if (movegen->tte_move) {
                 return movegen->tte_move;
             }
+            /* fallthrough */
 
         case QUIESCENCE_CAPTURES_SORT:
             generate_moves<CAPTURE>(movegen, movegen->position);
             score_moves(movegen, SCORE_CAPTURE);
             ++movegen->stage;
+            /* fallthrough */
 
         case QUIESCENCE_CAPTURES:
             while (movegen->head < movegen->tail) {
@@ -198,11 +209,13 @@ Move next_move(MoveGen *movegen) {
             if (movegen->tte_move) {
                 return movegen->tte_move;
             }
+            /* fallthrough */
 
         case QUIESCENCE_CAPTURES_SORT_CHECKS:
             generate_moves<CAPTURE>(movegen, movegen->position);
             score_moves(movegen, SCORE_QUIET);
             ++movegen->stage;
+            /* fallthrough */
 
         case QUIESCENCE_CAPTURES_CHECKS:
             if (movegen->head < movegen->tail) {
@@ -211,6 +224,7 @@ Move next_move(MoveGen *movegen) {
             ++movegen->stage;
             movegen->head = 0;
             generate_quiet_checks(movegen, movegen->position);
+            /* fallthrough */
 
         case QUIESCENCE_QUIETS_CHECKS:
             while (movegen->head < movegen->tail) {
@@ -411,25 +425,25 @@ void generate_quiet_checks(MoveGen *movegen, Position *p) {
     Bitboard pinned_pieces = p->pinned[opponent_color(p->color)] & p->bbs[p->color];
     while (pinned_pieces) {
         Square pin_index = pop(&pinned_pieces);
-        Piece pin_piece = piece_type(p->pieces[pin_index]);
+        int pin_piece = piece_type(p->pieces[pin_index]);
         Bitboard move_locations = 0;
         switch(pin_piece) {
-            case white_knight:
+            case KNIGHT:
                 move_locations |= ~FROMTO_MASK[pin_index][king_index] & generate_knight_targets(pin_index) & non_capture;
                 break;
-            case white_bishop:
+            case BISHOP:
                 move_locations |= ~FROMTO_MASK[pin_index][king_index] & generate_bishop_targets(p->board, pin_index) & non_capture;
                 break;
-            case white_rook:
+            case ROOK:
                 move_locations |= ~FROMTO_MASK[pin_index][king_index] & generate_rook_targets(p->board, pin_index) & non_capture;
                 break;
-            case white_queen:
+            case QUEEN:
                 move_locations |= ~FROMTO_MASK[pin_index][king_index] & generate_queen_targets(p->board, pin_index) & non_capture;
                 break;
-            case white_king:
+            case KING:
                 move_locations |= ~FROMTO_MASK[pin_index][king_index] & generate_king_targets(pin_index) & non_capture;
                 break;
-            case white_pawn:
+            case PAWN:
                 move_locations |= ~FROMTO_MASK[pin_index][king_index] & generate_pawn_targets<SILENT>(p, pin_index) & ~(RANK_1BB | RANK_8BB);
                 break;
         }

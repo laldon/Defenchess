@@ -25,6 +25,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <thread>
+#include "params.h"
 #include <atomic>
 
 typedef uint8_t Square;
@@ -174,13 +175,7 @@ const int
     TIMEOUT = 32003,
 
     MATE_IN_MAX_PLY = MATE - MAX_PLY,
-    MATED_IN_MAX_PLY = -MATE + MAX_PLY,
-
-    PAWN_MID = 100, PAWN_END = 140,
-    KNIGHT_MID = 400, KNIGHT_END = 440,
-    BISHOP_MID = 430, BISHOP_END = 470,
-    ROOK_MID = 650, ROOK_END = 710,
-    QUEEN_MID = 1300, QUEEN_END = 1350;
+    MATED_IN_MAX_PLY = -MATE + MAX_PLY;
 
 const int RANK_1 = 0,
           RANK_2 = 1,
@@ -238,6 +233,16 @@ enum _Piece {
     black_king = 13
 };
 
+enum _PieceType {
+    NO_PIECE = 0,
+    PAWN = 1,
+    KNIGHT = 2,
+    BISHOP = 3,
+    ROOK = 4,
+    QUEEN = 5,
+    KING = 6
+};
+
 enum _Square : Square {
     A1 = 0,
         B1, C1, D1, E1, F1, G1, H1,
@@ -250,94 +255,25 @@ enum _Square : Square {
     A8, B8, C8, D8, E8, F8, G8, H8
 };
 
-// Give kings a value for SEE
-const int piece_values[14] = {0, 0, PAWN_MID, PAWN_MID, KNIGHT_MID, KNIGHT_MID, BISHOP_MID, BISHOP_MID,
-                              ROOK_MID, ROOK_MID, QUEEN_MID, QUEEN_MID, 100 * QUEEN_MID, 100 * QUEEN_MID};
-
 const char piece_chars[14] = {'\0', '\0', '\0', '\0', 'N', 'n', 'B', 'b', 'R', 'r', 'Q', 'q', 'K', 'k'};
 extern int mvvlva_values[12][14];
 
-typedef struct Score {
-    int midgame;
-    int endgame;
-
-    Score(int x=0, int y=0) : midgame(x), endgame(y)
-    {}
-
-    inline Score operator+(const Score& a) const
-    {
-        return Score(midgame + a.midgame, endgame + a.endgame);
-    }
-    inline Score operator-(const Score& a) const
-    {
-        return Score(midgame - a.midgame, endgame - a.endgame);
-    }
-    inline Score operator+=(const Score& a) 
-    {
-        this->midgame += a.midgame;
-        this->endgame += a.endgame;
-        return *this;
-    }
-    inline Score operator-=(const Score& a) 
-    {        
-        this->midgame -= a.midgame;
-        this->endgame -= a.endgame;
-        return *this;
-    }
-    inline Score operator/(const Score& a) const
-    {
-        return Score(midgame / a.midgame, endgame / a.endgame);
-    }
-    inline Score operator*(const Score& a) const
-    {
-        return Score(midgame * a.midgame, endgame * a.endgame);
-    }
-    inline Score operator+=(const int& a) 
-    {
-        this->midgame += a;
-        this->endgame += a;
-        return *this;
-    }
-    inline Score operator-=(const int& a)
-    {
-        this->midgame -= a;
-        this->endgame -= a;
-        return *this;
-    }
-    inline Score operator+(const int& a) const
-    {
-        return Score(midgame + a, endgame + a);
-    }
-    inline Score operator-(const int& a) const
-    {
-        return Score(midgame - a, endgame - a);
-    }
-    inline Score operator/(const int& a) const
-    {
-        return Score(midgame / a, endgame / a);
-    }
-    inline Score operator*(const int& a) const
-    {
-        return Score(midgame * a, endgame * a);
-    }
-} Score;
-
-extern Score pst[14][64];
-
 typedef struct CopyThingSize {
-    //? COPIED 
-    uint64_t     pawn_hash;
-    Piece        pieces[64];
+    // COPIED
     Bitboard     bbs[14];
-    Score        score;
-    uint8_t      castling; // black_queenside | black_kingside | white_queenside | white_kingside
-    Square       king_index[2];
-    Bitboard     board;
-    uint8_t      last_irreversible;
-    int          material_index;
-    int          non_pawn_material[2];
+    Piece        pieces[64];
     SearchThread *my_thread;
+    uint64_t     pawn_hash;
+    Bitboard     board;
+    Score        score;
+    int          non_pawn_material[2];
+    int          material_index;
+    Square       king_index[2];
+    uint8_t      castling; // black_queenside | black_kingside | white_queenside | white_kingside
+    uint8_t      last_irreversible;
 } CopyThingSize;
+
+const int position_size = sizeof(CopyThingSize);
 
 typedef struct Metadata {
     int  ply;
@@ -348,27 +284,25 @@ typedef struct Metadata {
 } Metadata;
 
 struct Position {
-    //? COPIED 
+    // COPIED
+    SearchThread *my_thread;
     uint64_t     pawn_hash;
-    Piece        pieces[64];
     Bitboard     bbs[14];
-    Score        score;
-    uint8_t      castling; // black_queenside | black_kingside | white_queenside | white_kingside
-    Square       king_index[2];
     Bitboard     board;
-    uint8_t      last_irreversible;
     int          material_index;
     int          non_pawn_material[2];
-    SearchThread *my_thread;
+    Score        score;
+    Piece        pieces[64];
+    Square       king_index[2];
+    uint8_t      castling; // black_queenside | black_kingside | white_queenside | white_kingside
+    uint8_t      last_irreversible;
 
-    //! NOT TO COPY
+    // NOT TO COPY
+    Bitboard pinned[2];
+    uint64_t hash;
     Square   enpassant; 
     Color    color;
-    uint64_t hash;
-    Bitboard pinned[2];
 };
-
-const int position_size = sizeof(CopyThingSize);
 
 typedef struct Evaluation {
     // Position *position;
@@ -519,13 +453,14 @@ struct SearchThread {
     std::thread thread_obj;
     Position    positions[1024];
     int         thread_id;
+    int         root_ply;
     int         search_ply;
     Metadata    metadatas[MAX_PLY + 1];
     Move        counter_moves[14][64];
     int         history[14][64];
-    int         countermove_history[14][64];
     std::atomic<uint64_t> nodes;
     std::atomic<uint64_t> tb_hits;
+    int         depth;
 };
 
 inline bool is_main_thread(Position *p) {return p->my_thread->thread_id == 0;}
@@ -537,9 +472,9 @@ extern int myremain;
 extern int total_remaining;
 extern int moves_to_go;
 extern volatile bool is_timeout;
-extern int root_ply;
 extern int think_depth_limit;
 extern int num_threads;
+extern int move_overhead;
 
 inline void initialize_threads() {
     for (int i = 0; i < num_threads; ++i) {
@@ -564,8 +499,6 @@ inline uint64_t sum_tb_hits() {
     return s;
 }
 
-extern Move pv_at_depth[MAX_PLY * 2];
-
 extern int reductions[2][64][64];
 
 inline Color piece_color(Piece p) {return p & 1;}
@@ -574,7 +507,7 @@ inline bool is_white(Piece p) {return piece_color(p) == white;}
 
 inline bool is_black(Piece p) {return piece_color(p) == black;}
 
-inline Piece piece_type(Piece p) {return p & 0xE;}
+inline int piece_type(Piece p) {return int(p / 2);}
 
 inline Piece king(Color color) {return white_king | color;}
 
@@ -590,17 +523,17 @@ inline Piece pawn(Color color) {return white_pawn | color;}
 
 inline Piece occupy(Color color) {return white_occupy | color;}
 
-inline bool is_king(Piece p) {return piece_type(p) == white_king;}
+inline bool is_king(Piece p) {return piece_type(p) == KING;}
 
-inline bool is_queen(Piece p) {return piece_type(p) == white_queen;}
+inline bool is_queen(Piece p) {return piece_type(p) == QUEEN;}
 
-inline bool is_rook(Piece p) {return piece_type(p) == white_rook;}
+inline bool is_rook(Piece p) {return piece_type(p) == ROOK;}
 
-inline bool is_bishop(Piece p) {return piece_type(p) == white_bishop;}
+inline bool is_bishop(Piece p) {return piece_type(p) == BISHOP;}
 
-inline bool is_knight(Piece p) {return piece_type(p) == white_knight;}
+inline bool is_knight(Piece p) {return piece_type(p) == KNIGHT;}
 
-inline bool is_pawn(Piece p) {return piece_type(p) == white_pawn;}
+inline bool is_pawn(Piece p) {return piece_type(p) == PAWN;}
 
 inline int move_from(Move m) {return m >> 10;}
 
