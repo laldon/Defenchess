@@ -3,6 +3,7 @@ settings.json
 img/
 scripts/
 .idea/
+cmake-*
 *.jpg
 *.txt
 *.pgn
