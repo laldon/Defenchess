@@ -608,12 +608,12 @@ void thread_think(SearchThread *my_thread, bool in_check) {
         if (!is_main) {
             while (true) {
                 int num_greater_depth = 0;
-                for (int i = 1; i < num_threads; ++i) {
+                for (int i = 0; i < num_threads; ++i) {
                     if (my_thread->thread_id != i && search_threads[i].depth >= depth) {
                         ++num_greater_depth;
                     }
                 }
-                if (depth > 1 && num_greater_depth >= num_threads / 2) {
+                if (depth > 1 && num_greater_depth >= num_threads / 4) {
                     ++depth;
                 } else {
                     break;
