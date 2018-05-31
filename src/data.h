@@ -26,7 +26,6 @@
 #include <algorithm>
 #include <thread>
 #include "params.h"
-#include <atomic>
 
 typedef uint8_t Square;
 typedef uint64_t Bitboard;
@@ -458,9 +457,9 @@ struct SearchThread {
     Metadata    metadatas[MAX_PLY + 1];
     Move        counter_moves[14][64];
     int         history[14][64];
-    std::atomic<uint64_t> nodes;
-    std::atomic<uint64_t> tb_hits;
     int         depth;
+    uint64_t    nodes;
+    uint64_t    tb_hits;
 };
 
 inline bool is_main_thread(Position *p) {return p->my_thread->thread_id == 0;}
@@ -486,7 +485,7 @@ inline void initialize_threads() {
 inline uint64_t sum_nodes() {
     uint64_t s = 0;
     for (int i = 0; i < num_threads; ++i) {
-        s += search_threads[i].nodes.load(std::memory_order_relaxed);
+        s += search_threads[i].nodes;
     }
     return s;
 }
@@ -494,7 +493,7 @@ inline uint64_t sum_nodes() {
 inline uint64_t sum_tb_hits() {
     uint64_t s = 0;
     for (int i = 0; i < num_threads; ++i) {
-        s += search_threads[i].tb_hits.load(std::memory_order_relaxed);
+        s += search_threads[i].tb_hits;
     }
     return s;
 }

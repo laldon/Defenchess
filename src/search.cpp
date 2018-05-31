@@ -27,9 +27,10 @@
 #include <sys/time.h>
 #include <algorithm>
 #include "tb.h"
+#include <mutex>
 
-bool main_thread_finished = false;
 std::vector<Move> root_moves = {};
+std::mutex depth_mtx;
 
 Move pv_at_depth[MAX_PLY * 2];
 int  score_at_depth[MAX_PLY * 2];
@@ -134,8 +135,6 @@ bool check_time(Position *p) {
             }
         }
         ++timer_count;
-    } else if (main_thread_finished) {
-        return true;
     }
     return false;
 }
@@ -245,7 +244,7 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
         md->current_move = move;
         int score = -alpha_beta_quiescence(position, md+1, -beta, -alpha, depth - 1, checks);
         undo_move(position);
-        assert(is_timeout || main_thread_finished || (score >= -MATE && score <= MATE));
+        assert(is_timeout || (score >= -MATE && score <= MATE));
 
         if (is_timeout && p->my_thread->depth > 1) {
             return TIMEOUT;
@@ -548,7 +547,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
             }
         }
         undo_move(position);
-        assert(is_timeout || main_thread_finished || (score >= -MATE && score <= MATE));
+        assert(is_timeout || (score >= -MATE && score <= MATE));
 
         if ((check_time(p) || is_timeout) && p->my_thread->depth > 1) {
             return TIMEOUT;
@@ -591,55 +590,39 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
     return best_score;
 }
 
-void think(Position *p) {
-    // Set the table generation
-    start_search();
+void thread_think(SearchThread *my_thread, bool in_check) {
+    Position *p = &my_thread->positions[my_thread->root_ply];
+    Metadata *md = &my_thread->metadatas[0];
+    bool is_main = is_main_thread(p);
 
-    // First check TB
-    Move tb_move;
-    bool in_check = is_checked(p);
-    SearchThread *main_thread = p->my_thread;
-    Metadata *md = &main_thread->metadatas[0];
-
-    // Clear root moves
-    root_moves.clear();
-
-    int wdl = probe_syzygy_dtz(p, &tb_move);
-    if (wdl != SYZYGY_FAIL) {
-        // Return draws immediately
-        if (wdl == SYZYGY_DRAW) {
-            std::cout << "info score cp 0" << std::endl;
-            std::cout << "bestmove " << move_to_str(tb_move) << std::endl;
-            return;
-        }
-        root_moves.push_back(tb_move);
-    } else {
-        Material *eval_material = get_material(p);
-        MoveGen movegen = new_movegen(p, md, 0, no_move, NORMAL_SEARCH, in_check);
-        Move move;
-        while ((move = next_move(&movegen)) != no_move) {
-            if (is_legal(p, move)) {
-                root_moves.push_back(move);
-            }
-        }
-        if (eval_material->endgame_type == DRAW_ENDGAME || root_moves.size() == 1) {
-            std::cout << "bestmove " << move_to_str(root_moves[0]) << std::endl;
-            return;
-        }
-    }
     int previous_guess = -MATE;
     int current_guess = -MATE;
     int init_remain = myremain;
     int max_time_usage = std::min(total_remaining, init_remain * 3);
+    int depth = 0;
 
-    gettimeofday(&start_ts, NULL);
-    int depth = 1;
-
-    std::memset(pv_at_depth, 0, sizeof(pv_at_depth));
-    std::memset(score_at_depth, 0, sizeof(score_at_depth));
-
-    initialize_threads();
     while (depth <= think_depth_limit) {
+        depth_mtx.lock();
+        ++depth;
+
+        if (!is_main) {
+            while (true) {
+                int num_greater_depth = 0;
+                for (int i = 0; i < num_threads; ++i) {
+                    if (my_thread->thread_id != i && search_threads[i].depth >= depth) {
+                        ++num_greater_depth;
+                    }
+                }
+                if (num_greater_depth >= num_threads / 4) {
+                    ++depth;
+                } else {
+                    break;
+                }
+            }
+        }
+        my_thread->depth = depth;
+        depth_mtx.unlock();
+
         int aspiration = 10;
         int alpha = -MATE;
         int beta = MATE;
@@ -651,29 +634,9 @@ void think(Position *p) {
 
         bool failed_low = false;
         while (true) {
-            int score;
+            int score = alpha_beta(p, md, alpha, beta, depth, in_check, false);
 
-            for (int i = 1; i < num_threads; ++i) {
-                SearchThread *t = &search_threads[i];
-                Position *tp = &t->positions[t->search_ply];
-                Metadata *tmd = &t->metadatas[0];
-                int thread_depth = depth + (i % 4);
-                t->depth = thread_depth;
-                t->thread_obj = std::thread(alpha_beta, tp, tmd, alpha, beta, thread_depth, in_check, false);
-            }
-
-            main_thread->depth = depth;
-            score = alpha_beta(p, md, alpha, beta, depth, in_check, false);
-            main_thread_finished = true;
-
-            // Stop threads
-            for (int i = 1; i < num_threads; ++i) {
-                SearchThread *t = &search_threads[i];
-                t->thread_obj.join();
-            }
-            main_thread_finished = false;
-
-            if (score > alpha) {
+            if (is_main && score > alpha) {
                 current_guess = score;
                 update_main_pv();
             }
@@ -694,6 +657,10 @@ void think(Position *p) {
         }
         if (is_timeout) {
             break;
+        }
+
+        if (!is_main) {
+            continue;
         }
 
         gettimeofday(&curr_time, NULL);
@@ -738,14 +705,71 @@ void think(Position *p) {
                 myremain = std::max(init_remain, myremain);
             }
         }
-        ++depth;
     }
-    gettimeofday(&curr_time, NULL);
-    std::cout << "info time " << time_passed() << std::endl;
-    std::cout << "bestmove " << move_to_str(main_pv.moves[0]);
-    if (main_pv.size > 1) {
-        std::cout << " ponder " << move_to_str(main_pv.moves[1]);
+
+    if (is_main) {
+        gettimeofday(&curr_time, NULL);
+        std::cout << "info time " << time_passed() << std::endl;
+        std::cout << "bestmove " << move_to_str(main_pv.moves[0]);
+        if (main_pv.size > 1) {
+            std::cout << " ponder " << move_to_str(main_pv.moves[1]);
+        }
+        std::cout << std::endl;
     }
-    std::cout << std::endl;
     return;
 }
+
+void think(Position *p) {
+    // Set the table generation
+    start_search();
+
+    // First check TB
+    Move tb_move;
+    bool in_check = is_checked(p);
+    SearchThread *main_thread = p->my_thread;
+    Metadata *md = &main_thread->metadatas[0];
+
+    // Clear root moves
+    root_moves.clear();
+
+    int wdl = probe_syzygy_dtz(p, &tb_move);
+    if (wdl != SYZYGY_FAIL) {
+        // Return draws immediately
+        if (wdl == SYZYGY_DRAW) {
+            std::cout << "info score cp 0" << std::endl;
+            std::cout << "bestmove " << move_to_str(tb_move) << std::endl;
+            return;
+        }
+        root_moves.push_back(tb_move);
+    } else {
+        Material *eval_material = get_material(p);
+        MoveGen movegen = new_movegen(p, md, 0, no_move, NORMAL_SEARCH, in_check);
+        Move move;
+        while ((move = next_move(&movegen)) != no_move) {
+            if (is_legal(p, move)) {
+                root_moves.push_back(move);
+            }
+        }
+        if (eval_material->endgame_type == DRAW_ENDGAME || root_moves.size() == 1) {
+            std::cout << "bestmove " << move_to_str(root_moves[0]) << std::endl;
+            return;
+        }
+    }
+
+    gettimeofday(&start_ts, NULL);
+    std::memset(pv_at_depth, 0, sizeof(pv_at_depth));
+    std::memset(score_at_depth, 0, sizeof(score_at_depth));
+
+    initialize_threads();
+    for (int i = 0; i < num_threads; ++i) {
+        SearchThread *t = &search_threads[i];
+        t->thread_obj = std::thread(thread_think, t, in_check);
+    }
+
+    // Stop threads
+    for (int i = 0; i < num_threads; ++i) {
+        SearchThread *t = &search_threads[i];
+        t->thread_obj.join();
+    }
+}
+
