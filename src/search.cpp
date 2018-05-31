@@ -641,9 +641,11 @@ void thread_think(SearchThread *my_thread, bool in_check) {
         while (true) {
             int score = alpha_beta(p, md, alpha, beta, depth, in_check, false);
 
-            if (is_main && score > alpha) {
+            if (score > alpha) {
                 current_guess = score;
-                update_main_pv();
+                if (is_main) {
+                    update_main_pv();
+                }
             }
             if (is_timeout) {
                 break;
@@ -663,6 +665,8 @@ void thread_think(SearchThread *my_thread, bool in_check) {
         if (is_timeout) {
             break;
         }
+
+        previous_guess = current_guess;
 
         if (!is_main) {
             continue;
@@ -688,7 +692,6 @@ void thread_think(SearchThread *my_thread, bool in_check) {
         std::cout << " nodes " << nodes <<  " nps " << nodes*1000/(time_taken+1) << " time " << time_taken << " pv ";
         print_pv();
 
-        previous_guess = current_guess;
         pv_at_depth[depth - 1] = main_pv.moves[0];
         score_at_depth[depth - 1] = current_guess;
 
