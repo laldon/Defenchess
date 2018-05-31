@@ -601,7 +601,7 @@ void thread_think(SearchThread *my_thread, bool in_check) {
     int max_time_usage = std::min(total_remaining, init_remain * 3);
     int depth = 0;
 
-    while (depth <= think_depth_limit) {
+    while (true) {
         depth_mtx.lock();
         ++depth;
 
@@ -613,15 +613,20 @@ void thread_think(SearchThread *my_thread, bool in_check) {
                         ++num_greater_depth;
                     }
                 }
-                if (num_greater_depth >= num_threads / 4) {
+                if (num_greater_depth >= num_threads / 2) {
                     ++depth;
                 } else {
                     break;
                 }
             }
         }
+
         my_thread->depth = depth;
         depth_mtx.unlock();
+
+        if (depth > think_depth_limit) {
+            break;
+        }
 
         int aspiration = 10;
         int alpha = -MATE;
