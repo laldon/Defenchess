@@ -30,7 +30,16 @@
 #include <mutex>
 
 std::vector<Move> root_moves = {};
-std::mutex depth_mtx;
+int depth_increments[MAX_THREADS] = {
+    0, 1, 2, 3, 3, 4, 4, 5,
+    5, 5, 6, 6, 6, 6, 7, 7,
+    7, 7, 7, 7, 8, 8, 8, 8,
+    8, 8, 8, 8, 9, 9, 9, 9,
+    9, 9, 9, 9, 9, 9, 9, 10,
+    10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 11, 11,
+    11, 11, 11, 11, 11, 11, 11, 11
+};
 
 Move pv_at_depth[MAX_PLY * 2];
 int  score_at_depth[MAX_PLY * 2];
@@ -603,31 +612,13 @@ void thread_think(SearchThread *my_thread, bool in_check) {
     int max_time_usage = std::min(total_remaining, init_remain * 3);
     int depth = 0;
 
-    while (true) {
-        ++depth;
-
-        depth_mtx.lock();
-        my_thread->depth = depth;
-
+    while (++depth <= think_depth_limit) {
         if (!is_main) {
-            int num_greater_depth = 0;
-            for (int i = 0; i < num_threads; ++i) {
-                if (my_thread->thread_id != i && search_threads[i].depth >= depth) {
-                    ++num_greater_depth;
-                }
-            }
-            if (num_greater_depth >= std::max(1, num_threads / 2)) {
-                my_thread->depth = depth + 1;
-                depth_mtx.unlock();
-                continue;
-            }
+            int main_thread_depth = search_threads[0].depth.load(std::memory_order_relaxed);
+            depth = main_thread_depth + depth_increments[my_thread->thread_id];
         }
 
-        depth_mtx.unlock();
-
-        if (depth > think_depth_limit) {
-            break;
-        }
+        my_thread->depth = depth;
 
         int aspiration = 10;
         int alpha = -MATE;

@@ -633,6 +633,7 @@ void init_threads() {
         search_thread->thread_id = i;
         search_thread->search_ply = 0;
         search_thread->root_ply = 0;
+        search_thread->depth = 1;
     }
 }
 
