@@ -246,7 +246,8 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
         undo_move(position);
         assert(is_timeout || (score >= -MATE && score <= MATE));
 
-        if (is_timeout && p->my_thread->depth > 1) {
+        int main_thread_depth = search_threads[0].depth.load(std::memory_order_relaxed);
+        if (is_timeout && main_thread_depth > 1) {
             return TIMEOUT;
         }
 
@@ -549,7 +550,8 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         undo_move(position);
         assert(is_timeout || (score >= -MATE && score <= MATE));
 
-        if ((check_time(p) || is_timeout) && p->my_thread->depth > 1) {
+        int main_thread_depth = search_threads[0].depth.load(std::memory_order_relaxed);
+        if ((is_timeout || check_time(p)) && main_thread_depth > 1) {
             return TIMEOUT;
         }
 
@@ -602,26 +604,25 @@ void thread_think(SearchThread *my_thread, bool in_check) {
     int depth = 0;
 
     while (true) {
-        depth_mtx.lock();
         ++depth;
 
+        depth_mtx.lock();
+        my_thread->depth = depth;
+
         if (!is_main) {
-            while (true) {
-                int num_greater_depth = 0;
-                for (int i = 0; i < num_threads; ++i) {
-                    if (my_thread->thread_id != i && search_threads[i].depth >= depth) {
-                        ++num_greater_depth;
-                    }
+            int num_greater_depth = 0;
+            for (int i = 0; i < num_threads; ++i) {
+                if (my_thread->thread_id != i && search_threads[i].depth >= depth) {
+                    ++num_greater_depth;
                 }
-                if (depth > 1 && num_greater_depth >= num_threads / 4) {
-                    ++depth;
-                } else {
-                    break;
-                }
+            }
+            if (num_greater_depth >= num_threads / 4) {
+                my_thread->depth = depth++;
+                depth_mtx.unlock();
+                continue;
             }
         }
 
-        my_thread->depth = depth;
         depth_mtx.unlock();
 
         if (depth > think_depth_limit) {
@@ -714,16 +715,6 @@ void thread_think(SearchThread *my_thread, bool in_check) {
             }
         }
     }
-
-    if (is_main) {
-        gettimeofday(&curr_time, NULL);
-        std::cout << "info time " << time_passed() << std::endl;
-        std::cout << "bestmove " << move_to_str(main_pv.moves[0]);
-        if (main_pv.size > 1) {
-            std::cout << " ponder " << move_to_str(main_pv.moves[1]);
-        }
-        std::cout << std::endl;
-    }
     return;
 }
 
@@ -779,5 +770,13 @@ void think(Position *p) {
         SearchThread *t = &search_threads[i];
         t->thread_obj.join();
     }
+
+    gettimeofday(&curr_time, NULL);
+    std::cout << "info time " << time_passed() << std::endl;
+    std::cout << "bestmove " << move_to_str(main_pv.moves[0]);
+    if (main_pv.size > 1) {
+        std::cout << " ponder " << move_to_str(main_pv.moves[1]);
+    }
+    std::cout << std::endl;
 }
 
