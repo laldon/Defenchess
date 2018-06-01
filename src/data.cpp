@@ -111,6 +111,8 @@ void get_ready() {
 
     for (int i = 0; i < MAX_THREADS; ++i) {
         SearchThread *t = &(search_threads[i]);
+        t->depth = 1;
+
         // Clear the metadata
         for (int j = 0; j < MAX_PLY + 1; ++j) {
             Metadata *md = &t->metadatas[j];

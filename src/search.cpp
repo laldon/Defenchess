@@ -593,7 +593,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
 }
 
 void thread_think(SearchThread *my_thread, bool in_check) {
-    Position *p = &my_thread->positions[my_thread->root_ply];
+    Position *p = &my_thread->positions[my_thread->search_ply];
     Metadata *md = &my_thread->metadatas[0];
     bool is_main = is_main_thread(p);
 
