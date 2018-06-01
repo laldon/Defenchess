@@ -16,8 +16,8 @@
     along with Defenchess.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef TYPES_H
-#define TYPES_H
+#ifndef DATA_H
+#define DATA_H
 
 #include <cstdint>
 #include <ctime>

@@ -616,7 +616,7 @@ void thread_think(SearchThread *my_thread, bool in_check) {
                     ++num_greater_depth;
                 }
             }
-            if (num_greater_depth >= std::max(1, num_threads / 4)) {
+            if (num_greater_depth >= std::max(1, num_threads / 2)) {
                 my_thread->depth = depth + 1;
                 depth_mtx.unlock();
                 continue;
