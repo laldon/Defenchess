@@ -616,8 +616,8 @@ void thread_think(SearchThread *my_thread, bool in_check) {
                     ++num_greater_depth;
                 }
             }
-            if (num_greater_depth >= num_threads / 4) {
-                my_thread->depth = depth++;
+            if (num_greater_depth >= std::max(1, num_threads / 4)) {
+                my_thread->depth = depth + 1;
                 depth_mtx.unlock();
                 continue;
             }
@@ -715,7 +715,6 @@ void thread_think(SearchThread *my_thread, bool in_check) {
             }
         }
     }
-    return;
 }
 
 void think(Position *p) {
