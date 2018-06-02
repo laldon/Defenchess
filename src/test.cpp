@@ -62,7 +62,7 @@ void see_test() {
         SeeResult see_result = see_results[i];
         Position *p = import_fen(see_result.fen, 0);
         std::cout << "Testing position " << i << std::endl;
-        if (see_capture(p, see_result.move) != see_result.result) {
+        if (see_capture(p, see_result.move, 0) != see_result.result) {
             assert(false);
         }
     }
