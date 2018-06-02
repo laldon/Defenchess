@@ -92,7 +92,7 @@ Move next_move(MoveGen *movegen) {
         case GOOD_CAPTURES:
             while (movegen->head < movegen->tail) {
                 move = pick_best(movegen->moves, movegen->head++, movegen->tail).move;
-                if (see_capture(movegen->position, move)) {
+                if (see_capture(movegen->position, move), 0) {
                     return move;
                 }
                 movegen->moves[movegen->end_bad_captures++] = ScoredMove{move, 0};

@@ -229,17 +229,17 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
 
         assert(capture != no_piece || in_check || checks);
 
-        // int delta = md->static_eval + 120;
-        // if (!in_check && !checks && !is_principal && delta > -KNOWN_WIN && !is_advanced_pawn_push(p, move) && delta + piece_values[capture] <= alpha) {
-        //     continue;
-        // }
+        int delta = md->static_eval + 120;
+        if (!in_check && !checks && !is_principal && delta > -KNOWN_WIN && !is_advanced_pawn_push(p, move) && delta + piece_values[capture] <= alpha) {
+            continue;
+        }
 
         bool evasion_prunable = in_check &&
                                 (depth != 0 || num_moves > 2) &&
                                 best_score > MATED_IN_MAX_PLY &&
                                 capture == no_piece;
 
-        if ((!in_check || evasion_prunable) && move_type(move) != PROMOTION && !see_capture(p, move)) {
+        if ((!in_check || evasion_prunable) && move_type(move) != PROMOTION && !see_capture(p, move, 0)) {
             continue;
         }
 
@@ -490,7 +490,7 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
                 if (singular_value < rbeta) {
                     extension = 1;
                 }
-        } else if (checks && see_capture(p, move)) {
+        } else if (checks && see_capture(p, move, 0)) {
             extension = 1;
         }
         new_depth = depth - 1 + extension;
@@ -505,6 +505,10 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
 
             // Futility pruning: parent node
             if (lmr_depth < 7 && md->static_eval + 150 + 120 * lmr_depth <= alpha) {
+                continue;
+            }
+
+            if (lmr_depth < 8 && !see_capture(p, move, -20 * lmr_depth * lmr_depth)) {
                 continue;
             }
         }

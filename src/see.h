@@ -21,6 +21,6 @@
 
 #include "data.h"
 
-bool see_capture(Position *p, Move move);
+bool see_capture(Position *p, Move move, int threshold);
 
 #endif
