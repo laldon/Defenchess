@@ -496,14 +496,11 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
         new_depth = depth - 1 + extension;
 
         if (!root_node && !important && p->non_pawn_material[p->color] && best_score > MATED_IN_MAX_PLY) {
-            int reduction = lmr(is_principal, depth, num_moves);
             if (depth < 8 && num_moves >= futility_move_counts[improving][depth]) {
                 continue;
             }
-            // Reduced depth of the next LMR search
-            int lmr_depth = std::max(new_depth - reduction, 0);
 
-            // Futility pruning: parent node
+            int lmr_depth = std::max(new_depth - lmr(is_principal, depth, num_moves), 0);
             if (lmr_depth < 7 && md->static_eval + 150 + 120 * lmr_depth <= alpha) {
                 continue;
             }
@@ -511,6 +508,10 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
             if (lmr_depth < 8 && !see_capture(p, move, -20 * lmr_depth * lmr_depth)) {
                 continue;
             }
+        }
+
+        if (!is_principal && !in_check && best_score > MATED_IN_MAX_PLY && depth < 6 && !see_capture(p, move, -PAWN_END * depth)) {
+            continue;
         }
 
         if (!is_legal(p, move)) {
