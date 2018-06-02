@@ -228,7 +228,8 @@ void tune() {
     read_entire_file();
     // init_parameters(best_guess);
     // init_pst(best_guess);
-    init_mobility(best_guess);
+    // init_mobility(best_guess);
+    init_scaling(best_guess);
 
     for (unsigned i = 0; i < best_guess.size(); ++i) {
         for (unsigned j = i + 1; j < best_guess.size(); ++j) {
@@ -303,6 +304,13 @@ void tune() {
         Parameter *param = &best_guess[i];
         cout << "best " << param->name << ": " << param->value << endl;
     }
+}
+
+void init_scaling(vector<Parameter> &parameters) {
+    parameters.push_back({&NO_PAWN_SCALING, NO_PAWN_SCALING, "NO_PAWN_SCALING", true, 1});
+    parameters.push_back({&ONE_PAWN_SCALING, ONE_PAWN_SCALING, "ONE_PAWN_SCALING", true, 1});
+    parameters.push_back({&OCB_ONLY_SCALING, OCB_ONLY_SCALING, "OCB_ONLY_SCALING", true, 1});
+    parameters.push_back({&OCB_MORE_SCALING, OCB_MORE_SCALING, "OCB_MORE_SCALING", true, 1});
 }
 
 void init_mobility(vector<Parameter> &parameters) {

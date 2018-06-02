@@ -100,6 +100,11 @@ Score rook_threat_bonus[6] = {
     // { 0, 0}  // King should never be called
 };
 
+int NO_PAWN_SCALING = 2,
+    ONE_PAWN_SCALING = 11,
+    OCB_ONLY_SCALING = 7,
+    OCB_MORE_SCALING = 30;
+
 Score pst[14][64];
 
 int bonusPawn[2][32] = {

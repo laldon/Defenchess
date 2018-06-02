@@ -139,6 +139,11 @@ extern Score minor_threat_bonus[6];
 
 extern Score rook_threat_bonus[6];
 
+extern int NO_PAWN_SCALING,
+           ONE_PAWN_SCALING,
+           OCB_ONLY_SCALING,
+           OCB_MORE_SCALING;
+
 extern Score pst[14][64];
 
 extern int bonusPawn[2][32];

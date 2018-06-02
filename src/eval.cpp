@@ -619,18 +619,18 @@ int scaling_factor(Evaluation *eval, Position *p, Material *eval_material) {
     if (eval->num_pieces[pawn(winner)] <= 1 &&
         p->non_pawn_material[winner] <= p->non_pawn_material[loser] + piece_values[white_bishop]) {
             if (eval->num_pieces[pawn(winner)] == 0) {
-                return 4;
+                return NO_PAWN_SCALING;
             }
-            return 24;
+            return ONE_PAWN_SCALING;
     }
 
     // Opposite bishops
     if (eval->num_pieces[white_bishop] == 1 && eval->num_pieces[black_bishop] == 1 &&
         opposite_colors(eval->bishop_squares[white], eval->bishop_squares[black])) {
         if (p->non_pawn_material[white] == BISHOP_MID && p->non_pawn_material[black] == BISHOP_MID) {
-            return 16;
+            return OCB_ONLY_SCALING;
         } else {
-            return 24;
+            return OCB_MORE_SCALING;
         }
     }
     return SCALE_NORMAL;
