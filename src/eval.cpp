@@ -610,7 +610,7 @@ void pre_eval(Evaluation *eval, Position *p) {
 
 int scaling_factor(Evaluation *eval, Position *p, Material *eval_material) {
     if (eval_material->scaling_factor_type != NO_SCALING) {
-        return 4;  // This is KRPKR since we have no other endgames yet.
+        return 21;  // This is KRPKR since we have no other endgames yet.
     }
 
     Color winner = p->score.endgame > 0 ? white : black;
