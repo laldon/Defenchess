@@ -100,6 +100,8 @@ Score rook_threat_bonus[6] = {
     // { 0, 0}  // King should never be called
 };
 
+int connection_bonus[8] = { 0, 7, 17, 15, 45, 77, 66, 234 };
+
 Score pst[14][64];
 
 int bonusPawn[2][32] = {

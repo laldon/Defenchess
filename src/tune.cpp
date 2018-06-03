@@ -25,6 +25,7 @@
 #include "position.h"
 #include "tt.h"
 #include "pst.h"
+#include "eval.h"
 
 using namespace std;
 
@@ -89,6 +90,7 @@ void single_error(int thread_id) {
 void set_parameter(Parameter *param) {
     *param->variable = param->value;
     init_values();
+    init_eval();
 }
 
 #pragma GCC push_options
@@ -306,6 +308,11 @@ void tune() {
 }
 
 void init_mobility(vector<Parameter> &parameters) {
+    for (int i = 0; i < 8; ++i) {
+        parameters.push_back({&connection_bonus[i], connection_bonus[i], "connection_bonus[" + to_string(i) + "]", true, 1});
+    }
+    return;
+
     for (int i = 0; i <= 8; ++i) {
         parameters.push_back({&mobility_bonus[KNIGHT][i].midgame, mobility_bonus[KNIGHT][i].midgame, "mobility_bonus[KNIGHT][" + to_string(i) + "].midgame", true, 1});
         parameters.push_back({&mobility_bonus[KNIGHT][i].endgame, mobility_bonus[KNIGHT][i].endgame, "mobility_bonus[KNIGHT][" + to_string(i) + "].endgame", true, 1});

@@ -25,7 +25,6 @@
 #include <iostream>
 
 Score connected[2][2][3][8];
-const int connection_bonus[8] = { 0, 8, 15, 10, 45, 60, 100, 200 };
 
 void init_eval() {
     for (int opposed = 0; opposed <= 1; ++opposed)

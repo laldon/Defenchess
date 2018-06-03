@@ -141,6 +141,8 @@ extern Score rook_threat_bonus[6];
 
 extern Score pst[14][64];
 
+extern int connection_bonus[8];
+
 extern int bonusPawn[2][32];
 extern int bonusKnight[2][32];
 extern int bonusBishop[2][32];
