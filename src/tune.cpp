@@ -310,12 +310,12 @@ void tune() {
 void init_material(vector<Parameter> &parameters) {
     for (int i = 0; i < 6; ++i) {
         for (int j = 0; j < i + 1; ++j) {
-            parameters.push_back({&ours[i][j], ours[i][j], "ours[" << to_string(i) << "][" + to_string(j) + "]", true, 1});
+            parameters.push_back({&ours[i][j], ours[i][j], "ours[" + to_string(i) + "][" + to_string(j) + "]", true, 1});
             }
     }
     for (int i = 1; i < 6; ++i) {
         for (int j = 0; j < i; ++j) {
-            parameters.push_back({&theirs[i][j], theirs[i][j], "theirs[" << to_string(i) << "][" + to_string(j) + "]", true, 1});
+            parameters.push_back({&theirs[i][j], theirs[i][j], "theirs[" + to_string(i) + "][" + to_string(j) + "]", true, 1});
         }
     }
 }

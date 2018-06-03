@@ -115,6 +115,7 @@ extern uint8_t ROOK_MOVES_CASTLE_TO[64];
 extern uint8_t ROOK_MOVES_CASTLE_PIECE[64];
 
 void init();
+void init_imbalance();
 
 const uint8_t FLAG_EXACT = 0;
 const uint8_t FLAG_BETA = 1;

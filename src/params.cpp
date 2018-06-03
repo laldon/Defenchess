@@ -236,22 +236,22 @@ int bonusKing[2][32] = {
 
 int ours[][6] = {
     // pair pawn knight bishop rook queen
-    {   974                               }, // Bishop pair
-    {    23,   0                          }, // Pawn
-    {    18, 149,    -1                   }, // Knight
-    {     0,  60,     2,     0            }, // Bishop
-    {   -15,  -1,    27,    61, -87       }, // Rook
-    {  -108,  14,    71,    80, -78,    0 }  // Queen
+    {   967                               }, // Bishop pair
+    {    17,   8                          }, // Pawn
+    {    -8, 141,    10                   }, // Knight
+    {     1,  52,    -5,     9            }, // Bishop
+    {   -11,  -1,    34,    79, -86       }, // Rook
+    {  -118,  10,    62,    80, -62,    8 }  // Queen
 };
 
 int theirs[][6] = {
     // pair pawn knight bishop rook queen
     {     0                               }, // Bishop pair
-    {    21,   0                          }, // Pawn
-    {     5,  36,    0                    }, // Knight
-    {    34,  38,   24,      0            }, // Bishop
-    {    26,  22,   14,    -14,   0       }, // Rook
-    {    59,  58,  -21,     82, 156,    0 }  // Queen
+    {    18,   0                          }, // Pawn
+    {    21,  38,    0                    }, // Knight
+    {    40,  53,    4,      0            }, // Bishop
+    {    28,  32,    6,    -29,   0       }, // Rook
+    {    79, 102,   -9,    100, 146,    0 }  // Queen
 };
 
 int pawn_set[] = { 14, -18, 62, -29, 68, -5, -73, -12, 18 };
