@@ -89,6 +89,7 @@ void single_error(int thread_id) {
 void set_parameter(Parameter *param) {
     *param->variable = param->value;
     init_values();
+    init_imbalance();
 }
 
 #pragma GCC push_options
@@ -228,7 +229,8 @@ void tune() {
     read_entire_file();
     // init_parameters(best_guess);
     // init_pst(best_guess);
-    init_mobility(best_guess);
+    // init_mobility(best_guess);
+    init_material(best_guess);
 
     for (unsigned i = 0; i < best_guess.size(); ++i) {
         for (unsigned j = i + 1; j < best_guess.size(); ++j) {
@@ -302,6 +304,19 @@ void tune() {
     for (unsigned i = 0; i < best_guess.size(); ++i) {
         Parameter *param = &best_guess[i];
         cout << "best " << param->name << ": " << param->value << endl;
+    }
+}
+
+void init_material(vector<Parameter> &parameters) {
+    for (int i = 0; i < 6; ++i) {
+        for (int j = 0; j < i + 1; ++j) {
+            parameters.push_back({&ours[i][j], ours[i][j], "ours[" << to_string(i) << "][" + to_string(j) + "]", true, 1});
+            }
+    }
+    for (int i = 1; i < 6; ++i) {
+        for (int j = 0; j < i; ++j) {
+            parameters.push_back({&theirs[i][j], theirs[i][j], "theirs[" << to_string(i) << "][" + to_string(j) + "]", true, 1});
+        }
     }
 }
 

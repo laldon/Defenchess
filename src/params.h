@@ -148,4 +148,9 @@ extern int bonusRook[2][32];
 extern int bonusQueen[2][32];
 extern int bonusKing[2][32];
 
+extern int ours[][6];
+extern int theirs[][6];
+extern int pawn_set[];
+
+
 #endif

@@ -36,6 +36,7 @@ typedef struct Parameter {
 void init_parameters(std::vector<Parameter> &parameters);
 void init_pst(std::vector<Parameter> &parameters);
 void init_mobility(std::vector<Parameter> &parameters);
+void init_material(std::vector<Parameter> &parameters);
 void tune();
 
 #endif
