@@ -342,7 +342,6 @@ const int SCALE_NORMAL = 32;
 
 typedef struct Material {
     int               phase;
-    int               score;
     EndgameType       endgame_type;
     ScalingFactorType scaling_factor_type;
 } Material;

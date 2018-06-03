@@ -102,7 +102,8 @@ extern Score
     weak_pawn_threat,
     rank_threat_bonus,
     hanging_threat_bonus,
-    pawn_push_threat_bonus;
+    pawn_push_threat_bonus,
+    bishop_pair;
 
 // Penalties
 extern Score

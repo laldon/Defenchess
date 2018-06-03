@@ -142,8 +142,10 @@ Score evaluate_bishop(Evaluation *eval, Position *p, Color color) {
     Score bishop_score = {0, 0};
     Color opp_c = opponent_color(color);
     Bitboard my_bishops = p->bbs[bishop(color)];
+    int num_bishops = 0;
 
     while (my_bishops) {
+        ++num_bishops;
         Square outpost = pop(&my_bishops);
         eval->bishop_squares[color] = outpost;
         Bitboard bishop_targets = generate_bishop_targets(p->board ^ p->bbs[queen(color)], outpost);
@@ -179,6 +181,9 @@ Score evaluate_bishop(Evaluation *eval, Position *p, Color color) {
         eval->targets[color] |= eval->targets[bishop(color)] |= bishop_targets;
         ++eval->num_pieces[bishop(color)];
         ++eval->num_pieces[color];
+    }
+    if (num_bishops > 1) {
+        bishop_score += bishop_pair;
     }
     return bishop_score;
 }
@@ -671,7 +676,6 @@ int evaluate(Position *p) {
     evaluate_passers(&eval, p);
 
     eval.score += (eval.score_white - eval.score_black);
-    eval.score += eval_material->score;
     int scale = scaling_factor(&eval, p, eval_material);
     int ret = (eval.score.midgame * eval_material->phase + eval.score.endgame * (256 - eval_material->phase) * scale / SCALE_NORMAL) / 256;
     return (p->color == white ? ret : -ret) + tempo;
@@ -731,7 +735,6 @@ void print_eval(Position *p){
 
     std::cout << "  ATTRIBUTE   Score : " << "----WHITE----|" << "----BLACK----|" << "----TOTAL----" << std::endl;
     std::cout << "  Position    Score : " << "                            " << score_str(Position_score) << std::endl;
-    std::cout << "  Imbalance   Score : " << "                            " << score_str(Score{0, 0} + eval_material->score) << std::endl;
     std::cout << "  Pawn        Score : " << "                            " << score_str(Pawn_score) << std::endl;
     std::cout << "  Passer      Score : " << score_str(Passer_score[white]) << "|" << score_str(Passer_score[black]) << "|" << score_str(Passer_score[white] - Passer_score[black]) << std::endl;
     std::cout << "  King        Score : " << score_str(King_score[white]) << "|" << score_str(King_score[black]) << "|" << score_str(King_score[white] - King_score[black]) << std::endl;
@@ -742,7 +745,7 @@ void print_eval(Position *p){
     std::cout << "  Rook        Score : " << score_str(Rook_score[white]) << "|" << score_str(Rook_score[black]) << "|" << score_str(Rook_score[white] - Rook_score[black]) << std::endl;
     std::cout << "  Queen       Score : " << score_str(Queen_score[white]) << "|" << score_str(Queen_score[black]) << "|" << score_str(Queen_score[white] - Queen_score[black]) << std::endl;
 
-    std::cout << std::endl << "  Total       Score : " << score_str(whitey) << "|" << score_str(blacky) << "|" << score_str(eval.score_pawn + p->score + whitey - blacky + eval_material->score) << std::endl;
+    std::cout << std::endl << "  Total       Score : " << score_str(whitey) << "|" << score_str(blacky) << "|" << score_str(eval.score_pawn + p->score + whitey - blacky) << std::endl;
     int CP = 100 * p->color == white ? evaluate(p) : -evaluate(p);
     double percentage = (double)(256 - eval_material->phase) / 256.0 * 100.0;
     std::cout << std::endl;

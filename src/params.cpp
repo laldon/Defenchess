@@ -36,7 +36,8 @@ Score
     weak_pawn_threat = {40, 40},
     rank_threat_bonus = {2, 0},
     hanging_threat_bonus = {2, 21},
-    pawn_push_threat_bonus = {25, 16};
+    pawn_push_threat_bonus = {25, 16},
+    bishop_pair = {5, 66};
 
 // Penalties
 Score

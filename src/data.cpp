@@ -478,54 +478,6 @@ void init_king_fronts(){
     }
 }
 
-const int ours[][6] = {
-    // pair pawn knight bishop rook queen
-    {   974                               }, // Bishop pair
-    {    23,   0                          }, // Pawn
-    {    18, 149,    -1                   }, // Knight
-    {     0,  60,     2,     0            }, // Bishop
-    {   -15,  -1,    27,    61, -87       }, // Rook
-    {  -108,  14,    71,    80, -78,    0 }  // Queen
-};
-
-
-const int theirs[][6] = {
-    // pair pawn knight bishop rook queen
-    {     0                               }, // Bishop pair
-    {    21,   0                          }, // Pawn
-    {     5,  36,    0                    }, // Knight
-    {    34,  38,   24,      0            }, // Bishop
-    {    26,  22,   14,    -14,   0       }, // Rook
-    {    59,  58,  -21,     82, 156,    0 }  // Queen
-};
-
-const int pawn_set[] = { 14, -18, 62, -29, 68, -5, -73, -12, 18 };
-const int queen_minors[13] = { 18, -4, -8, -14, -2, 0, 0, 0, 0, 0, 0, 0, 0 };
-
-int imbalance(const int piece_count[][6], Color color) {
-    const Color opp_c = opponent_color(color);
-
-    int bonus = pawn_set[piece_count[color][1]];
-
-    // Second-degree polynomial material imbalance by Tord Romstad
-    for (int pt1 = 0; pt1 <= 5; ++pt1) {
-        if (!piece_count[color][pt1])
-            continue;
-
-        int v = 0;
-        for (int pt2 = 0; pt2 <= pt1; ++pt2)
-            v +=  ours[pt1][pt2] * piece_count[color][pt2] + theirs[pt1][pt2] * piece_count[opp_c][pt2];
-
-        bonus += piece_count[color][pt1] * v;
-    }
-
-    // Special handling of Queen vs. Minors
-    if  (piece_count[color][5] == 1 && piece_count[opp_c][5] == 0)
-         bonus += queen_minors[piece_count[opp_c][2] + piece_count[opp_c][3]];
-
-    return bonus;
-}
-
 void init_imbalance(){
     for (int wp = 0 ; wp < 9 ; wp++) {
         for (int wn = 0 ; wn < 3 ; wn++) {
@@ -550,14 +502,6 @@ void init_imbalance(){
                     bp * material_balance[black_pawn];
         Material *material = &material_base[index];
         material->phase = std::max(0, (11 * (wn + wb + bn + bb) + 22 * (wr + br) + 40 * (wq + bq) - 48)) * 16 / 13;
-        material->score = 0;
-
-        const int piece_count[2][6] = {
-            { wb > 1, wp, wn, wb, wr, wq },
-            { bb > 1, bp, bn, bb, br, bq }
-        };
-
-        material->score = ((imbalance(piece_count, white) - imbalance(piece_count, black)) / 16);
 
         // Endgames
         int white_minor = wn + wb;
