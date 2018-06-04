@@ -154,7 +154,6 @@ typedef struct PV {
 } PV;
 
 extern PV pv[MAX_PLY + 1];
-extern PV main_pv;
 extern PV debug_pv;
 
 void get_ready();
@@ -372,12 +371,6 @@ enum SearchType {
     PERFT_SEARCH = 2
 };
 
-extern struct timeval curr_time, start_ts;
-
-inline int time_passed() {
-    return (((curr_time.tv_sec - start_ts.tv_sec) * 1000000) + (curr_time.tv_usec - start_ts.tv_usec)) / 1000;
-}
-
 typedef struct ScoredMove {
     Move move;
     int  score;
@@ -468,11 +461,6 @@ inline bool is_main_thread(Position *p) {return p->my_thread->thread_id == 0;}
 const int MAX_THREADS = 64;
 extern SearchThread search_threads[MAX_THREADS];
 
-extern int myremain;
-extern int total_remaining;
-extern int moves_to_go;
-extern volatile bool is_timeout;
-extern int think_depth_limit;
 extern int num_threads;
 extern int move_overhead;
 

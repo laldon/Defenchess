@@ -28,6 +28,14 @@
 #include <algorithm>
 #include "tb.h"
 #include <mutex>
+#include "position.h"
+
+int myremain = 10000;
+int total_remaining = 10000;
+int moves_to_go = 0;
+struct timeval curr_time, start_ts;
+volatile bool is_timeout = false;
+int think_depth_limit = MAX_PLY;
 
 std::vector<Move> root_moves = {};
 int depth_increments[MAX_THREADS] = {
@@ -46,18 +54,11 @@ int  score_at_depth[MAX_PLY * 2];
 
 void print_pv() {
     int i = 0;
-    while (i < main_pv.size) {
-        std::cout << move_to_str(main_pv.moves[i]) << " ";
+    while (i < pv[0].size) {
+        std::cout << move_to_str(pv[0].moves[i]) << " ";
         ++i;
     }
     std::cout << std::endl;
-}
-
-void update_main_pv() {
-    main_pv.size = pv[0].size;
-    for (int i = 0; i < main_pv.size; i++) {
-        main_pv.moves[i] = pv[0].moves[i];
-    }
 }
 
 void set_pv(Move move, int ply) {
@@ -138,7 +139,7 @@ bool check_time(Position *p) {
     if (is_main_thread(p)) {
         if (timer_count == 0) {
             gettimeofday(&curr_time, NULL);
-            if (time_passed() > myremain) {
+            if (time_passed() > total_remaining) {
                 is_timeout = true;
                 return true;
             }
@@ -614,7 +615,6 @@ void thread_think(SearchThread *my_thread, bool in_check) {
     int previous_guess = -MATE;
     int current_guess = -MATE;
     int init_remain = myremain;
-    int max_time_usage = std::min(total_remaining, init_remain * 3);
     int depth = 0;
 
     while (++depth <= think_depth_limit) {
@@ -638,15 +638,12 @@ void thread_think(SearchThread *my_thread, bool in_check) {
         while (true) {
             int score = alpha_beta(p, md, alpha, beta, depth, in_check, false);
 
-            if (score > alpha) {
-                current_guess = score;
-                if (is_main) {
-                    update_main_pv();
-                }
-            }
+            current_guess = score;
+
             if (is_timeout) {
                 break;
             }
+
             if (score <= alpha) {
                 beta = (alpha + beta) / 2;
                 alpha = std::max(score - aspiration, -MATE);
@@ -660,9 +657,6 @@ void thread_think(SearchThread *my_thread, bool in_check) {
             aspiration += aspiration / 2;
             assert(alpha >= -MATE && beta <= MATE);
         }
-        if (is_timeout) {
-            break;
-        }
 
         previous_guess = current_guess;
 
@@ -670,10 +664,14 @@ void thread_think(SearchThread *my_thread, bool in_check) {
             continue;
         }
 
+        if (is_timeout) {
+            break;
+        }
+
         gettimeofday(&curr_time, NULL);
         int time_taken = time_passed();
         uint64_t tb_hits = sum_tb_hits();
-        std::cout << "info depth " << depth << " seldepth " << main_pv.size << " multipv 1 ";
+        std::cout << "info depth " << depth << " seldepth " << pv[0].size << " multipv 1 ";
         std::cout << "tbhits " << tb_hits << " score ";
 
         if (current_guess <= MATED_IN_MAX_PLY) {
@@ -690,17 +688,22 @@ void thread_think(SearchThread *my_thread, bool in_check) {
         std::cout << " nodes " << nodes <<  " nps " << nodes*1000/(time_taken+1) << " time " << time_taken << " pv ";
         print_pv();
 
-        pv_at_depth[depth - 1] = main_pv.moves[0];
+        if (time_passed() > myremain) {
+            is_timeout = true;
+            break;
+        }
+
+        pv_at_depth[depth - 1] = pv[0].moves[0];
         score_at_depth[depth - 1] = current_guess;
 
         if (depth >= 10) {
             if (failed_low) {
-                myremain = std::min(max_time_usage, myremain * 11 / 10); // %10 panic time
+                myremain = myremain * 11 / 10;
             }
             int score_diff = score_at_depth[depth - 1] - score_at_depth[depth - 2];
 
             if (score_diff < -10) {
-                myremain = std::min(max_time_usage, myremain * 21 / 20);
+                myremain = myremain * 21 / 20;
             }
             if (score_diff > 10) {
                 myremain = std::max(init_remain / 2, myremain * 98 / 100);
@@ -714,7 +717,9 @@ void thread_think(SearchThread *my_thread, bool in_check) {
     }
 }
 
-void think(Position *p) {
+void think(Position *p, std::vector<std::string> word_list) {
+    init_time(p, word_list);
+
     // Set the table generation
     start_search();
 
@@ -769,10 +774,44 @@ void think(Position *p) {
 
     gettimeofday(&curr_time, NULL);
     std::cout << "info time " << time_passed() << std::endl;
-    std::cout << "bestmove " << move_to_str(main_pv.moves[0]);
-    if (main_pv.size > 1) {
-        std::cout << " ponder " << move_to_str(main_pv.moves[1]);
+    std::cout << "bestmove " << move_to_str(pv[0].moves[0]);
+    if (pv[0].size > 1) {
+        std::cout << " ponder " << move_to_str(pv[0].moves[1]);
     }
     std::cout << std::endl;
+}
+
+void bench() {
+    uint64_t nodes = 0;
+    std::vector<std::string> empty_word_list;
+
+    struct timeval bench_start, bench_end;
+    gettimeofday(&bench_start, nullptr);
+    int tmp_depth = think_depth_limit;
+    int tmp_myremain = myremain;
+    think_depth_limit = 13;
+    is_timeout = false;
+
+    for (int i = 0; i < 36; i++){
+        std::cout << "\nPosition [" << (i + 1) << "|36]\n" << std::endl;
+        Position *p = import_fen(benchmarks[i], 0);
+
+        myremain = 3600000;
+        think(p, empty_word_list);
+        nodes += search_threads[0].nodes;
+
+        clear_tt();
+    }
+
+    gettimeofday(&bench_end, nullptr);
+    int time_taken = bench_time(bench_start, bench_end);
+    think_depth_limit = tmp_depth;
+    myremain = tmp_myremain;
+
+    std::cout << "\n------------------------\n";
+    std::cout << "Time  : " << time_taken << std::endl;
+    std::cout << "Nodes : " << nodes << std::endl;
+    std::cout << "NPS   : " << nodes * 1000 / (time_taken + 1) << std::endl;
+    exit(EXIT_SUCCESS);
 }
 

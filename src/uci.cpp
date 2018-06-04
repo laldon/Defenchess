@@ -22,7 +22,6 @@
 #include "test.h"
 #include <fstream>
 #include "eval.h"
-#include "timecontrol.h"
 #include "bitbase.h"
 #include "tt.h"
 #include <vector>
@@ -128,56 +127,7 @@ void eval() {
 }
 
 void go() {
-    is_timeout = false;
-    int black_remaining = 0;
-    int white_remaining = 0;
-    int black_increment = 0;
-    int white_increment = 0;
-    moves_to_go = 0;
-    think_depth_limit = MAX_PLY;
-
-    if (word_equal(1, "movetime")) {
-        moves_to_go = 1;
-        myremain = stoi(word_list[2]) * 99 / 100;
-        total_remaining = myremain;
-    }
-    else if (word_equal(1, "infinite")) {
-        moves_to_go = 1;
-        myremain = 3600000;
-    }
-    else if (word_equal(1, "depth")) {
-        moves_to_go = 1;
-        myremain = 3600000;
-        think_depth_limit = stoi(word_list[2]);
-    }
-    else if (word_list.size() > 1) {
-        for (unsigned i = 1 ; i < word_list.size() ; i += 2) {
-            if (word_list[i] == "wtime")
-                white_remaining = stoi(word_list[i + 1]);
-            if (word_list[i] == "btime")
-                black_remaining = stoi(word_list[i + 1]);
-            if (word_list[i] == "winc")
-                white_increment = stoi(word_list[i + 1]);
-            if (word_list[i] == "binc")
-                black_increment = stoi(word_list[i + 1]);
-            if (word_list[i] == "movestogo")
-                moves_to_go = stoi(word_list[i + 1]);
-            if (word_list[i] == "infinite")
-                myremain = 3600000;
-            if (word_list[i] == "depth")
-                think_depth_limit = stoi(word_list[i + 1]);
-        }
-
-        TTime t = get_myremain(
-            root_position->color == white ? white_increment : black_increment,
-            root_position->color == white ? white_remaining : black_remaining,
-            moves_to_go
-        );
-        myremain = t.optimum_time;
-        total_remaining = t.maximum_time;
-    }
-
-    std::thread think_thread (think, root_position);
+    std::thread think_thread (think, root_position, word_list);
     think_thread.detach();
 }
 
@@ -268,43 +218,6 @@ void setoption() {
     } else if (name == "MoveOverhead") {
         move_overhead = stoi(value);
     }
-}
-
-int bench_time(struct timeval s, struct timeval e) {
-    return (((e.tv_sec - s.tv_sec) * 1000000) + (e.tv_usec - s.tv_usec)) / 1000;
-}
-
-void bench() {
-    uint64_t nodes = 0;
-
-    struct timeval bench_start, bench_end;
-    gettimeofday(&bench_start, nullptr);
-    int tmp_depth = think_depth_limit;
-    int tmp_myremain = myremain;
-    think_depth_limit = 13;
-    is_timeout = false;
-
-    for (int i = 0; i < 36; i++){
-        cout << "\nPosition [" << (i + 1) << "|36]\n" << endl;
-        Position *p = import_fen(benchmarks[i], 0);
-
-        myremain = 3600000;
-        think(p);
-        nodes += search_threads[0].nodes;
-
-        clear_tt();
-    }
-
-    gettimeofday(&bench_end, nullptr);
-    int time_taken = bench_time(bench_start, bench_end);
-    think_depth_limit = tmp_depth;
-    myremain = tmp_myremain;
-
-    cout << "\n------------------------\n";
-    cout << "Time  : " << time_taken << endl;
-    cout << "Nodes : " << nodes << endl;
-    cout << "NPS   : " << nodes * 1000 / (time_taken + 1) << endl;
-    exit(EXIT_SUCCESS);
 }
 
 void ucinewgame() {

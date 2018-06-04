@@ -70,12 +70,6 @@ uint8_t ENPASSANT_INDEX[64];
 uint64_t castlingHash[16];
 uint64_t polyglotCombined[14][64];
 
-int myremain = 10000;
-int total_remaining = 10000;
-int moves_to_go = 0;
-struct timeval curr_time, start_ts;
-volatile bool is_timeout = false;
-int think_depth_limit = MAX_PLY;
 int num_threads = 1;
 int move_overhead = 100;
 
@@ -86,7 +80,6 @@ int mvvlva_values[12][14];
 int reductions[2][64][64];
 
 PV pv[MAX_PLY + 1];
-PV main_pv;
 PV debug_pv;
 
 void get_ready() {
