@@ -70,24 +70,16 @@ uint8_t ENPASSANT_INDEX[64];
 uint64_t castlingHash[16];
 uint64_t polyglotCombined[14][64];
 
-int myremain = 10000;
-int total_remaining = 10000;
-int moves_to_go = 0;
-struct   timeval curr_time, start_ts;
-bool     is_timeout = false;
-int think_depth_limit = MAX_PLY;
 int num_threads = 1;
+int move_overhead = 100;
 
 SearchThread search_threads[MAX_THREADS];
 
-int root_ply = 0;
 int mvvlva_values[12][14];
-Move pv_at_depth[MAX_PLY * 2];
 
 int reductions[2][64][64];
 
 PV pv[MAX_PLY + 1];
-PV main_pv;
 PV debug_pv;
 
 void get_ready() {
@@ -97,12 +89,12 @@ void get_ready() {
     }
 
     SearchThread *main_thread = &search_threads[0];
-    root_ply = main_thread->search_ply;
+    main_thread->root_ply = main_thread->search_ply;
 
     // Copy over the root position
     for (int i = 1; i < MAX_THREADS; ++i) {
         SearchThread *t = &(search_threads[i]);
-        t->search_ply = root_ply;
+        t->root_ply = t->search_ply = main_thread->root_ply;
 
         // Need to fully copy the position
         std::memcpy(t->positions + main_thread->search_ply, main_thread->positions + main_thread->search_ply, sizeof(Position));
@@ -112,10 +104,16 @@ void get_ready() {
 
     for (int i = 0; i < MAX_THREADS; ++i) {
         SearchThread *t = &(search_threads[i]);
-        // Clear killers
+        t->depth = 1;
+
+        // Clear the metadata
         for (int j = 0; j < MAX_PLY + 1; ++j) {
-            t->killers[j][0] = 0;
-            t->killers[j][1] = 0;
+            Metadata *md = &t->metadatas[j];
+            md->current_move = no_move;
+            md->static_eval = UNDEFINED;
+            md->ply = 0;
+            md->killers[0] = no_move;
+            md->killers[1] = no_move;
         }
         // Clear counter moves
         for (int j = 0; j < 14; ++j) {
@@ -127,11 +125,6 @@ void get_ready() {
         for (int j = 0; j < 14; ++j) {
             for (int k = 0; k < 64; ++k) {
                 t->history[j][k] = 0;
-            }
-        }
-        for (int j = 0; j < 14; ++j) {
-            for (int k = 0; k < 64; ++k) {
-                t->countermove_history[j][k] = 0;
             }
         }
     }
@@ -372,14 +365,6 @@ void init_polyglot() {
     for (int i = 0; i < 14; i++) {
         for (int j = 0; j < 64; j++) {
             polyglotCombined[i][j] = polyglotArray[polyglotPieces[i] + j];
-        }
-    }
-}
-
-void init_values() {
-    for (int i = 0; i < 12; i++) {
-        for (int j = 0; j < 14; j++) {
-            mvvlva_values[i][j] = piece_values[i] - j;
         }
     }
 }
@@ -626,8 +611,8 @@ void init_distance() {
 }
 
 void init_lmr() {
-    for (int depth = 0; depth < 64; ++depth) {
-        for (int num_moves = 0; num_moves < 64; ++num_moves) {
+    for (int depth = 1; depth < 64; ++depth) {
+        for (int num_moves = 1; num_moves < 64; ++num_moves) {
             reductions[0][depth][num_moves] = int(log(depth) * log(num_moves) / 1.95);
             reductions[1][depth][num_moves] = std::max(reductions[0][depth][num_moves] - 1, 0);
         }
@@ -640,6 +625,8 @@ void init_threads() {
         std::memset(search_thread->positions, 0, sizeof(search_thread->positions));
         search_thread->thread_id = i;
         search_thread->search_ply = 0;
+        search_thread->root_ply = 0;
+        search_thread->depth = 1;
     }
 }
 
@@ -655,9 +642,8 @@ void init_masks() {
     init_between();
     init_fromto();
     init_pawns();
-    init_pst();
-    init_polyglot();
     init_values();
+    init_polyglot();
     init_passed_pawns();
     init_pawn_masks();
     init_adj();

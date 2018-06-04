@@ -35,7 +35,7 @@ const int push_to_edges[64] = {
 const int push_close[8] = { 0, 0, 100, 80, 60, 40, 20, 10 };
 
 int evaluate_kpk(Position* p) {
-    Color winner  = winning_side(p);
+    Color winner  = p->bbs[pawn(white)] ? white : black;;
     Color loser = opponent_color(winner);
 
     Square pawn_index = mirror_square(lsb(p->bbs[pawn(winner)]), winner);
@@ -52,7 +52,7 @@ int evaluate_kpk(Position* p) {
 }
 
 int evaluate_kxk(Position *p) {
-    Color winner = winning_side(p);
+    Color winner = p->score.endgame > 0 ? white : black;
     Color loser = opponent_color(winner);
 
     Square winner_king = p->king_index[winner];

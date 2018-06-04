@@ -30,7 +30,7 @@ bool scored_move_compare_greater(ScoredMove lhs, ScoredMove rhs) { return lhs.sc
 void print_movegen(MoveGen *movegen) {
     std::cout << "movegen: ";
     for (int i = movegen->head; i < movegen->tail; i++) {
-        std::cout << move_to_str_stock(movegen->moves[i].move) << "(" << movegen->moves[i].score << "), ";
+        std::cout << move_to_str(movegen->moves[i].move) << "(" << movegen->moves[i].score << "), ";
     }
     std::cout << std::endl;
 }
@@ -81,16 +81,18 @@ Move next_move(MoveGen *movegen) {
             if (movegen->tte_move) {
                 return movegen->tte_move;
             }
+            /* fallthrough */
 
         case GOOD_CAPTURES_SORT:
             generate_moves<CAPTURE>(movegen, movegen->position);
             score_moves(movegen, SCORE_CAPTURE);
             ++movegen->stage;
+            /* fallthrough */
 
         case GOOD_CAPTURES:
             while (movegen->head < movegen->tail) {
                 move = pick_best(movegen->moves, movegen->head++, movegen->tail).move;
-                if (see_capture(movegen->position, move)) {
+                if (see_capture(movegen->position, move, 0)) {
                     return move;
                 }
                 movegen->moves[movegen->end_bad_captures++] = ScoredMove{move, 0};
@@ -103,6 +105,7 @@ Move next_move(MoveGen *movegen) {
                 !is_capture(movegen->position, move)) {
                 return move;
             }
+            /* fallthrough */
 
         case KILLER_MOVES:
             ++movegen->stage;
@@ -113,6 +116,7 @@ Move next_move(MoveGen *movegen) {
                 !is_capture(movegen->position, move)) {
                 return move;
             }
+            /* fallthrough */
 
         case COUNTER_MOVES:
             ++movegen->stage;
@@ -125,14 +129,16 @@ Move next_move(MoveGen *movegen) {
                 !is_capture(movegen->position, move)) {
                 return move;
             }
+            /* fallthrough */
 
         case QUIETS_SORT:
             movegen->head = movegen->end_bad_captures;
             movegen->tail = movegen->end_bad_captures;
             generate_moves<SILENT>(movegen, movegen->position);
             score_moves(movegen, SCORE_QUIET);
-            insertion_sort(movegen->moves, movegen->head, movegen->tail, -500 * movegen->depth);
+            insertion_sort(movegen->moves, movegen->head, movegen->tail, -1024 * movegen->depth);
             ++movegen->stage;
+            /* fallthrough */
 
         case QUIETS:
             while (movegen->head < movegen->tail) {
@@ -146,6 +152,7 @@ Move next_move(MoveGen *movegen) {
             }
             ++movegen->stage;
             movegen->head = 0;
+            /* fallthrough */
 
         case BAD_CAPTURES:
             if (movegen->head < movegen->end_bad_captures) {
@@ -158,11 +165,13 @@ Move next_move(MoveGen *movegen) {
             if (movegen->tte_move) {
                 return movegen->tte_move;
             }
+            /* fallthrough */
 
         case EVASIONS_SORT:
             generate_evasions(movegen, movegen->position);
             score_moves(movegen, SCORE_EVASION);
             ++movegen->stage;
+            /* fallthrough */
 
         case EVASIONS:
             while (movegen->head < movegen->tail) {
@@ -178,11 +187,13 @@ Move next_move(MoveGen *movegen) {
             if (movegen->tte_move) {
                 return movegen->tte_move;
             }
+            /* fallthrough */
 
         case QUIESCENCE_CAPTURES_SORT:
             generate_moves<CAPTURE>(movegen, movegen->position);
             score_moves(movegen, SCORE_CAPTURE);
             ++movegen->stage;
+            /* fallthrough */
 
         case QUIESCENCE_CAPTURES:
             while (movegen->head < movegen->tail) {
@@ -198,11 +209,13 @@ Move next_move(MoveGen *movegen) {
             if (movegen->tte_move) {
                 return movegen->tte_move;
             }
+            /* fallthrough */
 
         case QUIESCENCE_CAPTURES_SORT_CHECKS:
             generate_moves<CAPTURE>(movegen, movegen->position);
             score_moves(movegen, SCORE_QUIET);
             ++movegen->stage;
+            /* fallthrough */
 
         case QUIESCENCE_CAPTURES_CHECKS:
             if (movegen->head < movegen->tail) {
@@ -211,6 +224,7 @@ Move next_move(MoveGen *movegen) {
             ++movegen->stage;
             movegen->head = 0;
             generate_quiet_checks(movegen, movegen->position);
+            /* fallthrough */
 
         case QUIESCENCE_QUIETS_CHECKS:
             while (movegen->head < movegen->tail) {
@@ -225,41 +239,46 @@ Move next_move(MoveGen *movegen) {
             assert(false);
     }
 
-    return 0;
+    return no_move;
 }
 
-MoveGen new_movegen(Position *p, int ply, int depth, Move tte_move, uint8_t type, bool in_check) {
-    Square prev_to = move_to((p-1)->current_move);
+MoveGen new_movegen(Position *p, Metadata *md, int depth, Move tte_move, uint8_t type, bool in_check) {
+    int ply = md->ply;
     int movegen_stage;
     Move tm;
     if (in_check) {
-        tm = tte_move && is_pseudolegal(p, tte_move) ? tte_move : Move(0);
+        // tm = tte_move && is_pseudolegal(p, tte_move) ? tte_move : no_move;
+        tm = no_move;
         movegen_stage = EVASION_TTE_MOVE;
     } else {
         if (type == NORMAL_SEARCH) {
-            tm = tte_move && is_pseudolegal(p, tte_move) ? tte_move : Move(0);
+            tm = tte_move && is_pseudolegal(p, tte_move) ? tte_move : no_move;
             movegen_stage = NORMAL_TTE_MOVE;
         } else if (type == QUIESCENCE_SEARCH) {
             assert(depth == 0 || depth == -1);
-            tm = tte_move && is_pseudolegal(p, tte_move) && is_capture(p, tte_move) ? tte_move : Move(0);
+            tm = tte_move && is_pseudolegal(p, tte_move) && is_capture(p, tte_move) ? tte_move : no_move;
             if (depth >= 0) {
                 movegen_stage = QUIESCENCE_TTE_MOVE_CHECKS;
             } else {
                 movegen_stage = QUIESCENCE_TTE_MOVE;
             }
         } else {  // Perft
-            tm = tte_move && is_pseudolegal(p, tte_move) ? tte_move : Move(0);
+            tm = tte_move && is_pseudolegal(p, tte_move) ? tte_move : no_move;
             movegen_stage = NORMAL_TTE_MOVE;
         }
     }
 
     SearchThread *my_thread = p->my_thread;
+    if (!tm) {
+        ++movegen_stage;
+    }
+    Square prev_to = ply > 0 ? move_to((md-1)->current_move) : no_move;
     MoveGen movegen = {
         {}, // Moves
         p, // Position
         tm, // tte_move
-        {my_thread->killers[ply][0], my_thread->killers[ply][1]}, // killer 2
-        (ply > 0) ? my_thread->counter_moves[p->pieces[prev_to]][prev_to] : Move(0), // counter move
+        {md->killers[0], md->killers[1]}, // killer 2
+        (ply > 0) ? my_thread->counter_moves[p->pieces[prev_to]][prev_to] : no_move, // counter move
         movegen_stage, // stage
         0, // head
         0, // tail
@@ -406,25 +425,25 @@ void generate_quiet_checks(MoveGen *movegen, Position *p) {
     Bitboard pinned_pieces = p->pinned[opponent_color(p->color)] & p->bbs[p->color];
     while (pinned_pieces) {
         Square pin_index = pop(&pinned_pieces);
-        Piece pin_piece = piece_type(p->pieces[pin_index]);
+        int pin_piece = piece_type(p->pieces[pin_index]);
         Bitboard move_locations = 0;
         switch(pin_piece) {
-            case white_knight:
+            case KNIGHT:
                 move_locations |= ~FROMTO_MASK[pin_index][king_index] & generate_knight_targets(pin_index) & non_capture;
                 break;
-            case white_bishop:
+            case BISHOP:
                 move_locations |= ~FROMTO_MASK[pin_index][king_index] & generate_bishop_targets(p->board, pin_index) & non_capture;
                 break;
-            case white_rook:
+            case ROOK:
                 move_locations |= ~FROMTO_MASK[pin_index][king_index] & generate_rook_targets(p->board, pin_index) & non_capture;
                 break;
-            case white_queen:
+            case QUEEN:
                 move_locations |= ~FROMTO_MASK[pin_index][king_index] & generate_queen_targets(p->board, pin_index) & non_capture;
                 break;
-            case white_king:
+            case KING:
                 move_locations |= ~FROMTO_MASK[pin_index][king_index] & generate_king_targets(pin_index) & non_capture;
                 break;
-            case white_pawn:
+            case PAWN:
                 move_locations |= ~FROMTO_MASK[pin_index][king_index] & generate_pawn_targets<SILENT>(p, pin_index) & ~(RANK_1BB | RANK_8BB);
                 break;
         }

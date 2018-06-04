@@ -22,12 +22,12 @@
 #include "test.h"
 #include <fstream>
 #include "eval.h"
-#include "timecontrol.h"
 #include "bitbase.h"
 #include "tt.h"
 #include <vector>
 #include <map>
-#include <iostream>
+#include "tb.h"
+#include "tune.h"
 
 using namespace std;
 
@@ -80,6 +80,8 @@ void uci() {
 #endif
     cout << "option name Hash type spin default 256 min 1 max 16384" << endl;
     cout << "option name Threads type spin default 1 min 1 max " << MAX_THREADS << endl;
+    cout << "option name SyzygyPath type string default <empty>" << endl;
+    cout << "option name MoveOverhead type spin default 100 min 0 max 5000" << endl;
     cout << "uciok" << endl;
 }
 
@@ -93,7 +95,14 @@ void perft() {
 }
 
 void debug() {
+    cout << bitstring(root_position->board);
     show_position_png(root_position);
+    MoveGen movegen = new_movegen(root_position, 0, 0, 0, NORMAL_SEARCH, is_checked(root_position));
+    Move move;
+    while ((move = next_move(&movegen)) != no_move) {
+        cout << move_to_str(move) << " ";
+    }
+    cout << endl;
 }
 
 void quit() {
@@ -118,56 +127,7 @@ void eval() {
 }
 
 void go() {
-    is_timeout = false;
-    int black_remaining = 0;
-    int white_remaining = 0;
-    int black_increment = 0;
-    int white_increment = 0;
-    moves_to_go = 0;
-    think_depth_limit = MAX_PLY;
-
-    if (word_equal(1, "movetime")) {
-        moves_to_go = 1;
-        myremain = stoi(word_list[2]) * 99 / 100;
-        total_remaining = myremain;
-    }
-    else if (word_equal(1, "infinite")) {
-        moves_to_go = 1;
-        myremain = 3600000;
-    }
-    else if (word_equal(1, "depth")) {
-        moves_to_go = 1;
-        myremain = 3600000;
-        think_depth_limit = stoi(word_list[2]);
-    }
-    else if (word_list.size() > 1) {
-        for (unsigned i = 1 ; i < word_list.size() ; i += 2) {
-            if (word_list[i] == "wtime")
-                white_remaining = stoi(word_list[i + 1]);
-            if (word_list[i] == "btime")
-                black_remaining = stoi(word_list[i + 1]);
-            if (word_list[i] == "winc")
-                white_increment = stoi(word_list[i + 1]);
-            if (word_list[i] == "binc")
-                black_increment = stoi(word_list[i + 1]);
-            if (word_list[i] == "movestogo")
-                moves_to_go = stoi(word_list[i + 1]);
-            if (word_list[i] == "infinite")
-                myremain = 3600000;
-            if (word_list[i] == "depth")
-                think_depth_limit = stoi(word_list[i + 1]);
-        }
-
-        TTime t = get_myremain(
-            root_position->color == white ? white_increment : black_increment,
-            root_position->color == white ? white_remaining : black_remaining,
-            moves_to_go
-        );
-        myremain = t.optimum_time;
-        total_remaining = t.maximum_time;
-    }
-
-    std::thread think_thread (think, root_position);
+    std::thread think_thread (think, root_position, word_list);
     think_thread.detach();
 }
 
@@ -176,7 +136,7 @@ void startpos() {
 
     if (word_equal(2, "moves")) {
         for (unsigned i = 3 ; i < word_list.size() ; i++) {
-            Move m = 0;
+            Move m = no_move;
             if (word_list[i].length() == 4) {
                 m = uci2move(root_position, word_list[i]);
             } else if (word_list[i].length() == 5) {
@@ -200,11 +160,11 @@ void startpos() {
 void cmd_fen() {
     string fen_str = word_list[2] + " " + word_list[3] + " " + word_list[4] + " " + word_list[5] + " " + word_list[6] + " " + word_list[7];
 
-    root_position = import_fen(fen_str.c_str());
+    root_position = import_fen(fen_str, 0);
 
     if (word_equal(8, "moves")) {
         for (unsigned i = 9 ; i < word_list.size() ; i++) {
-            Move m = 0;
+            Move m = no_move;
             if (word_list[i].length() == 4) {
                 m = uci2move(root_position, word_list[i]);
             } else if (word_list[i].length() == 5) {
@@ -226,8 +186,12 @@ void cmd_fen() {
 }
 
 void see() {
-    Move move = uci2move(root_position, word_list[1]);
-    cout << see_capture(root_position, move) << endl;
+    if (word_list[1] == "test") {
+        see_test();
+    } else {
+        Move move = uci2move(root_position, word_list[1]);
+        cout << see_capture(root_position, move, 0) << endl;
+    }
 }
 
 void cmd_position() {
@@ -239,18 +203,20 @@ void cmd_position() {
 }
 
 void setoption() {
-    if (word_list[1] == "name") {
-        if (word_list[2] == "Hash") {
-            if (word_list[3] == "value") {
-                int megabytes = stoi(word_list[4]);
-                reset_tt(megabytes);
-            }
-        }
-        if (word_list[2] == "Threads") {
-            if (word_list[3] == "value") {
-                num_threads = std::min(MAX_THREADS, stoi(word_list[4]));
-            }
-        }
+    if (word_list[1] != "name" || word_list[3] != "value") {
+        return;
+    }
+    string name = word_list[2];
+    string value = word_list[4];
+
+    if (name == "Hash") {
+        reset_tt(stoi(value));
+    } else if (name == "Threads") {
+        num_threads = std::min(MAX_THREADS, stoi(value));
+    } else if (name == "SyzygyPath") {
+        init_syzygy(value);
+    } else if (name == "MoveOverhead") {
+        move_overhead = stoi(value);
     }
 }
 
@@ -285,11 +251,20 @@ void run_command(string s) {
         stop();
     if (s == "see")
         see();
+    if (s == "bench")
+        bench();
+#ifdef __TUNE__
+    if (s == "tune")
+        tune();
+#endif
 }
 
 void loop() {
     string in_str;
     init();
+#ifdef __TUNE__
+    tune();
+#endif
     root_position = start_pos();
 
     while (true) {

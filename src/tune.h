@@ -16,27 +16,28 @@
     along with Defenchess.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef MOVEUTIL_H
-#define MOVEUTIL_H
+#ifdef __TUNE__
+
+#ifndef TUNE_H
+#define TUNE_H
 
 #include "data.h"
-#include "bitboard.h"
+#include <vector>
 #include <iostream>
 
-inline Move _movecast(Square from, Square to, Square type_o) {
-    // | from (6) | to (6) | type (4) |
-    return (from << 10) | (to << 4) | type_o;
-}
+typedef struct Parameter {
+    int *variable;
+    int value;
+    std::string name;
+    bool increasing;
+    int stability;
+} Parameter;
 
-std::string move_to_str(Move m);
+void init_parameters(std::vector<Parameter> &parameters);
+void init_pst(std::vector<Parameter> &parameters);
+void init_mobility(std::vector<Parameter> &parameters);
+void tune();
 
-std::string i2n(int i);
-std::string int_to_notation(int a);
-
-void show_position_png(Position *p);
-
-int n2i(char c);
-
-void print_movegen(MoveGen *movegen);
+#endif
 
 #endif

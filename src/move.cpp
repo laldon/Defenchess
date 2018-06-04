@@ -24,7 +24,7 @@
 #include <cstring>
 
 void move_piece(Position *p, Square from, Square to, Piece piece, Color curr_c) {
-    p->pieces[from] = empty;
+    p->pieces[from] = no_piece;
     p->pieces[to] = piece;
     Bitboard from_to = bfi[from] ^ bfi[to];
     p->bbs[piece] ^= from_to;
@@ -58,7 +58,7 @@ void capture(Position *p, Square to, Piece captured, Color opponent) {
 void capture_enpassant(Position *p, Square to, Square enpassant_to, Piece captured, Color opponent) {
     p->bbs[captured] ^= bfi[enpassant_to];
     p->bbs[opponent] ^= bfi[enpassant_to];
-    p->pieces[enpassant_to] = empty;
+    p->pieces[enpassant_to] = no_piece;
     p->board ^= bfi[enpassant_to];
 
     uint64_t h = polyglotCombined[captured][to];
@@ -118,7 +118,7 @@ Position *make_move(Position *p, Move move) {
             assert(to == p->enpassant);
             assert(p->enpassant != 0);
             assert(rank(to, curr_c) == RANK_6);
-            assert(p->pieces[to] == empty);
+            assert(p->pieces[to] == no_piece);
             assert(p->pieces[enpassant_to] == pawn(opponent));
 
             capture_enpassant(new_p, to, enpassant_to, captured, opponent);
@@ -167,12 +167,17 @@ Position *make_null_move(Position *p) {
     Position *new_p = &(my_thread->positions[my_thread->search_ply]);
     ++new_p->last_irreversible;
 
+    new_p->enpassant = 0;
+    new_p->hash = p->hash ^ polyglotWhite;
+    new_p->color = opponent_color(p->color);
+
     if (p->enpassant) {
         new_p->hash ^= polyglotEnpassant[col(p->enpassant)];
-        new_p->enpassant = 0;
     }
-    new_p->hash ^= polyglotWhite;
-    new_p->color ^= 1;
+
+    new_p->pinned[white] = pinned_piece_squares(new_p, white);
+    new_p->pinned[black] = pinned_piece_squares(new_p, black);
+
     return new_p;
 }
 
@@ -185,7 +190,7 @@ Position *undo_move(Position *p) {
 bool is_pseudolegal(Position *p, Move move) {
     Square from = move_from(move);
     Piece piece = p->pieces[from];
-    Piece p_type = piece_type(piece);
+    int p_type = piece_type(piece);
     Move m_type = move_type(move);
 
     if (m_type != NORMAL) {
@@ -205,7 +210,7 @@ bool is_pseudolegal(Position *p, Move move) {
         return false;
     }
 
-    if (piece == empty) {
+    if (piece == no_piece) {
         return false;
     }
     if (piece_color(piece) != p->color) {
@@ -218,9 +223,9 @@ bool is_pseudolegal(Position *p, Move move) {
     }
 
     Bitboard b = 0;
-    if (p_type == white_king) {
+    if (p_type == KING) {
         b = generate_king_targets(from);
-    } else if (p_type == white_pawn) {
+    } else if (p_type == PAWN) {
         if (rank(to, p->color) == RANK_8) {
             return false;
         }
@@ -228,13 +233,13 @@ bool is_pseudolegal(Position *p, Move move) {
             return false;
         }
         b = generate_pawn_targets<ALL>(p, from);
-    } else if (p_type == white_knight) {
+    } else if (p_type == KNIGHT) {
         b = generate_knight_targets(from);
-    } else if (p_type == white_bishop) {
+    } else if (p_type == BISHOP) {
         b = generate_bishop_targets(p->board, from);
-    } else if (p_type == white_rook) {
+    } else if (p_type == ROOK) {
         b = generate_rook_targets(p->board, from);
-    } else if (p_type == white_queen) {
+    } else if (p_type == QUEEN) {
         b = generate_queen_targets(p->board, from);
     }
     return b & bfi[to];
@@ -247,8 +252,9 @@ bool gives_check(Position *p, Move m) {
     Square from = move_from(m);
     Square to = move_to(m);
     Piece curr_piece = p->pieces[from];
+    int p_type = piece_type(curr_piece);
 
-    if (piece_type(curr_piece) == white_pawn) {
+    if (p_type == PAWN) {
         //? Targets King at location:
         if (PAWN_CAPTURE_MASK[to][p->color] & their_king)
             return true;
@@ -282,7 +288,7 @@ bool gives_check(Position *p, Move m) {
             }
         } 
 
-    } else if (piece_type(curr_piece) == white_king) {
+    } else if (p_type == KING) {
 
         //? Causes a discover check
         if (!on(FROMTO_MASK[from][to], their_king_index) && on(pinned_piece_squares(p, opponent_color(p->color)), from))
@@ -297,7 +303,7 @@ bool gives_check(Position *p, Move m) {
             }
         }
 
-    } else if (piece_type(curr_piece) == white_queen) {
+    } else if (p_type == QUEEN) {
         //? Targets King at location:
         if (generate_queen_targets(p->board, to) & their_king)
             return true;
@@ -306,7 +312,7 @@ bool gives_check(Position *p, Move m) {
         if (!on(FROMTO_MASK[from][to], their_king_index) && on(pinned_piece_squares(p, opponent_color(p->color)), from))
             return true;
 
-    } else if (piece_type(curr_piece) == white_rook) {
+    } else if (p_type == ROOK) {
         //? Targets King at location:
         if (generate_rook_targets(p->board, to) & their_king)
             return true;
@@ -315,7 +321,7 @@ bool gives_check(Position *p, Move m) {
         if (!on(FROMTO_MASK[from][to], their_king_index) && on(pinned_piece_squares(p, opponent_color(p->color)), from))
             return true;
 
-    } else if (piece_type(curr_piece) == white_bishop) {
+    } else if (p_type == BISHOP) {
         //? Targets King at location:
         if (generate_bishop_targets(p->board, to) & their_king)
             return true;
@@ -324,7 +330,7 @@ bool gives_check(Position *p, Move m) {
         if (!on(FROMTO_MASK[from][to], their_king_index) && on(pinned_piece_squares(p, opponent_color(p->color)), from))
             return true;
 
-    } else if (piece_type(curr_piece) == white_knight) {
+    } else if (p_type == KNIGHT) {
         //? Targets King at location:
         if (KNIGHT_MASKS[to] & their_king)
             return true;

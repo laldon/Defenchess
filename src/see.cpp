@@ -23,28 +23,26 @@
 #include <iostream>
 #include "move_utils.h"
 
-int get_smallest_attacker(Position *p, Bitboard board, Color color, Square square) {
-    Bitboard targeters = targeted_from_with_king(p, board, color, square) & board;
-    int piece_val_c = piece_values[white_king];
-    int curr_index = -1;
-    while (targeters) {
-        Square index = pop(&targeters);
-        if (piece_values[p->pieces[index]] < piece_val_c) {
-            piece_val_c = piece_values[p->pieces[index]];
-            curr_index = index;
+Square get_smallest_attacker(Position *p, Bitboard targeters, Color color) {
+    Piece piece = color == white ? white_pawn : black_pawn;
+    Piece target = color == white ? white_king : black_king;
+
+    for (; piece <= target; piece += 2) {
+        Bitboard intersection = p->bbs[piece] & targeters;
+        if (intersection) {
+            return lsb(intersection);
         }
     }
-
-    return curr_index;
+    assert(false);
+    return 0;
 }
 
-bool see_capture(Position *p, Move move) {
+bool see_capture(Position *p, Move move, int threshold) {
     Move m_type = move_type(move);
     if (m_type != NORMAL) {
-        return true;
+        return threshold <= 0;
     }
 
-    Bitboard board = p->board;
     Square from = move_from(move);
     Square to = move_to(move);
     Color color = piece_color(p->pieces[from]);
@@ -52,21 +50,44 @@ bool see_capture(Position *p, Move move) {
     int piece_value = piece_values[p->pieces[to]];
     int capturer_value = piece_values[p->pieces[from]];
 
-    int balance = piece_value - capturer_value;
+    int balance = piece_value - threshold;
+    if (balance < 0) {
+        return false;
+    }
+
+    balance -= capturer_value;
     if (balance >= 0) {
         return true;
     }
 
-    board ^= bfi[from];
     bool opponent_to_move = true;
 
+    Bitboard board = p->board ^ bfi[from];
+    Bitboard targeters = all_targets(p, board, to) & board;
+
+    Bitboard rooks = p->bbs[white_rook] | p->bbs[black_rook];
+    Bitboard bishops = p->bbs[white_bishop] | p->bbs[black_bishop];
+    Bitboard queens = p->bbs[white_queen] | p->bbs[black_queen];
+
     while (true) {
-        int smallest_attacker = get_smallest_attacker(p, board, color, to);
-        if (smallest_attacker == -1) {
+        Bitboard my_targeters = targeters & p->bbs[opponent_color(color)];
+        if (!my_targeters) {
             break;
         }
 
-        balance += piece_values[p->pieces[smallest_attacker]];;
+        Square attacker_sq = get_smallest_attacker(p, my_targeters, opponent_color(color));
+        board ^= bfi[attacker_sq];
+        int p_type = piece_type(p->pieces[attacker_sq]);
+        if (p_type == PAWN || p_type == BISHOP || p_type == QUEEN) {
+            targeters |= generate_bishop_targets(board, to) & (bishops | queens);
+        }
+
+        if (p_type == ROOK || p_type == QUEEN) {
+            targeters |= generate_rook_targets(board, to) & (rooks | queens);
+        }
+        targeters &= board;
+
+        balance += piece_values[p->pieces[attacker_sq]];;
 
         opponent_to_move = !opponent_to_move;
 
@@ -76,7 +97,6 @@ bool see_capture(Position *p, Move move) {
 
         balance = - balance - 1;
         color = opponent_color(color);
-        board ^= bfi[smallest_attacker];
     }
     return opponent_to_move;
 }

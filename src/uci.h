@@ -20,6 +20,7 @@
 #define UCI_H
 
 #include "data.h"
+#include <iostream>
 
 void loop();
 
