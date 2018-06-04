@@ -694,18 +694,24 @@ void thread_think(SearchThread *my_thread, bool in_check) {
 
         if (depth >= 10) {
             if (failed_low) {
-                myremain = std::min(max_time_usage, myremain * 11 / 10); // %10 panic time
+                myremain = std::min(max_time_usage, myremain * 112 / 100); // %10 panic time
             }
             int score_diff = score_at_depth[depth - 1] - score_at_depth[depth - 2];
 
             if (score_diff < -10) {
-                myremain = std::min(max_time_usage, myremain * 21 / 20);
-            }
-            if (score_diff > 10) {
+                myremain = std::min(max_time_usage, myremain * 105 / 100);
+                if (score_at_depth[depth - 1] == score_at_depth[depth - 2]) {
+                    myremain = std::min(max_time_usage, myremain * 106 / 100);
+                }
+            } else if (score_diff > 10) {
                 myremain = std::max(init_remain / 2, myremain * 98 / 100);
+                if (score_at_depth[depth - 1] == score_at_depth[depth - 2]) {
+                    myremain = std::max(init_remain / 2, myremain * 98 / 100);
+                }
             }
+
             if (pv_at_depth[depth - 1] == pv_at_depth[depth - 2]) {
-                myremain = std::max(init_remain / 2, myremain * 94 / 100);
+                myremain = std::max(init_remain / 2, myremain * 96 / 100);
             } else {
                 myremain = std::max(init_remain, myremain);
             }
