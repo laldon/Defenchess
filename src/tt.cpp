@@ -29,7 +29,7 @@ PawnTTEntry *pawntt;
 const uint64_t one_mb = 1024ULL * 1024ULL;
 
 const uint64_t pawntt_size = sizeof(PawnTTEntry) * 16384ULL;
-const uint64_t pawntt_mod = (uint64_t)(pawntt_size / sizeof(PawnTTEntry));
+const uint64_t pawntt_mask = (uint64_t)(pawntt_size / sizeof(PawnTTEntry) - 1);
 
 void init_tt() {
     table.tt_size = one_mb * 16ULL; // 16 MB
@@ -97,7 +97,6 @@ int age_diff(TTEntry *tte) {
 }
 
 void set_tte(uint64_t hash, TTEntry *tte, Move move, int depth, int score, int static_eval, uint8_t flag) {
-#ifndef __TUNE__
     uint16_t h = (uint16_t)(hash >> 48);
 
     if (move || h != tte->hash) {
@@ -112,11 +111,9 @@ void set_tte(uint64_t hash, TTEntry *tte, Move move, int depth, int score, int s
         tte->static_eval = (int16_t)static_eval;
         tte->ageflag = (table.generation << 2) | flag;
     }
-#endif
 }
 
 TTEntry *get_tte(uint64_t hash, bool &tt_hit) {
-#ifndef __TUNE__
     uint64_t index = hash & table.bucket_mask;
     Bucket *bucket = &table.tt[index];
 
@@ -141,17 +138,12 @@ TTEntry *get_tte(uint64_t hash, bool &tt_hit) {
 
     tt_hit = false;
     return replacement;
-#else
-    Bucket *bucket = &table.tt[0];
-    tt_hit = false;
-    return &bucket->ttes[0];
-#endif
 }
 
 void set_pawntte(uint64_t pawn_hash, Evaluation* eval, Position *p, int white_shelter_value, int black_shelter_value) {
-#ifndef __TUNE__
-    uint64_t index = pawn_hash % pawntt_mod;
+    uint64_t index = pawn_hash & pawntt_mask;
     PawnTTEntry *pawntte = &pawntt[index];
+
     pawntte->pawn_hash = (uint32_t)(pawn_hash >> 32);
     pawntte->score = eval->score_pawn;
     pawntte->pawn_passers[white] = eval->pawn_passers[white];
@@ -164,16 +156,13 @@ void set_pawntte(uint64_t pawn_hash, Evaluation* eval, Position *p, int white_sh
     pawntte->king_index[white] = p->king_index[white];
     pawntte->king_index[black] = p->king_index[black];
     eval->pawntte = pawntte;
-#endif
 }
 
 PawnTTEntry *get_pawntte(uint64_t pawn_hash) {
-#ifndef __TUNE__
-    uint64_t index = pawn_hash % pawntt_mod;
+    uint64_t index = pawn_hash & pawntt_mask;
     PawnTTEntry *pawntte = &pawntt[index];
     if (pawntte->pawn_hash == (uint32_t)(pawn_hash >> 32)) {
         return pawntte;
     }
-#endif
     return 0;
 }

@@ -268,12 +268,12 @@ typedef struct TTEntry {
 } TTEntry;
 
 typedef struct PawnTTEntry {
-    uint32_t pawn_hash;
-    Score    score;
     Bitboard pawn_passers[2];
     int      semi_open_files[2];
-    Square   king_index[2];
     int      shelter_values[2];
+    Score    score;
+    Square   king_index[2];
+    uint32_t pawn_hash;
     uint8_t  castling;
 } PawnTTEntry;
 
