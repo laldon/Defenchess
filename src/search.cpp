@@ -648,6 +648,7 @@ void thread_think(SearchThread *my_thread, bool in_check) {
                 break;
             }
             if (score <= alpha) {
+                beta = (alpha + beta) / 2;
                 alpha = std::max(score - aspiration, -MATE);
                 failed_low = true;
             } else if (score >= beta) {
@@ -656,7 +657,7 @@ void thread_think(SearchThread *my_thread, bool in_check) {
                 break;
             }
 
-            aspiration += aspiration / 2 + 5;
+            aspiration += aspiration / 2;
             assert(alpha >= -MATE && beta <= MATE);
         }
         if (is_timeout) {
