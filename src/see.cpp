@@ -37,10 +37,10 @@ Square get_smallest_attacker(Position *p, Bitboard targeters, Color color) {
     return 0;
 }
 
-bool see_capture(Position *p, Move move) {
+bool see_capture(Position *p, Move move, int threshold) {
     Move m_type = move_type(move);
     if (m_type != NORMAL) {
-        return true;
+        return threshold <= 0;
     }
 
     Square from = move_from(move);
@@ -50,7 +50,12 @@ bool see_capture(Position *p, Move move) {
     int piece_value = piece_values[p->pieces[to]];
     int capturer_value = piece_values[p->pieces[from]];
 
-    int balance = piece_value - capturer_value;
+    int balance = piece_value - threshold;
+    if (balance < 0) {
+        return false;
+    }
+
+    balance -= capturer_value;
     if (balance >= 0) {
         return true;
     }

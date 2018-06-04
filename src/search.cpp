@@ -27,9 +27,19 @@
 #include <sys/time.h>
 #include <algorithm>
 #include "tb.h"
+#include <mutex>
 
-bool main_thread_finished = false;
 std::vector<Move> root_moves = {};
+int depth_increments[MAX_THREADS] = {
+    0, 1, 2, 3, 3, 4, 4, 5,
+    5, 5, 6, 6, 6, 6, 7, 7,
+    7, 7, 7, 7, 8, 8, 8, 8,
+    8, 8, 8, 8, 9, 9, 9, 9,
+    9, 9, 9, 9, 9, 9, 9, 10,
+    10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 11, 11,
+    11, 11, 11, 11, 11, 11, 11, 11
+};
 
 Move pv_at_depth[MAX_PLY * 2];
 int  score_at_depth[MAX_PLY * 2];
@@ -134,8 +144,6 @@ bool check_time(Position *p) {
             }
         }
         ++timer_count;
-    } else if (main_thread_finished) {
-        return true;
     }
     return false;
 }
@@ -231,7 +239,7 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
                                 best_score > MATED_IN_MAX_PLY &&
                                 capture == no_piece;
 
-        if ((!in_check || evasion_prunable) && move_type(move) != PROMOTION && !see_capture(p, move)) {
+        if ((!in_check || evasion_prunable) && move_type(move) != PROMOTION && !see_capture(p, move, 0)) {
             continue;
         }
 
@@ -245,9 +253,10 @@ int alpha_beta_quiescence(Position *p, Metadata *md, int alpha, int beta, int de
         md->current_move = move;
         int score = -alpha_beta_quiescence(position, md+1, -beta, -alpha, depth - 1, checks);
         undo_move(position);
-        assert(is_timeout || main_thread_finished || (score >= -MATE && score <= MATE));
+        assert(is_timeout || (score >= -MATE && score <= MATE));
 
-        if (is_timeout && p->my_thread->depth > 1) {
+        int main_thread_depth = search_threads[0].depth.load(std::memory_order_relaxed);
+        if (is_timeout && main_thread_depth > 1) {
             return TIMEOUT;
         }
 
@@ -481,23 +490,28 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
                 if (singular_value < rbeta) {
                     extension = 1;
                 }
-        } else if (checks && see_capture(p, move)) {
+        } else if (checks && see_capture(p, move, 0)) {
             extension = 1;
         }
         new_depth = depth - 1 + extension;
 
         if (!root_node && !important && p->non_pawn_material[p->color] && best_score > MATED_IN_MAX_PLY) {
-            int reduction = lmr(is_principal, depth, num_moves);
             if (depth < 8 && num_moves >= futility_move_counts[improving][depth]) {
                 continue;
             }
-            // Reduced depth of the next LMR search
-            int lmr_depth = std::max(new_depth - reduction, 0);
 
-            // Futility pruning: parent node
+            int lmr_depth = std::max(new_depth - lmr(is_principal, depth, num_moves), 0);
             if (lmr_depth < 7 && md->static_eval + 150 + 120 * lmr_depth <= alpha) {
                 continue;
             }
+
+            if (lmr_depth < 8 && !see_capture(p, move, -20 * lmr_depth * lmr_depth)) {
+                continue;
+            }
+        }
+
+        if (!is_principal && !in_check && best_score > MATED_IN_MAX_PLY && depth < 6 && !see_capture(p, move, -PAWN_END * depth)) {
+            continue;
         }
 
         if (!is_legal(p, move)) {
@@ -548,9 +562,10 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
             }
         }
         undo_move(position);
-        assert(is_timeout || main_thread_finished || (score >= -MATE && score <= MATE));
+        assert(is_timeout || (score >= -MATE && score <= MATE));
 
-        if ((check_time(p) || is_timeout) && p->my_thread->depth > 1) {
+        int main_thread_depth = search_threads[0].depth.load(std::memory_order_relaxed);
+        if ((is_timeout || check_time(p)) && main_thread_depth > 1) {
             return TIMEOUT;
         }
 
@@ -591,6 +606,113 @@ int alpha_beta(Position *p, Metadata *md, int alpha, int beta, int depth, bool i
     return best_score;
 }
 
+void thread_think(SearchThread *my_thread, bool in_check) {
+    Position *p = &my_thread->positions[my_thread->search_ply];
+    Metadata *md = &my_thread->metadatas[0];
+    bool is_main = is_main_thread(p);
+
+    int previous_guess = -MATE;
+    int current_guess = -MATE;
+    int init_remain = myremain;
+    int max_time_usage = std::min(total_remaining, init_remain * 3);
+    int depth = 0;
+
+    while (++depth <= think_depth_limit) {
+        if (!is_main) {
+            int main_thread_depth = search_threads[0].depth.load(std::memory_order_relaxed);
+            depth = main_thread_depth + depth_increments[my_thread->thread_id];
+        }
+
+        my_thread->depth = depth;
+
+        int aspiration = 10;
+        int alpha = -MATE;
+        int beta = MATE;
+
+        if (depth >= 5) {
+            alpha = std::max(previous_guess - aspiration, -MATE);
+            beta = std::min(previous_guess + aspiration, MATE);
+        }
+
+        bool failed_low = false;
+        while (true) {
+            int score = alpha_beta(p, md, alpha, beta, depth, in_check, false);
+
+            if (score > alpha) {
+                current_guess = score;
+                if (is_main) {
+                    update_main_pv();
+                }
+            }
+            if (is_timeout) {
+                break;
+            }
+            if (score <= alpha) {
+                alpha = std::max(score - aspiration, -MATE);
+                failed_low = true;
+            } else if (score >= beta) {
+                beta = std::min(score + aspiration, MATE);
+            } else {
+                break;
+            }
+
+            aspiration += aspiration / 2 + 5;
+            assert(alpha >= -MATE && beta <= MATE);
+        }
+        if (is_timeout) {
+            break;
+        }
+
+        previous_guess = current_guess;
+
+        if (!is_main) {
+            continue;
+        }
+
+        gettimeofday(&curr_time, NULL);
+        int time_taken = time_passed();
+        uint64_t tb_hits = sum_tb_hits();
+        std::cout << "info depth " << depth << " seldepth " << main_pv.size << " multipv 1 ";
+        std::cout << "tbhits " << tb_hits << " score ";
+
+        if (current_guess <= MATED_IN_MAX_PLY) {
+            std::cout << "mate " << ((-MATE - current_guess) / 2 + 1);
+        } else if (current_guess >= MATE_IN_MAX_PLY) {
+            std::cout << "mate " << ((MATE - current_guess) / 2 + 1);
+        } else {
+            std::cout << "cp " << current_guess * 100 / PAWN_END;
+        }
+
+        std::cout << " hashfull " << hashfull();
+
+        uint64_t nodes = sum_nodes();
+        std::cout << " nodes " << nodes <<  " nps " << nodes*1000/(time_taken+1) << " time " << time_taken << " pv ";
+        print_pv();
+
+        pv_at_depth[depth - 1] = main_pv.moves[0];
+        score_at_depth[depth - 1] = current_guess;
+
+        if (depth >= 10) {
+            if (failed_low) {
+                myremain = std::min(max_time_usage, myremain * 11 / 10); // %10 panic time
+            }
+            int score_diff = score_at_depth[depth - 1] - score_at_depth[depth - 2];
+
+            if (score_diff < -10) {
+                myremain = std::min(max_time_usage, myremain * 21 / 20);
+            }
+            if (score_diff > 10) {
+                myremain = std::max(init_remain / 2, myremain * 98 / 100);
+            }
+            if (pv_at_depth[depth - 1] == pv_at_depth[depth - 2]) {
+                myremain = std::max(init_remain / 2, myremain * 94 / 100);
+            } else {
+                myremain = std::max(init_remain, myremain);
+            }
+        }
+    }
+}
+
 void think(Position *p) {
     // Set the table generation
     start_search();
@@ -627,119 +749,23 @@ void think(Position *p) {
             return;
         }
     }
-    int previous_guess = -MATE;
-    int current_guess = -MATE;
-    int init_remain = myremain;
-    int max_time_usage = std::min(total_remaining, init_remain * 3);
 
     gettimeofday(&start_ts, NULL);
-    int depth = 1;
-
     std::memset(pv_at_depth, 0, sizeof(pv_at_depth));
     std::memset(score_at_depth, 0, sizeof(score_at_depth));
 
     initialize_threads();
-    while (depth <= think_depth_limit) {
-        int aspiration = 20;
-        int alpha = -MATE;
-        int beta = MATE;
-
-        if (depth >= 5) {
-            alpha = std::max(previous_guess - aspiration, -MATE);
-            beta = std::min(previous_guess + aspiration, MATE);
-        }
-
-        bool failed_low = false;
-        while (true) {
-            int score;
-
-            for (int i = 1; i < num_threads; ++i) {
-                SearchThread *t = &search_threads[i];
-                Position *tp = &t->positions[t->search_ply];
-                Metadata *tmd = &t->metadatas[0];
-                int thread_depth = depth + (i % 4);
-                t->depth = thread_depth;
-                t->thread_obj = std::thread(alpha_beta, tp, tmd, alpha, beta, thread_depth, in_check, false);
-            }
-
-            main_thread->depth = depth;
-            score = alpha_beta(p, md, alpha, beta, depth, in_check, false);
-            main_thread_finished = true;
-
-            // Stop threads
-            for (int i = 1; i < num_threads; ++i) {
-                SearchThread *t = &search_threads[i];
-                t->thread_obj.join();
-            }
-            main_thread_finished = false;
-
-            if (score > alpha) {
-                current_guess = score;
-                update_main_pv();
-            }
-            if (is_timeout) {
-                break;
-            }
-            if (score <= alpha) {
-                alpha = std::max(score - aspiration, -MATE);
-                failed_low = true;
-            } else if (score >= beta) {
-                beta = std::min(score + aspiration, MATE);
-            } else {
-                break;
-            }
-
-            aspiration += aspiration / 2 + 5;
-            assert(alpha >= -MATE && beta <= MATE);
-        }
-        if (is_timeout) {
-            break;
-        }
-
-        gettimeofday(&curr_time, NULL);
-        int time_taken = time_passed();
-        uint64_t tb_hits = sum_tb_hits();
-        std::cout << "info depth " << depth << " seldepth " << main_pv.size << " multipv 1 ";
-        std::cout << "tbhits " << tb_hits << " score ";
-
-        if (current_guess <= MATED_IN_MAX_PLY) {
-            std::cout << "mate " << ((-MATE - current_guess) / 2 + 1);
-        } else if (current_guess >= MATE_IN_MAX_PLY) {
-            std::cout << "mate " << ((MATE - current_guess) / 2 + 1);
-        } else {
-            std::cout << "cp " << current_guess * 100 / PAWN_END;
-        }
-
-        std::cout << " hashfull " << hashfull();
-
-        uint64_t nodes = sum_nodes();
-        std::cout << " nodes " << nodes <<  " nps " << nodes*1000/(time_taken+1) << " time " << time_taken << " pv ";
-        print_pv();
-
-        previous_guess = current_guess;
-        pv_at_depth[depth - 1] = main_pv.moves[0];
-        score_at_depth[depth - 1] = current_guess;
-
-        if (depth >= 10) {
-            if (failed_low) {
-                myremain = std::min(max_time_usage, myremain * 11 / 10); // %10 panic time
-            }
-            int score_diff = score_at_depth[depth - 1] - score_at_depth[depth - 2];
-
-            if (score_diff < -10) {
-                myremain = std::min(max_time_usage, myremain * 21 / 20);
-            }
-            if (score_diff > 10) {
-                myremain = std::max(init_remain / 2, myremain * 98 / 100);
-            }
-            if (pv_at_depth[depth - 1] == pv_at_depth[depth - 2]) {
-                myremain = std::max(init_remain / 2, myremain * 94 / 100);
-            } else {
-                myremain = std::max(init_remain, myremain);
-            }
-        }
-        ++depth;
+    for (int i = 0; i < num_threads; ++i) {
+        SearchThread *t = &search_threads[i];
+        t->thread_obj = std::thread(thread_think, t, in_check);
     }
+
+    // Stop threads
+    for (int i = 0; i < num_threads; ++i) {
+        SearchThread *t = &search_threads[i];
+        t->thread_obj.join();
+    }
+
     gettimeofday(&curr_time, NULL);
     std::cout << "info time " << time_passed() << std::endl;
     std::cout << "bestmove " << move_to_str(main_pv.moves[0]);
@@ -747,5 +773,5 @@ void think(Position *p) {
         std::cout << " ponder " << move_to_str(main_pv.moves[1]);
     }
     std::cout << std::endl;
-    return;
 }
+

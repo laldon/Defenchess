@@ -240,7 +240,7 @@ void see() {
         see_test();
     } else {
         Move move = uci2move(root_position, word_list[1]);
-        cout << see_capture(root_position, move) << endl;
+        cout << see_capture(root_position, move, 0) << endl;
     }
 }
 
