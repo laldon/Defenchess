@@ -43,7 +43,8 @@ Score
     double_pawn_penalty = {4, 30},
     blocked_rook_penalty = {65, 0},
     bishop_pawn_penalty = {6, 11},
-    hindered_passer_penalty = {1, 0};
+    hindered_passer_penalty = {1, 0},
+            pawn_storm_penalty = {2, 4};
 
 int
     king_only_protected_penalty = 6,

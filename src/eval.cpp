@@ -97,6 +97,7 @@ Score evaluate_pawn_structure(Evaluation *eval, Position *p, Color color) {
         ++eval->num_pieces[pawn(color)];
         ++eval->num_pieces[color];
     }
+
     return pawn_structure;
 }
 
@@ -522,6 +523,37 @@ Score evaluate_passer(Evaluation *eval, Position *p, Color color) {
     return passer_score;
 }
 
+Score evaluate_pawn_storm(Evaluation *eval, Position *p, Color color) {
+    Color opponent = opponent_color(color);
+    Square king_index = p->king_index[color];
+
+    Score pawn_storm_score = {0, 4};
+
+    Bitboard possible_attacked_squares = eval->targets[pawn(opponent)];
+    Bitboard king_triplet_mask = KING_EXTENDED_MASKS[color][king_index];
+
+    Bitboard cross_section = possible_attacked_squares & king_triplet_mask;
+
+    while (cross_section) {
+        Square next_threat_square = pop(&cross_section);
+        for (int distance = 0 ; distance < 4 ; distance++) {
+            if (DISTANCE_RING[king_index][distance] & bfi[next_threat_square]) {
+                pawn_storm_score.midgame -= (4 - distance) * pawn_storm_penalty.midgame;
+                pawn_storm_score.endgame -= (4 - distance) * pawn_storm_penalty.endgame;
+                distance = 5;
+            }
+        }
+    }
+
+    return pawn_storm_score;
+}
+
+void evaluate_pawn_storm(Evaluation *eval, Position *p) {
+    eval->score_white += evaluate_pawn_storm(eval, p, white);
+    eval->score_black += evaluate_pawn_storm(eval, p, black);
+}
+
+
 void evaluate_bishops(Evaluation *eval, Position *p) {
     eval->score_white += evaluate_bishop(eval, p, white);
     eval->score_black += evaluate_bishop(eval, p, black);
@@ -568,6 +600,7 @@ void evaluate_passers(Evaluation *eval, Position *p) {
     eval->score_white += evaluate_passer(eval, p, white);
     eval->score_black += evaluate_passer(eval, p, black);
 }
+
 
 void pre_eval(Evaluation *eval, Position *p) {
     eval->targets[white_pawn] = generate_pawn_threats(p->bbs[white_pawn], white);
@@ -669,6 +702,7 @@ int evaluate(Position *p) {
     evaluate_threats(&eval, p);
     evaluate_mobility(&eval);
     evaluate_passers(&eval, p);
+    evaluate_pawn_storm(&eval, p);
 
     eval.score += (eval.score_white - eval.score_black);
     eval.score += eval_material->score;

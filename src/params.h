@@ -109,7 +109,8 @@ extern Score
     double_pawn_penalty,
     blocked_rook_penalty,
     bishop_pawn_penalty,
-    hindered_passer_penalty;
+    hindered_passer_penalty,
+        pawn_storm_penalty;
 
 extern int
     king_only_protected_penalty,
