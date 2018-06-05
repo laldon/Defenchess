@@ -49,10 +49,10 @@ typedef struct Table {
 } Table;
 
 typedef struct PawnTTEntry {
-    uint32_t pawn_hash;
-    Score    score;
     Bitboard pawn_passers[2];
     int      semi_open_files[2];
+    Score    score;
+    uint32_t pawn_hash;
 } PawnTTEntry;
 
 inline uint8_t tte_flag(TTEntry *tte) {
