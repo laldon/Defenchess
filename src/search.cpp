@@ -660,12 +660,12 @@ void thread_think(SearchThread *my_thread, bool in_check) {
 
         previous_guess = current_guess;
 
-        if (!is_main) {
-            continue;
-        }
-
         if (is_timeout) {
             break;
+        }
+
+        if (!is_main) {
+            continue;
         }
 
         gettimeofday(&curr_time, NULL);
