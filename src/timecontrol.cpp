@@ -28,7 +28,8 @@ TTime moves_in_time(int increment, int remaining, int movestogo){
     int average_time = remaining / movestogo;
     int extra = average_time * importance * 3 / 200;
     int spend = average_time + extra + increment * (movestogo - 1) / movestogo;
-    return {spend, (remaining - move_overhead) / 4};
+    int max_usage = std::min(spend * 6, (remaining - move_overhead) / 4);
+    return {spend, max_usage};
 }
 
 TTime no_movestogo(int increment, int remaining) {
@@ -42,7 +43,8 @@ TTime no_movestogo(int increment, int remaining) {
     int average_time = remaining / movestogo;
     int extra = average_time * std::max(30 - move_num, 0) / 200;
     int spend = average_time + extra + increment;
-    return {spend, (remaining - move_overhead) / 4};
+    int max_usage = std::min(spend * 6, (remaining - move_overhead) / 4);
+    return {spend, max_usage};
 }
 
 TTime get_myremain(int increment, int remaining, int movestogo){

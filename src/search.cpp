@@ -696,8 +696,8 @@ void thread_think(SearchThread *my_thread, bool in_check) {
         pv_at_depth[depth - 1] = pv[0].moves[0];
         score_at_depth[depth - 1] = current_guess;
 
-        if (depth >= 10) {
-            if (failed_low) {
+        if (depth >= 6) {
+            if (depth >= 10 && failed_low) {
                 myremain = myremain * 11 / 10;
             }
             int score_diff = score_at_depth[depth - 1] - score_at_depth[depth - 2];
