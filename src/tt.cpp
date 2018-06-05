@@ -28,13 +28,13 @@ PawnTTEntry *pawntt;
 
 const uint64_t one_mb = 1024ULL * 1024ULL;
 
-const uint64_t pawntt_size = sizeof(PawnTTEntry) * 32768ULL;
+const uint64_t pawntt_size = sizeof(PawnTTEntry) * 16384ULL;
 const uint64_t pawntt_mask = (uint64_t)(pawntt_size / sizeof(PawnTTEntry) - 1ULL);
 
 void init_tt() {
     table.tt_size = one_mb * 16ULL; // 16 MB
     table.tt = (Bucket*) malloc(table.tt_size);
-    table.bucket_mask = (uint64_t)(table.tt_size / sizeof(Bucket) - 1);
+    table.bucket_mask = (uint64_t)(table.tt_size / sizeof(Bucket) - 1ULL);
     table.generation = 0;
     std::memset(table.tt, 0, table.tt_size);
 
