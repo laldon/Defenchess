@@ -42,7 +42,7 @@ TTime no_movestogo(int increment, int remaining) {
     int max_usage = std::min(spend * 4, (remaining - move_overhead) / 4);
 
     if (max_usage < increment) {
-        max_usage std::min(remaining - 2 * move_overhead, max_usage * 3 / 2);
+        max_usage = std::min(remaining - 2 * move_overhead, max_usage * 3 / 2);
     }
 
     return {spend, max_usage};
